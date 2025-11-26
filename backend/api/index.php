@@ -9,8 +9,12 @@ $controller = new JugadoresController();
 $action = $_GET["action"] ?? "";
 
 switch ($action) {
-    case "crear":
+    case "crear": // Se usa para el Registro
         $controller->crear();
+        break;
+
+    case "login": // Nueva ruta para Login
+        $controller->login();
         break;
 
     case "listar":
