@@ -3,7 +3,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
-class Database {
+class FutbolDB {
     private $host;
     private $db_name;
     private $username;
@@ -29,6 +29,11 @@ class Database {
             echo "Error de conexión: " . $exception->getMessage();
         }
         return $this->conn;
+    }
+
+    public static function connectDB() {
+        $instance = new self();
+        return $instance->getConnection();
     }
 }
 ?>
