@@ -1,4 +1,5 @@
 import { useState } from "react";
+import './Register.css';
 
 export default function Register({ switchToLogin }) {
     const [form, setForm] = useState({
@@ -44,22 +45,44 @@ export default function Register({ switchToLogin }) {
     };
 
     return (
-        <div className="auth-container">
-            <h2>Registro de Jugador</h2>
-            {feedback && <p>{feedback}</p>}
+        <div className="register-page">
+            {/* Sección Izquierda: Ilustración */}
+            <div className="illustration-section">
+                <img src="/futbol_papa.svg" alt="Ilustración de seguridad" className="illustration-image" />
+            </div>
 
-            <form onSubmit={handleSubmit}>
-                <input type="text" name="nombre" placeholder="Nombre completo" onChange={handleChange} required />
-                <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-                <input type="text" name="telefono" placeholder="Teléfono" onChange={handleChange} />
-                <input type="password" name="password" placeholder="Contraseña" onChange={handleChange} required />
-                
-                <button type="submit">Fichar Jugador</button>
-            </form>
+            {/* Sección Derecha: Formulario */}
+            <div className="form-section">
+                <div className="form-container">
+                    <h2>¡Bienvenido!</h2>
+                    {feedback && <p className="feedback-message">{feedback}</p>}
 
-            <p>
-                ¿Ya tienes cuenta? <button onClick={switchToLogin}>Inicia Sesión</button>
-            </p>
+                    <form onSubmit={handleSubmit}>
+                        <div className="input-group">
+                            <span className="input-icon"><i className="bi bi-person"></i></span> {/* Icono de usuario */}
+                            <input type="text" name="nombre" placeholder="Tú nombre" onChange={handleChange} required />
+                        </div>
+                        <div className="input-group">
+                            <span className="input-icon"><i className="bi bi-envelope"></i></span> {/* Icono de email */}
+                            <input type="email" name="email" placeholder="Tú correo electrónico" onChange={handleChange} required />
+                        </div>
+                        {/* Campo de teléfono (opcional, no está en el diseño original) */}
+                        <div className="input-group">
+                            <span className="input-icon"><i className="bi bi-telephone"></i></span> 
+                            <input type="text" name="telefono" placeholder="Teléfono (opcional)" onChange={handleChange} />
+                        </div>
+                        <div className="input-group">
+                            <span className="input-icon"><i className="bi bi-lock"></i></span> {/* Icono de contraseña */}
+                            <input type="password" name="password" placeholder="Crea una contraseña" onChange={handleChange} required />
+                        </div>
+                        
+                        <div className="button-group">
+                            <button type="submit" className="btn-primary">Crear cuenta</button>
+                            <button type="button" className="btn-secondary" onClick={switchToLogin}>Iniciar sesión</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     );
 }
