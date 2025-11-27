@@ -1,155 +1,268 @@
 :root {
-    --color-base: #0D47A1; /* Negro */
-    --color-secondary: #fff; /* Gris Medio */
-    --color-accent: #101010; /* Plateado */
-    --color-primary: #1B5E20; /* Verde Oscuro */
-    --color-white: #fff; /* Blanco */
+  --color-base: #0d47a1;
+  --color-secondary: #ffffff;
+  --color-accent: #101010;
+  --color-primary: #1b5e20;
+  --color-white: #ffffff;
 }
 
-/* Reseteo básico y fuente */
+/* Reset básico */
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Contenedor principal de la página */
-.register-page, .auth-page {
-    display: flex;
-    height: 100vh; /* Ocupa toda la altura de la pantalla */
-    width: 100%;
+/* Contenedor principal (registro y login) */
+.register-page,
+.auth-page {
+  display: flex;
+  height: 100vh;
+  width: 100%;
 }
 
-/* --- Sección Izquierda (Ilustración) --- */
+/* Sección izquierda: ilustración */
 .illustration-section {
-    flex: 1; /* Ocupa el 50% del ancho */
-    background-color: var(--color-secondary); /* Gris Medio (30%) */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px;
+  flex: 1;
+  background-color: var(--color-secondary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
 }
 
 .illustration-image {
-    max-width: 100%;
-    max-height: 80vh; /* Evita que la imagen sea demasiado alta */
-    object-fit: contain;
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
 }
 
-/* --- Sección Derecha (Formulario) --- */
+/* Sección derecha: formulario */
 .form-section {
-    flex: 1; /* Ocupa el 50% del ancho */
-    background-color: var(--color-base); /* Negro (60%) */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px;
-    color: var(--color-white); /* Blanco */
+  flex: 0.5;
+  background-color: var(--color-base);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: var(--color-white);
 }
 
+/* Contenedor interno del formulario */
 .form-container {
-    width: 100%;
-    max-width: 400px; /* Ancho máximo para el formulario */
-    text-align: center;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
 }
 
-h2 {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-    font-weight: bold;
+/* Título principal */
+.form-container h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-.feedback-message {
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+/* Subtítulo pequeño (para login) */
+.form-container p.subtitle {
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-/* Estilos de los Inputs */
+/* Barrita bajo el título (solo si la usas) */
+.form-title-underline {
+  width: 60px;
+  height: 3px;
+  background: var(--color-secondary);
+  margin: 0 auto 24px auto;
+}
+
+/* Mensaje de feedback */
+.feedback-message,
+.error-message {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+/* Grupo de inputs */
 .input-group {
-    position: relative;
-    margin-bottom: 20px;
+  position: relative;
+  margin-bottom: 20px;
 }
 
+/* Icono dentro del input (si lo usas) */
 .input-icon {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
-    color: var(--color-accent); /* Plateado (10%) */
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: var(--color-accent);
 }
 
-.input-group input {
-    width: 100%;
-    padding: 15px 20px 15px 50px; /* Padding extra a la izquierda para el icono */
-    border: none;
-    border-radius: 30px; /* Bordes redondeados */
-    font-size: 1rem;
-    outline: none; /* Quita el borde al hacer clic */
-    background-color: var(--color-secondary); /* Gris Medio */
-    color: var(--color-accent); /* Blanco */
+/* Inputs */
+.input-group input,
+.input-group textarea {
+  width: 100%;
+  padding: 15px 20px 15px 50px;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  outline: none;
+  background-color: var(--color-secondary);
+  color: var(--color-accent);
 }
 
-.input-group input::placeholder {
-    color: var(--color-accent); /* Plateado */
+/* Textarea (si lo usas como mensaje) */
+.input-group textarea {
+  resize: vertical;
+  min-height: 120px;
 }
 
-/* Estilos de los Botones */
+/* Placeholders */
+.input-group input::placeholder,
+.input-group textarea::placeholder {
+  color: var(--color-accent);
+}
+
+/* Checkbox política privacidad */
+.privacy-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0 0 0;
+  font-size: 0.95rem;
+  color: var(--color-white);
+  justify-content: flex-start;
+}
+
+.privacy-check input[type='checkbox'] {
+  accent-color: var(--color-primary);
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
+}
+
+.privacy-check a {
+  color: var(--color-white);
+  text-decoration: underline;
+}
+
+.privacy-check a:hover {
+  color: #144214;
+}
+
+/* Divider con texto (registro/login) */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 30px 0 10px 0;
+  width: 100%;
+  gap: 10px;
+}
+
+.divider hr {
+  flex: 1;
+  border: none;
+  border-top: 1.5px solid var(--color-secondary);
+  background: none;
+}
+
+.divider-text {
+  color: var(--color-white);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+/* Link / botón secundario (login/register debajo del divider) */
+.login-link,
+.register-link {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Tamaño común y serio para los botones secundarios */
+.login-link .btn-secondary,
+.register-link .btn-secondary {
+  width: 80%;
+  min-width: 200px;
+  max-width: 320px;
+  padding: 16px 0;
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Contenedor botones principales */
 .button-group {
-    display: flex;
-    gap: 20px; /* Espacio entre botones */
-    margin-top: 30px;
-    justify-content: space-between;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40px; /* margen grande como pediste */
 }
 
-button {
-    flex: 1; /* Los botones ocupan el mismo ancho */
-    padding: 15px;
-    border-radius: 30px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* Tamaño común y serio para TODOS los botones grandes */
+.button-group button,
+.login-link .btn-secondary,
+.register-link .btn-secondary {
+  width: 80%;
+  min-width: 200px;
+  max-width: 320px;
+  padding: 16px 0;
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* Botón Principal (Create account) */
+/* Botón principal (verde) */
 .btn-primary {
-    background-color: var(--color-primary); /* Verde Oscuro */
-    color: var(--color-white); /* Blanco */
-    border: none;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
 }
 
 .btn-primary:hover {
-    background-color: #144214; /* Verde Oscuro más intenso */
+  background-color: #144214;
 }
 
-/* Botón Secundario (Sign in) */
+/* Botón secundario (borde blanco) */
 .btn-secondary {
-    background-color: transparent;
-    color: var(--color-white); /* Blanco */
-    border: 2px solid var(--color-white); /* Borde blanco */
+  background-color: transparent;
+  color: var(--color-white);
+  border: 2px solid var(--color-white);
 }
 
 .btn-secondary:hover {
-    background-color: var(--color-white); /* Blanco */
-    color: var(--color-base); /* Negro */
+  background-color: var(--color-white);
+  color: var(--color-base);
 }
 
-/* --- Responsividad (Para pantallas pequeñas) --- */
+
+/* Responsivo: en móvil apilamos, solo fondo azul y formulario */
 @media (max-width: 768px) {
-    .register-page {
-        flex-direction: column; /* Apila las secciones verticalmente */
-        height: auto;
-    }
+  .register-page,
+  .auth-page {
+    flex-direction: column;
+    height: 100vh;
+  }
 
-    .illustration-section {
-        display: none; /* Oculta la ilustración en móviles */
-    }
+  .illustration-section {
+    display: flex;
+    flex: 1;
+    padding: 20px;
+  }
 
-    .form-section {
-        padding: 60px 20px;
-    }
+  .form-section {
+    padding: 40px 20px;
+    flex: 3;
+  }
 }

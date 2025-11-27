@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <defs>
+
+    <symbol id="icono-cancha" viewBox="0 0 1150 780">
+      <defs>
+        <pattern id="cesped_patron" x="0" y="0" width="100" height="50" patternUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="50" height="780" fill="#3a8c3f" />
+          <rect x="50" y="0" width="50" height="780" fill="#46a34b" />
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="1150" height="780" fill="url(#cesped_patron)" />
+      <g transform="translate(50, 50)" stroke="#ffffff" stroke-width="5" fill="none">
+        <rect x="0" y="0" width="1050" height="680" />
+        <line x1="525" y1="0" x2="525" y2="680" />
+        <circle cx="525" cy="340" r="91.5" />
+        <rect x="0" y="138.5" width="165" height="403" />
+        <rect x="885" y="138.5" width="165" height="403" />
+        <rect x="0" y="248.5" width="55" height="183" />
+        <rect x="995" y="248.5" width="55" height="183" />
+        <path d="M 165,266.9 A 91.5,91.5 0 0,1 165,413.1" />
+        <path d="M 885,266.9 A 91.5,91.5 0 0,0 885,413.1" />
+        <path d="M 0,25 A 25,25 0 0,1 25,0" />
+        <path d="M 1025,0 A 25,25 0 0,1 1050,25" />
+        <path d="M 0,655 A 25,25 0 0,0 25,680" />
+        <path d="M 1025,680 A 25,25 0 0,0 1050,655" />
+      </g>
+      <g transform="translate(50, 50)" fill="#ffffff" stroke="none">
+        <circle cx="525" cy="340" r="6" />
+        <circle cx="110" cy="340" r="6" />
+        <circle cx="940" cy="340" r="6" />
+      </g>
+    </symbol>
+
+
+    <symbol id="icono-gol" viewBox="0 0 64 64">
+      <path d="M4,12 H60 V52 H4 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M12,12 V52 M20,12 V52 M28,12 V52 M36,12 V52 M44,12 V52 M52,12 V52 M4,20 H60 M4,28 H60 M4,36 H60 M4,44 H60" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+      <circle cx="32" cy="42" r="10" fill="currentColor" />
+    </symbol>
+
+
+    <symbol id="icono-trofeo" viewBox="0 0 64 64">
+       <path d="M12,8 L12,24 C12,36 20,44 32,44 C44,44 52,36 52,24 L52,8 H12 Z" fill="currentColor"/>
+       <path d="M24,48 H40 V56 H24 Z M16,56 H48 V62 H16 Z" fill="currentColor"/>
+       <path d="M12,14 H4 V28 H12 V14 Z M52,14 H60 V28 H52 V14 Z" fill="currentColor"/>
+    </symbol>
+
+  </defs>
+</svg>

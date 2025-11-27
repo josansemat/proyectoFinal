@@ -1,0 +1,94 @@
+/* Sidebar.css */
+
+/* =========================================
+   DEFINICIÓN DE VARIABLES
+   ========================================= */
+:root {
+  /* --- Paleta Principal --- */
+  --primary-color: #212529; /* Tu color azul primario */
+  --danger-color: #dc3545;  /* Rojo Bootstrap */
+  --danger-hover-color: #e35d6a;
+  --danger-soft-bg: rgba(220, 53, 69, 0.15);
+
+  /* --- Colores Específicos del Sidebar --- */
+  /* Usamos el color primario como fondo */
+  --sidebar-bg: var(--primary-color);
+  --sidebar-text: #ffffff; /* Texto blanco para contraste sobre azul oscuro */
+  --sidebar-text-muted: rgba(255, 255, 255, 0.6); /* Blanco con transparencia para textos secundarios */
+  --sidebar-item-bg-hover: rgba(255, 255, 255, 0.1); /* Hover más brillante para que se note en azul */
+  --sidebar-border-color: rgba(255, 255, 255, 0.1); /* Color para bordes separadores */
+}
+
+
+/* =========================================
+   ESTILOS ESTRUCTURALES DEL SIDEBAR
+   ========================================= */
+
+/* Aplicamos las variables al contenedor principal */
+.sidebar {
+  background-color: var(--sidebar-bg) !important; /* Important para asegurar que sobrescribe bootstrap */
+  color: var(--sidebar-text) !important;
+  transition: transform 0.3s ease-in-out; /* Solo transición de movimiento */
+}
+
+/* Scrollbar personalizado */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+
+
+/* =========================================
+   COMPONENTES DEL SIDEBAR
+   ========================================= */
+
+/* Estilos base para iconos SVG */
+.sidebar-nav-icon {
+  width: 24px; height: 24px; flex-shrink: 0;
+  fill: currentColor; stroke: currentColor;
+  transition: transform 0.2s ease;
+}
+
+/* Enlaces de navegación */
+.nav-link {
+    color: var(--sidebar-text) !important; /* Asegurar texto blanco */
+    transition: background-color 0.2s ease;
+}
+
+.nav-link:hover {
+    background-color: var(--sidebar-item-bg-hover);
+}
+
+.nav-link:hover .sidebar-nav-icon {
+  transform: scale(1.1);
+}
+
+/* Ajuste para el botón de perfil (doble línea) */
+.nav-link-profile {
+  display: flex; align-items: center; gap: 0.75rem;
+  text-align: left; width: 100%;
+}
+
+/* Textos secundarios (muted) */
+.text-sidebar-muted {
+    color: var(--sidebar-text-muted) !important;
+}
+
+/* Bordes */
+.border-sidebar {
+    border-color: var(--sidebar-border-color) !important;
+}
+
+
+/* --- SECCIÓN DE CERRAR SESIÓN --- */
+.logout-section { margin-top: auto; }
+
+.btn-logout-sidebar {
+  color: var(--danger-color) !important;
+  transition: all 0.2s ease;
+}
+
+.btn-logout-sidebar:hover {
+  background-color: var(--danger-soft-bg);
+  color: var(--danger-hover-color) !important;
+}
+.btn-logout-sidebar:hover .sidebar-nav-icon { transform: translateX(3px); }
