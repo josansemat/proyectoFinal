@@ -169,6 +169,24 @@ class Jugador {
         );
     }
 
+    // ----------------------------------------------------------
+    // GET EQUIPOS DEL JUGADOR
+    // ----------------------------------------------------------
+    public static function getEquiposByJugadorId($id_jugador) {
+        $conexion = FutbolDB::connectDB();
+        // MODIFICADO: Se añade 'je.rol_en_equipo as mi_rol'
+        $sql = "SELECT e.id, e.nombre, e.color_principal, je.dorsal, je.rol_en_equipo as mi_rol
+                FROM equipos e
+                JOIN jugadores_equipos je ON e.id = je.idequipo
+                WHERE je.idjugador = :id_jugador AND e.activo = 1";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':id_jugador', $id_jugador);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+
     // GETTERS
     public function getId(){ return $this->id; }
     public function getNombre(){ return $this->nombre; }

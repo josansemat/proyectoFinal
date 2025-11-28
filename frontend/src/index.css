@@ -1,0 +1,81 @@
+/* src/index.css */
+
+/* =========================================
+   VARIABLES GLOBALES
+   ========================================= */
+:root {
+  /* Valores INICIALES (se sobrescribirán por JS al cargar un equipo) */
+  /* --primary-color: #212529;      Color principal (fondo) */
+  --primary-rgb: 33, 37, 41;     /* Versión RGB para transparencias */
+  
+  /* Otros colores fijos */
+  --accent-color: #ffffff;
+  --danger-color: #dc3545;
+  
+}
+
+/* =========================================
+   ESTILOS BASE DINÁMICOS
+   ========================================= */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* El fondo del cuerpo usa el color primario dinámico */
+  background-color: var(--primary-color);
+  /* Texto base blanco por defecto */
+  color: #ffffff;
+  
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* =========================================
+   ESTILOS DEL CONTENEDOR PRINCIPAL
+   ========================================= */
+.app-main-content {
+    /* Fondo transparente para que se vea el color del body */
+    background-color: transparent;
+}
+
+
+/* =========================================
+   CLASES DE UTILIDAD GLOBALES PARA BOTONES
+   ========================================= */
+
+/* Botón Primario Dinámico */
+.btn-primary-custom {
+    background-color: var(--primary-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff; /* Texto blanco fijo */
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    filter: brightness(115%); 
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Botón Secundario (Outline) Dinámico */
+.btn-outline-custom {
+    background-color: transparent;
+    border: 2px solid currentColor;
+    color: inherit;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-custom:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}

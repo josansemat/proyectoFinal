@@ -110,4 +110,23 @@ class JugadoresController {
         foreach ($jugadores as $j) { $arr[] = (array)$j; }
         echo json_encode($arr);
     }
+    public function misEquipos() {
+        // En un caso real, el ID vendría del token de sesión.
+        // Para este prototipo, lo recibimos como parámetro GET por simplicidad.
+        $id_jugador = $_GET['id_jugador'] ?? null;
+
+        if (!$id_jugador) {
+            echo json_encode(["success" => false, "error" => "Falta el ID del jugador"]);
+            return;
+        }
+
+        $equipos = Jugador::getEquiposByJugadorId($id_jugador);
+
+        if ($equipos) {
+            echo json_encode(["success" => true, "equipos" => $equipos]);
+        } else {
+            // Puede ser que no tenga equipos, devolvemos un array vacío
+            echo json_encode(["success" => true, "equipos" => []]);
+        }
+    }
 }

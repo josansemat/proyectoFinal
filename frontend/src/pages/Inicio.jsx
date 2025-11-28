@@ -9,3 +9,5 @@ const Inicio = ({ user }) => {
 };
 
 export default Inicio;
+
+
