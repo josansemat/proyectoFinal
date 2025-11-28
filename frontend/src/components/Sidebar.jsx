@@ -1,5 +1,6 @@
 // src/components/Sidebar.jsx
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // <-- IMPORTACIÓN CLAVE
 import "./Sidebar.css";
 import SvgSprite from "./SvgSprite";
 
@@ -8,6 +9,7 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
   const [isOpen, setIsOpen] = useState(false);
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate(); // <-- INICIALIZAR EL HOOK
 
   const roleGlobal = user?.rol;
   const isAdmin = roleGlobal === "admin";
@@ -24,7 +26,7 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
   const navLinkStyle = { color: textColor };
   // --------------------------------------
 
-  // --- MAPA DE RUTAS A ICONOS (LA SOLUCIÓN AL PROBLEMA 1) ---
+  // --- MAPA DE RUTAS A ICONOS ---
   const navItems = [
     { path: '/plantilla', icon: '#icon-pitch', label: 'Plantilla' },
     { path: '/partidos', icon: '#icon-goal', label: 'Partidos' },
@@ -35,7 +37,14 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
-  const handleNav = (path) => { console.log("Navegando a:", path); closeSidebar(); };
+  
+  // AHORA handleNav UTILIZA navigate() para cambiar la URL
+  const handleNav = (path) => { 
+    console.log("Navegando a:", path); // Mantenemos el log para depuración
+    navigate(path); // <-- ESTO CAMBIA LA RUTA
+    closeSidebar(); 
+  };
+
   const toggleTeamDropdown = () => { if (hasMultipleTeams) setIsTeamDropdownOpen(!isTeamDropdownOpen); };
   const handleSelectTeamOption = (team) => { onTeamChange(team); setIsTeamDropdownOpen(false); closeSidebar(); };
 
@@ -130,7 +139,7 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
             {/* Buscar Equipos */}
             <li className="nav-item">
               <button type="button" className="btn w-100 nav-link px-2 d-flex align-items-center gap-3" onClick={() => handleNav("/buscar-equipos")}
-                 style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                   style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                 <svg className="sidebar-nav-icon"><use href="#icon-search"></use></svg>
                 <span>Buscar Equipos</span>
               </button>
@@ -141,13 +150,13 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
                 <li className="nav-item mt-4 mb-2 px-2 text-uppercase small fw-bold" style={sectionHeaderStyle}> Gestión de Mi Club </li>
                 <li className="nav-item">
                   <button type="button" className="btn w-100 nav-link px-2 d-flex align-items-center gap-3" onClick={() => handleNav("/mi-club/configurar")}
-                     style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                       style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <svg className="sidebar-nav-icon"><use href="#icon-settings"></use></svg><span>Editar Mi Club</span>
                   </button>
                 </li>
                 <li className="nav-item">
                   <button type="button" className="btn w-100 nav-link px-2 d-flex align-items-center gap-3" onClick={() => handleNav("/mi-club/solicitudes")}
-                     style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                       style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <svg className="sidebar-nav-icon"><use href="#icon-users"></use></svg><span>Solicitudes Pendientes</span>
                   </button>
                 </li>
@@ -159,13 +168,13 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
                 <li className="nav-item mt-4 mb-2 px-2 text-uppercase small fw-bold" style={{...sectionHeaderStyle}}> Administración Global </li>
                 <li className="nav-item">
                   <button type="button" className="btn w-100 nav-link px-2 d-flex align-items-center gap-3" onClick={() => handleNav("/admin/jugadores")}
-                     style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                       style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <svg className="sidebar-nav-icon"><use href="#icon-users"></use></svg><span>Gestión Jugadores</span>
                   </button>
                 </li>
                 <li className="nav-item">
                   <button type="button" className="btn w-100 nav-link px-2 d-flex align-items-center gap-3" onClick={() => handleNav("/admin/equipos")}
-                     style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                       style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <svg className="sidebar-nav-icon"><use href="#icon-shield"></use></svg><span>Gestión Equipos</span>
                   </button>
                 </li>
@@ -178,7 +187,7 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
             <ul className="nav flex-column border-top pt-2" style={{ borderColor: borderColor }}>
                <li className="nav-item">
                   <button type="button" className="btn nav-link px-2 nav-link-profile" onClick={() => handleNav("/mi-perfil")}
-                     style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                       style={navLinkStyle} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <svg className="sidebar-nav-icon"><use href="#icon-user"></use></svg>
                     <div><div className="fw-semibold">Mi perfil</div><div className="small text-start" style={{ color: mutedColor }}>Ajustes de cuenta</div></div>
                   </button>

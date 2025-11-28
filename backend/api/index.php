@@ -12,38 +12,45 @@ $controller = new JugadoresController();
 $action = $_GET["action"] ?? "";
 
 switch ($action) {
-    case "crear": // Se usa para el Registro
+    case "crear": // Registro de jugador
         $controller->crear();
         break;
 
-    case "login": // Nueva ruta para Login
+    case "login": // Login
         $controller->login();
         break;
 
-    case "listar":
+    case "listar": // Listar jugadores
         $controller->listar();
         break;
-    case "mis_equipos":
+
+    case "mis_equipos": // Equipos de un jugador
         $controller->misEquipos();
         break;
-    // --- NUEVAS RUTAS DE SOLICITUDES Y EQUIPOS ---
+
+    // --- RUTAS DE EQUIPOS ---
     case "listar_equipos_todos":
         $equipos = Equipo::getAllEquipos();
         echo json_encode(["success" => true, "equipos" => $equipos]);
         break;
-    case "solicitar_unirse":
+
+    // --- RUTAS DE SOLICITUDES ---
+    case "solicitar_unirse": // Jugador envía solicitud
         $solicitudesController->solicitarUnirse();
         break;
-    case "ver_solicitudes_equipo":
+
+    case "ver_solicitudes_equipo": // Manager/Admin ve solicitudes pendientes
         $solicitudesController->verPendientes();
         break;
-    case "responder_solicitud":
+
+    case "responder_solicitud": // Manager responde solicitud
         $solicitudesController->responder();
         break;
-     case "mis_solicitudes_ids":
+
+    case "mis_solicitudes_ids": // IDs de equipos solicitados por jugador
         $solicitudesController->misSolicitudesPendientes();
         break;
-        
+
     default:
         echo json_encode(["error" => "Invalid action"]);
         break;

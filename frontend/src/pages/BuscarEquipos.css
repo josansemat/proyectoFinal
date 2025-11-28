@@ -1,0 +1,97 @@
+/* src/pages/BuscarEquipos.css */
+
+:root {
+  --primary-color: #0d1b2a; /* Azul oscuro serio */
+  --primary-rgb: 13, 27, 42;
+  --contrast-text-color: #ffffff;
+  --contrast-text-color-rgb: 255, 255, 255;
+}
+
+.buscar-equipos-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Encabezado */
+.section-header h2 {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.section-subtitle {
+  font-size: 0.95rem;
+  color: #555;
+  opacity: 0.9;
+}
+
+.section-header hr {
+  border: none;
+  border-top: 2px solid var(--primary-color);
+  width: 60px;
+  margin: 0.5rem auto 1.5rem auto;
+}
+
+/* Tarjetas */
+.team-card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
+}
+
+.team-card .card-header {
+  padding: 0.75rem;
+  background-color: var(--primary-color);
+}
+
+.team-card .card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--contrast-text-color);
+}
+
+.team-card .card-body {
+  padding: 1rem;
+  background-color: #f8f9fa;
+}
+
+/* Escudo circular */
+.team-shield {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: var(--contrast-text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin: 0 auto 1rem auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Botón */
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: transform 0.1s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #1b263b; /* tono más claro del azul */
+}
