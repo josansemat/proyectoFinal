@@ -1,22 +1,18 @@
 import { useState } from "react";
-import './Register.css';
+import './Register.css'; // Asegúrate de que este archivo CSS existe
 
 export default function Register({ switchToLogin }) {
+    // 1. Añadido el campo 'apodo' al estado inicial
     const [form, setForm] = useState({
         nombre: "",
+        apodo: "", // <-- NUEVO
         email: "",
         telefono: "",
         password: "",
-        // rating y rol se manejan por defecto en backend para usuarios nuevos
     });
     const [feedback, setFeedback] = useState("");
     const [privacyChecked, setPrivacyChecked] = useState(false);
-    const handlePrivacyChange = (e) => {
-        setPrivacyChecked(e.target.checked);
-    };
-    
-
-
+    const [loading, setLoading] = useState(false); // Para desactivar el botón mientras carga
 
     const handleChange = (e) => {
         setForm({
@@ -27,11 +23,14 @@ export default function Register({ switchToLogin }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!privacyChecked) {
-            setFeedback("Debes aceptar la política de privacidad.");
+            setFeedback("Debes aceptar la política de privacidad para continuar.");
             return;
         }
+
         setFeedback("Registrando...");
+        setLoading(true); // Activar estado de carga
 
         try {
             const response = await fetch("/api/index.php?action=crear", {
@@ -39,18 +38,25 @@ export default function Register({ switchToLogin }) {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(form)
+                body: JSON.stringify(form) // Ahora 'form' incluye el apodo
             });
 
             const data = await response.json();
 
             if (data.success) {
-                switchToLogin(); // Mandar al usuario al login
+                setFeedback("¡Registro exitoso! Redirigiendo al inicio de sesión...");
+                // Esperar un poco antes de cambiar de pantalla para que el usuario lea el mensaje
+                setTimeout(() => {
+                    switchToLogin();
+                }, 2000);
             } else {
-                setFeedback(data.error || "Error al registrar");
+                setFeedback(data.error || "Error al registrar. Inténtalo de nuevo.");
             }
         } catch (err) {
-            setFeedback("Error de conexión");
+            console.error("Error de registro:", err);
+            setFeedback("Error de conexión con el servidor.");
+        } finally {
+            setLoading(false); // Desactivar estado de carga
         }
     };
 
@@ -70,9 +76,10 @@ export default function Register({ switchToLogin }) {
           <p className="subtitle">¡Bienvenido a la familia!</p>
           <div className="form-title-underline"></div>
 
-          {feedback && <div className="feedback-message">{feedback}</div>}
+          {feedback && <div className={`feedback-message ${feedback.includes('exitoso') ? 'success' : 'error'}`}>{feedback}</div>}
 
           <form onSubmit={handleSubmit}>
+            {/* Nombre Completo */}
             <div className="input-group">
               <span className="input-icon">
                 <i className="bi bi-person"></i>
@@ -87,6 +94,21 @@ export default function Register({ switchToLogin }) {
               />
             </div>
 
+            {/* 2. NUEVO INPUT: Apodo (Opcional) */}
+            <div className="input-group">
+              <span className="input-icon">
+                <i className="bi bi-star"></i> {/* Icono de estrella para apodo */}
+              </span>
+              <input
+                type="text"
+                name="apodo"
+                placeholder="Apodo (opcional)"
+                value={form.apodo}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Correo Electrónico */}
             <div className="input-group">
               <span className="input-icon">
                 <i className="bi bi-envelope"></i>
@@ -101,21 +123,23 @@ export default function Register({ switchToLogin }) {
               />
             </div>
 
+            {/* Teléfono */}
             <div className="input-group">
               <span className="input-icon">
                 <i className="bi bi-telephone"></i>
               </span>
               <input
-                type="text"
+                type="tel" // Cambiado a type="tel" para mejor teclado en móviles
                 name="telefono"
-                placeholder="Teléfono"
+                placeholder="Teléfono (9 dígitos)"
                 value={form.telefono}
                 onChange={handleChange}
-                pattern="\d{9}"
-                title="El teléfono debe tener exactamente 9 números"
+                pattern="[0-9]{9}" // Patrón para validar 9 dígitos
+                title="El teléfono debe tener exactamente 9 dígitos numéricos"
               />
             </div>
 
+            {/* Contraseña */}
             <div className="input-group">
               <span className="input-icon">
                 <i className="bi bi-lock"></i>
@@ -127,19 +151,22 @@ export default function Register({ switchToLogin }) {
                 value={form.password}
                 onChange={handleChange}
                 required
+                minLength={6} // Mínimo de seguridad básico
               />
             </div>
 
-            <div className="privacy-check">
+            {/* Checkbox de Privacidad */}
+            <div className="privacy-check" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                <input
                 type="checkbox"
                 id="privacy"
                 checked={privacyChecked}
                 onChange={(e) => setPrivacyChecked(e.target.checked)}
+                style={{ width: 'auto', margin: 0 }} // Ajuste de estilo rápido
                 />
-              <label htmlFor="privacy">
+              <label htmlFor="privacy" style={{ margin: 0, cursor: 'pointer' }}>
                 He leído y acepto la{" "}
-                <a href="#" target="_blank" rel="noreferrer">
+                <a href="#" onClick={(e) => e.preventDefault()} style={{textDecoration: 'underline'}}>
                   política de privacidad
                 </a>
                 .
@@ -147,8 +174,8 @@ export default function Register({ switchToLogin }) {
             </div>
 
             <div className="button-group">
-              <button type="submit" className="btn-primary">
-                Crear una cuenta
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? "Procesando..." : "Crear una cuenta"}
               </button>
             </div>
 

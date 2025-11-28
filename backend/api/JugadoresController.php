@@ -10,34 +10,50 @@ class JugadoresController {
     public function crear() {
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!$data) {
-            echo json_encode(["error" => "No data received"]);
+        // Validación básica: nombre, email y password son obligatorios.
+        if (empty($data["email"]) || empty($data["password"]) || empty($data["nombre"])) {
+            echo json_encode(["success" => false, "error" => "Faltan datos obligatorios"]);
             return;
         }
 
-        // Validar si el email ya existe antes de crear
-        $existe = Jugador::getByEmail($data["email"]);
-        if ($existe) {
-            echo json_encode(["error" => "El email ya está registrado"]);
+        // Verificar si el email ya existe
+        if (Jugador::getByEmail($data["email"])) {
+            echo json_encode(["success" => false, "error" => "El email ya está registrado"]);
             return;
         }
 
+        // Hashear la contraseña
+        $passwordHash = password_hash($data["password"], PASSWORD_DEFAULT);
+
+        // Valores por defecto
+        $rolDefault = "usuario";
+        $ratingDefault = 5.00;
+        $activoDefault = 1;
+
+        // Obtenemos el apodo y teléfono si existen, o NULL si no
+        $apodo = !empty($data["apodo"]) ? $data["apodo"] : null;
+        $telefono = !empty($data["telefono"]) ? $data["telefono"] : null;
+
+        // Crear la instancia de Jugador pasando TODOS los parámetros necesarios
         $jugador = new Jugador(
-            0,
+            0,              // ID
             $data["nombre"],
+            $apodo,         // AQUÍ FALTABA EL APODO
             $data["email"],
-            $data["telefono"],
-            password_hash($data["password"], PASSWORD_DEFAULT), // Encriptar contraseña
-            $data["rating_habilidad"] ?? 5.00, // Valor por defecto si no viene
-            "usuario", // Rol por defecto al registrarse
-            1 // Activo por defecto
+            $telefono,
+            $passwordHash,
+            $ratingDefault,
+            $rolDefault,
+            $activoDefault
         );
 
         try {
             $jugador->insert();
             echo json_encode(["success" => true, "message" => "Jugador registrado correctamente"]);
         } catch (Exception $e) {
-            echo json_encode(["error" => $e->getMessage()]);
+            // Log del error en el servidor (no lo mostramos al usuario por seguridad)
+            error_log("Error al registrar jugador: " . $e->getMessage());
+            echo json_encode(["success" => false, "error" => "Error al registrar en la base de datos. Inténtalo más tarde."]);
         }
     }
 
@@ -47,26 +63,26 @@ class JugadoresController {
     public function login() {
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!isset($data['email']) || !isset($data['password'])) {
-            echo json_encode(["error" => "Faltan datos de acceso"]);
+        if (empty($data['email']) || empty($data['password'])) {
+            echo json_encode(["success" => false, "error" => "Faltan datos de acceso"]);
             return;
         }
 
         $email = $data['email'];
-        $password = $data['password'];
+        $passwordInput = $data['password'];
 
         // Buscar usuario por email
         $jugador = Jugador::getByEmail($email);
 
         if ($jugador) {
-            // Verificar contraseña encriptada
-            if (password_verify($password, $jugador->getPassword())) {
-                // Login exitoso
+            // Verificar contraseña
+            if (password_verify($passwordInput, $jugador->getPassword())) {
                 
-                // Opcional: No devolver el password hash en la respuesta
+                // Login Exitoso: Devolvemos los datos del usuario (sin el password hash)
                 $userData = [
                     "id" => $jugador->getId(),
                     "nombre" => $jugador->getNombre(),
+                    "apodo" => $jugador->getApodo(),
                     "email" => $jugador->getEmail(),
                     "rol" => $jugador->getRol(),
                     "rating" => $jugador->getRating()
@@ -78,32 +94,20 @@ class JugadoresController {
                     "user" => $userData
                 ]);
             } else {
-                echo json_encode(["error" => "Contraseña incorrecta"]);
+                echo json_encode(["success" => false, "error" => "Credenciales incorrectas"]);
             }
         } else {
-            echo json_encode(["error" => "Usuario no encontrado"]);
+            echo json_encode(["success" => false, "error" => "Credenciales incorrectas"]);
         }
     }
 
     // --------------------------
-    // LIST (GET)
+    // LISTAR
     // --------------------------
     public function listar() {
         $jugadores = Jugador::getJugadores();
         $arr = [];
-
-        foreach ($jugadores as $j) {
-            $arr[] = [
-                "id" => $j->getId(),
-                "nombre" => $j->getNombre(),
-                "email" => $j->getEmail(),
-                "telefono" => $j->getTelefono(),
-                "rating_habilidad" => $j->getRating(),
-                "rol" => $j->getRol(),
-                "activo" => $j->getActivo()
-            ];
-        }
-
+        foreach ($jugadores as $j) { $arr[] = (array)$j; }
         echo json_encode($arr);
     }
 }

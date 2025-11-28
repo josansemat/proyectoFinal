@@ -10,7 +10,7 @@ const Sidebar = ({ user, onLogout }) => {
   // 1. Usamos user?.rol para evitar errores si 'user' aún no ha cargado (es null).
   // 2. Comprobamos si el rol coincide con los permitidos.
   const canEditClub = user?.rol === 'admin' || user?.rol === 'manager';
-
+  const canEdit = user?.rol === 'admin';
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
 
