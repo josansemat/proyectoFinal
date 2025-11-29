@@ -23,5 +23,3 @@ jobs:
           local_path: "./backend/*"
           remote_path: "/public/furbito/backend"
           delete_remote_files: false
-          dry_run: false
-          verbose: true
