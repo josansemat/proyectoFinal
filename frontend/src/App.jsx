@@ -15,6 +15,7 @@ import Sidebar from "./components/Sidebar.jsx";
 import Inicio from "./pages/Inicio";
 import BuscarEquipos from "./pages/BuscarEquipos";
 import ManagerSolicitudes from "./pages/ManagerSolicitudes";
+import EditarClub from "./pages/EditarClub";
 
 // --- FUNCIÓN 1: Convertir HEX a RGB para el CSS ---
 const hexToRgb = (hex) => {
@@ -243,6 +244,17 @@ function App() {
               }
             />
             <Route path="*" element={<Navigate to="/inicio" replace />} />
+            {/* RUTA PARA EDITAR CLUB */}
+            <Route
+              path="/mi-club/configurar"
+              element={
+                <EditarClub
+                  user={user}
+                  currentTeam={currentTeam}
+                  onTeamUpdate={handleTeamChange} // <-- Reutilizamos esta función para actualizar el estado global
+                />
+              }
+            />
           </Routes>
         </div>
       </div>

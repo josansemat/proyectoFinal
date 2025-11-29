@@ -5,9 +5,11 @@ ini_set('display_errors', 1);
 require_once "JugadoresController.php";
 require_once "SolicitudesController.php"; 
 require_once "../models/Equipo.php";
+require_once "EquiposController.php";
 
 $solicitudesController = new SolicitudesController(); 
 $controller = new JugadoresController();
+$equiposController = new EquiposController(); 
 
 $action = $_GET["action"] ?? "";
 
@@ -28,7 +30,6 @@ switch ($action) {
         $controller->misEquipos();
         break;
 
-    // --- RUTAS DE EQUIPOS ---
     case "listar_equipos_todos":
         $equipos = Equipo::getAllEquipos();
         echo json_encode(["success" => true, "equipos" => $equipos]);
@@ -49,6 +50,12 @@ switch ($action) {
 
     case "mis_solicitudes_ids": // IDs de equipos solicitados por jugador
         $solicitudesController->misSolicitudesPendientes();
+        break;
+    case "get_equipo":
+        $equiposController->getEquipo();
+        break;
+    case "update_equipo":
+        $equiposController->update();
         break;
 
     default:
