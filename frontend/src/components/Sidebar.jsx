@@ -1,6 +1,6 @@
 // src/components/Sidebar.jsx
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // <-- IMPORTACIÓN CLAVE
+import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import SvgSprite from "./SvgSprite";
 
@@ -9,7 +9,6 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
   const [isOpen, setIsOpen] = useState(false);
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const navigate = useNavigate(); // <-- INICIALIZAR EL HOOK
 
   const roleGlobal = user?.rol;
   const isAdmin = roleGlobal === "admin";
@@ -47,6 +46,13 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
 
   const toggleTeamDropdown = () => { if (hasMultipleTeams) setIsTeamDropdownOpen(!isTeamDropdownOpen); };
   const handleSelectTeamOption = (team) => { onTeamChange(team); setIsTeamDropdownOpen(false); closeSidebar(); };
+
+  const navigate = useNavigate();
+  const handleLogoutClick = () => {
+    // Primero cerramos sesión en la app, luego navegamos a la pantalla de login
+    try { onLogout(); } catch (e) { console.error(e); }
+    navigate('/');
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => { if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsTeamDropdownOpen(false); };
@@ -198,7 +204,7 @@ const Sidebar = ({ user, currentTeam, userTeams, isBgLight, onTeamChange, onLogo
 
         {/* Logout */}
         <div className="p-2 border-top logout-section" style={{ borderColor: borderColor }}>
-          <button type="button" className="btn w-100 text-start px-2 d-flex align-items-center gap-3 btn-logout-sidebar nav-link" onClick={onLogout}>
+          <button type="button" className="btn w-100 text-start px-2 d-flex align-items-center gap-3 btn-logout-sidebar nav-link" onClick={handleLogoutClick}>
             <svg className="sidebar-nav-icon"><use href="#icon-logout"></use></svg><span className="fw-semibold">Cerrar sesión</span>
           </button>
         </div>
