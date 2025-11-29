@@ -3,23 +3,25 @@ name: Deploy BACKEND to IONOS via SFTP
 on:
   push:
     branches:
-      - main   # Cambiar si usas otra rama
+      - main   # Cambia si usas otra rama
 
 jobs:
   sftp-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Upload backend via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.SFTP_SERVER }}
-          port: 22
+          port: 
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           local_path: "./backend/*"
           remote_path: "/public/furbito/backend"
           delete_remote_files: false
+          dry_run: false
+          verbose: true
