@@ -15,7 +15,7 @@ class Equipo {
     public static function getById($id) {
         $conexion = FutbolDB::connectDB();
         $stmt = $conexion->prepare("SELECT * FROM equipos WHERE id = :id");
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -27,7 +27,7 @@ class Equipo {
         $campos = [];
         $parametros = [':id' => $id];
 
-        // Solo añadimos a la consulta SQL los campos que vienen en el array $datos
+        // Construimos la consulta SQL dinámicamente
         if (isset($datos['nombre']) && !empty($datos['nombre'])) {
             $campos[] = "nombre = :nombre";
             $parametros[':nombre'] = $datos['nombre'];
@@ -43,12 +43,18 @@ class Equipo {
             $parametros[':color'] = $datos['color_principal'];
         }
 
-        // Si no hay nada que actualizar, salimos
-        if (empty($campos)) {
-            return true; // No es un error, simplemente no hubo cambios
+        // AÑADIDO: Actualización de la imagen de fondo
+        if (isset($datos['fondo_imagen']) && !empty($datos['fondo_imagen'])) {
+            $campos[] = "fondo_imagen = :fondo";
+            $parametros[':fondo'] = $datos['fondo_imagen'];
         }
 
-        // Construimos la SQL final: "UPDATE equipos SET nombre=:nombre, ... WHERE id=:id"
+        // Si no hay campos para actualizar, salimos
+        if (empty($campos)) {
+            return true;
+        }
+
+        // SQL final: "UPDATE equipos SET campo1=:c1, campo2=:c2 WHERE id=:id"
         $sql = "UPDATE equipos SET " . implode(', ', $campos) . " WHERE id = :id";
         
         $stmt = $conexion->prepare($sql);

@@ -1,0 +1,6 @@
+:root {
+  --custom-text-color: #ffffff; /* valor inicial */
+}
+.color-text {
+  color: var(--custom-text-color);
+}

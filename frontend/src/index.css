@@ -1,33 +1,32 @@
-/* src/index.css */
-
-/* =========================================
-   VARIABLES GLOBALES
-   ========================================= */
 :root {
-  /* Valores INICIALES (se sobrescribirán por JS al cargar un equipo) */
-  /* --primary-color: #212529;      Color principal (fondo) */
-  --primary-rgb: 33, 37, 41;     /* Versión RGB para transparencias */
-  
-  /* Otros colores fijos */
+  /* Colores dinámicos que se sobrescriben desde App.jsx */
+  --primary-color: #212529;
+  --primary-rgb: 33, 37, 41;
+  --contrast-text-color: #ffffff;
+  --bg-light: #343a40;
+
+  /* Colores fijos */
   --accent-color: #ffffff;
   --danger-color: #dc3545;
-  
+
+  /* Sidebar */
+  --sidebar-bg: var(--primary-color);
+  --sidebar-text: var(--contrast-text-color);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.6);
+  --sidebar-item-bg-hover: rgba(255, 255, 255, 0.1);
+  --sidebar-border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* =========================================
-   ESTILOS BASE DINÁMICOS
-   ========================================= */
+   ESTILOS BASE
+========================================= */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* El fondo del cuerpo usa el color primario dinámico */
   background-color: var(--primary-color);
-  /* Texto base blanco por defecto */
   color: #ffffff;
-  
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -36,46 +35,105 @@ code {
 }
 
 /* =========================================
-   ESTILOS DEL CONTENEDOR PRINCIPAL
-   ========================================= */
-.app-main-content {
-    /* Fondo transparente para que se vea el color del body */
-    background-color: transparent;
+   LAYOUT PRINCIPAL
+========================================= */
+.app-container {
+  display: flex;
+  min-height: 100vh;
 }
 
+.app-main-content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh; /* ocupa toda la altura visible */
+  background-color: transparent;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
 
 /* =========================================
-   CLASES DE UTILIDAD GLOBALES PARA BOTONES
-   ========================================= */
-
-/* Botón Primario Dinámico */
+   BOTONES
+========================================= */
 .btn-primary-custom {
-    background-color: var(--primary-color);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff; /* Texto blanco fijo */
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+  background-color: var(--primary-color);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .btn-primary-custom:hover {
-    filter: brightness(115%); 
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.5);
+  filter: brightness(115%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Botón Secundario (Outline) Dinámico */
 .btn-outline-custom {
-    background-color: transparent;
-    border: 2px solid currentColor;
-    color: inherit;
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+  background-color: transparent;
+  border: 2px solid currentColor;
+  color: inherit;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .btn-outline-custom:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================
+   SCROLLBAR PERSONALIZADA
+========================================= */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* =========================================
+   OVERLAY PARA CONTRASTE
+========================================= */
+.bg-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  z-index: 1;
+}
+
+/* =========================================
+   NAVEGACIÓN Y TEXTO
+========================================= */
+.text-sidebar-muted {
+  color: var(--sidebar-text-muted);
+}
+
+.nav-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  background-color: var(--sidebar-item-bg-hover);
+  border-radius: 6px;
 }
