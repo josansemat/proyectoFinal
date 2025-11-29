@@ -78,7 +78,10 @@ const Sidebar = ({
   // —— CERRAR DROPDOWN AL CLICK FUERA —— //
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
         setIsTeamDropdownOpen(false);
       }
     };
@@ -324,22 +327,7 @@ const Sidebar = ({
 
           {/* —— Sección Mi Perfil —— */}
           <div className="mt-auto pt-3 px-1">
-            <div className="p-3 border-top">
-              <label htmlFor="colorPicker" className="small">
-                Color del texto:
-              </label>
-              <input
-                type="color"
-                id="colorPicker"
-                defaultValue="#ffffff"
-                onChange={(e) => {
-                  document.documentElement.style.setProperty(
-                    "--custom-text-color",
-                    e.target.value
-                  );
-                }}
-              />
-            </div>
+            
             <ul
               className="nav flex-column border-top pt-2"
               style={{ borderColor: "var(--sidebar-border-color)" }}
