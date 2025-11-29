@@ -24,3 +24,4 @@ jobs:
           target: "/public/furbito"
           timeout: 120s
           strip_components: 1 # Esto elimina 'backend/' al subir los archivos
+          debug:true
