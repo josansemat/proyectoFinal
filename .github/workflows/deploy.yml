@@ -3,18 +3,17 @@ name: Deploy Backend to IONOS SFTP
 on:
   push:
     branches:
-      - main  # Cambia esto si tu rama principal tiene otro nombre
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Upload backend files via SFTP to IONOS
-        uses: appleboy/scp-action@v0.1.7
+      - name: Subir archivos backend por SFTP a IONOS
+        uses: appleboy/sftp-action@master
         with:
           host: ${{ secrets.SFTP_HOST }}
           username: ${{ secrets.SFTP_USERNAME }}
@@ -23,5 +22,5 @@ jobs:
           source: "backend/*"
           target: "/public/furbito"
           timeout: 120s
-          strip_components: 1 # Esto elimina 'backend/' al subir los archivos
+          strip_components: 1
           debug: true
