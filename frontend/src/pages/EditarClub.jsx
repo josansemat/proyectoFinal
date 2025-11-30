@@ -115,7 +115,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0" style={{backgroundColor: 'var(--bg-light)', color: '#000'}}>
+      <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
         
         <div className="mb-3">
             <label className="form-label fw-bold">Nombre del Equipo</label>
