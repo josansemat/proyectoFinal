@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+// IMPORTANTE: Asegúrate de importar el nuevo archivo CSS
+import './EditarClub.css';
 
 const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
   const [formData, setFormData] = useState({
@@ -105,90 +107,107 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
     }
   };
 
-  if (!currentTeam) return <div className="p-4">Selecciona un equipo primero.</div>;
-  if (loading) return <div className="p-4">Cargando datos...</div>;
+  if (!currentTeam) return <div className="p-4 text-white">Selecciona un equipo primero.</div>;
+  if (loading) return <div className="p-4 text-white">Cargando datos...</div>;
 
   const isButtonLight = ['#ffffff', '#f0f0f0', '#ffff00', '#f8f9fa'].includes(formData.color_principal.toLowerCase());
 
   return (
-    <div className="p-4 container" style={{ maxWidth: '600px' }}>
-      <h2 className="mb-4">Personalizar Club</h2>
+    /* Eliminado maxWidth para que ocupe más espacio en escritorio */
+    <div className="container py-5 editar-club-wrapper">
+      
+      {/* Banner del título */}
+      <div className="club-title-banner shadow-sm">
+        <h2 className="text-center m-0">Personalizar Club</h2>
+      </div>
       
       {message.text && (
-        <div className={`alert alert-${message.type === 'error' ? 'danger' : message.type} mb-3`}>
+        <div className={`alert alert-${message.type === 'error' ? 'danger' : message.type} my-3`}>
             {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
-        
-        <div className="mb-3">
-            <label className="form-label fw-bold">Nombre del Equipo</label>
-            <input type="text" className="form-control" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre del club"/>
-        </div>
-
-        <div className="mb-3">
-            <label className="form-label fw-bold">Color Principal</label>
-            <div className="d-flex align-items-center gap-3">
-                <input type="color" className="form-control form-control-color" name="color_principal" value={formData.color_principal} onChange={handleChange} />
-                <span className="text-muted">{formData.color_principal}</span>
-            </div>
-        </div>
-
-        {/* SELECTOR DE IMAGEN */}
-        <div className="mb-4 p-3 bg-light rounded border">
-            <label className="form-label fw-bold mb-2">Imagen de Fondo</label>
+      {/* Formulario card */}
+      <form onSubmit={handleSubmit} className="card club-form-card p-4 shadow-lg border-0">
+        <div className="row g-4"> {/* 'g-4' añade espacio entre columnas */}
             
-            <select 
-                className="form-select mb-3" 
-                name="fondo_imagen" 
-                value={formData.fondo_imagen} 
-                onChange={handleChange}
-            >
-                <option value="">-- Sin fondo / Por defecto --</option>
-                {listaFondos.map((fondo, index) => (
-                    <option key={index} value={fondo}>
-                        {fondo}
-                    </option>
-                ))}
-            </select>
+            {/* COLUMNA IZQUIERDA: Inputs de texto */}
+            <div className="col-lg-6 d-flex flex-column gap-3">
+                <div>
+                    <label className="form-label fw-bold fs-5">Nombre del Equipo</label>
+                    <input type="text" className="form-control form-control-lg" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre del club"/>
+                </div>
 
-            <div className="mt-3 text-center">
-                <p className="fw-bold small mb-1">Vista Previa:</p>
-                <div className="d-inline-block border rounded shadow-sm bg-white overflow-hidden" style={{ width: '100%', maxWidth: '400px', height: '150px' }}>
-                    {formData.fondo_imagen ? (
-                        <img 
-                            src={`/fondos/${formData.fondo_imagen}`}
-                            alt="Vista previa" 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => {
-                                e.target.onerror = null; 
-                                e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='150' viewBox='0 0 400 150'%3E%3Crect width='400' height='150' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23aaa'%3EError imagen%3C/text%3E%3C/svg%3E";
-                            }}
-                        />
-                    ) : (
-                        <div className="d-flex align-items-center justify-content-center h-100 text-muted bg-white">
-                            <span>Sin imagen seleccionada</span>
-                        </div>
-                    )}
+                <div>
+                    <label className="form-label fw-bold fs-5">Color Principal</label>
+                    <div className="d-flex align-items-center gap-3 p-2 border rounded bg-light">
+                        <input type="color" className="form-control form-control-color" name="color_principal" value={formData.color_principal} onChange={handleChange} title="Elige el color" />
+                        <span className="text-muted fw-bold">{formData.color_principal}</span>
+                    </div>
+                </div>
+
+                <div className="flex-grow-1 d-flex flex-column">
+                    <label className="form-label fw-bold fs-5">Descripción</label>
+                    {/* Hacemos que el textarea ocupe el alto disponible */}
+                    <textarea className="form-control flex-grow-1" name="descripcion" rows="5" value={formData.descripcion} onChange={handleChange} style={{resize: 'none'}}></textarea>
                 </div>
             </div>
+
+            {/* COLUMNA DERECHA: Selector de imagen y Preview */}
+            <div className="col-lg-6">
+                <div className="p-4 bg-light rounded border h-100 d-flex flex-column">
+                    <label className="form-label fw-bold mb-3 fs-5">Imagen de Fondo</label>
+                    
+                    <select 
+                        className="form-select form-select-lg mb-4" 
+                        name="fondo_imagen" 
+                        value={formData.fondo_imagen} 
+                        onChange={handleChange}
+                    >
+                        <option value="">-- Sin fondo / Por defecto --</option>
+                        {listaFondos.map((fondo, index) => (
+                            <option key={index} value={fondo}>
+                                {fondo}
+                            </option>
+                        ))}
+                    </select>
+
+                    <div className="mt-auto text-center">
+                        <p className="fw-bold mb-2 fs-5">Vista Previa:</p>
+                        {/* Contenedor de preview mucho más grande */}
+                        <div className="preview-container shadow-sm mx-auto">
+                            {formData.fondo_imagen ? (
+                                <img 
+                                    src={`/fondos/${formData.fondo_imagen}`}
+                                    alt="Vista previa" 
+                                    className="preview-image"
+                                    onError={(e) => {
+                                        e.target.onerror = null; 
+                                        e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='150' viewBox='0 0 400 150'%3E%3Crect width='400' height='150' fill='%23eee'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23aaa'%3EError imagen%3C/text%3E%3C/svg%3E";
+                                    }}
+                                />
+                            ) : (
+                                <div className="d-flex align-items-center justify-content-center h-100 text-muted bg-white">
+                                    <span>Sin imagen seleccionada</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Botón de guardar (ocupa todo el ancho abajo) */}
+            <div className="col-12 mt-4">
+                <button type="submit" className="btn btn-primary w-100 fw-bold py-3 fs-5 btn-guardar shadow-sm" 
+                    style={{ 
+                        backgroundColor: formData.color_principal, 
+                        borderColor: formData.color_principal,
+                        color: isButtonLight ? '#000' : '#fff' 
+                    }}>
+                    Guardar Cambios
+                </button>
+            </div>
         </div>
-
-        <div className="mb-3">
-            <label className="form-label fw-bold">Descripción</label>
-            <textarea className="form-control" name="descripcion" rows="2" value={formData.descripcion} onChange={handleChange}></textarea>
-        </div>
-
-        <button type="submit" className="btn btn-primary w-100 fw-bold py-2" 
-            style={{ 
-                backgroundColor: formData.color_principal, 
-                borderColor: formData.color_principal,
-                color: isButtonLight ? '#000' : '#fff' 
-            }}>
-            Guardar Cambios
-        </button>
-
       </form>
     </div>
   );

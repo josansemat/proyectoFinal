@@ -1,0 +1,88 @@
+/* EditarClub.css */
+
+/* Wrapper principal para darle un ancho máximo en pantallas muy grandes */
+.editar-club-wrapper {
+    max-width: 1100px;
+    /* Asegura que el formulario quede por encima de la ilustración de fondo */
+    position: relative;
+    /* z-index: 10; */
+}
+
+/* Estilo para el banner oscuro del título */
+.club-title-banner {
+    /* Usamos un color oscuro fijo como en la imagen de referencia */
+    background-color: #212529; 
+    color: #ffffff;
+    padding: 1.5rem;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    /* Quitamos margen inferior para que se pegue al formulario */
+    margin-bottom: 0;
+}
+
+.club-title-banner h2 {
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* Estilos para la tarjeta del formulario */
+.club-form-card {
+    /* Redondeamos solo abajo para que coincida con el banner */
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    /* Forzamos fondo blanco y texto oscuro para legibilidad */
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Etiquetas de formulario más grandes y marcadas */
+.club-form-card .form-label {
+    color: #212529;
+}
+
+/* Contenedor de la vista previa */
+.preview-container {
+    width: 100%;
+    max-width: 500px; /* Ancho máximo para que no se deforme demasiado */
+    height: 280px; /* Altura fija considerablemente mayor */
+    border: 3px solid #fff; /* Efecto marco blanco */
+    border-radius: 8px;
+    background-color: #fff;
+    overflow: hidden;
+    /* Sombra suave para el efecto "polaroid" pegada */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* La imagen dentro de la vista previa */
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Asegura que la imagen llene el cuadro sin estirarse feo */
+}
+
+/* Transición suave para el botón */
+.btn-guardar {
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-guardar:hover {
+    filter: brightness(110%) contrast(110%);
+    transform: translateY(-2px);
+}
+
+/* RESPONSIVE: Ajustes para móviles */
+@media (max-width: 991.98px) {
+    /* En tablets y móviles, la altura de la preview puede ser menor */
+    .preview-container {
+        height: 200px;
+    }
+    
+    /* El textarea no necesita ser tan alto en móvil */
+    textarea[name="descripcion"] {
+        height: 120px !important;
+    }
+}

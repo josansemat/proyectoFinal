@@ -13,7 +13,7 @@ class EquiposController {
 
         // 2. Intenta la estructura local clásica (frontend/public/fondos)
         // __DIR__ está en /backend/api. Subimos 3 niveles.
-        $pathLocal = __DIR__ . '/../../../frontend/public/fondos/';
+        $pathLocal = __DIR__ . '/../../frontend/public/fondos/';
 
         if (is_dir($pathServidor)) {
             return realpath($pathServidor) . '/';
