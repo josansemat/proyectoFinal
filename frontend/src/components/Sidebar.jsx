@@ -99,7 +99,7 @@ const Sidebar = ({
       {/* Botón móvil */}
       <button
         type="button"
-        className="btn btn-danger position-fixed top-0 start-0 m-3 d-md-none z-3"
+        className="btn btn-movil position-fixed top-0 start-0 m-3 d-md-none z-3"
         onClick={toggleSidebar}
       >
         {isOpen ? "✕" : "☰"}
@@ -180,7 +180,7 @@ const Sidebar = ({
           {/* —— Dropdown Equipos —— */}
           {isTeamDropdownOpen && hasMultipleTeams && (
             <div className="team-dropdown-menu shadow">
-              <div className="small px-3 py-2 text-uppercase fw-bold text-sidebar-muted">
+              <div className="small px-3 py-2 text-uppercase fw-bold text-sidebar-muted title-drop">
                 Mis Equipos
               </div>
 

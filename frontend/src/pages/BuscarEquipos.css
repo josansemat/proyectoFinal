@@ -1,97 +1,279 @@
 /* src/pages/BuscarEquipos.css */
 
 :root {
-  --primary-color: #0d1b2a; /* Azul oscuro serio */
-  --primary-rgb: 13, 27, 42;
-  --contrast-text-color: #ffffff;
-  --contrast-text-color-rgb: 255, 255, 255;
+  /* Paleta de colores profesional y oscura */
+  --bg-main: #0b0f19;       /* Fondo principal muy oscuro */
+  --bg-secondary: #151a28;  /* Fondo de tarjetas */
+  --text-primary: #ffffff;
+  --text-muted: #a0aec0;
+  --accent-gold: #fbbf24;   /* Color dorado para acentos premium */
+}
+
+/* Hacemos que el fondo de la página sea oscuro para inmersión total */
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
 }
 
 .buscar-equipos-container {
-  max-width: 1100px;
-  margin: 0 auto;
+  max-width: 100%;
+  padding: 0;
 }
 
-/* Encabezado */
-.section-header h2 {
-  font-weight: 700;
-  color: var(--primary-color);
+/* src/pages/BuscarEquipos.css */
+
+/* =========================================
+   ENCABEZADO TIPO TARJETA PRO
+========================================= */
+.buscar-equipos-header-card {
+    /* Fondo oscuro con un degradado sutil y profesional */
+    background:  var(--primary-color);
+    border-radius: 16px; /* Bordes redondeados */
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Borde sutil */
+    position: relative;
+    overflow: hidden;
 }
 
-.section-subtitle {
-  font-size: 0.95rem;
-  color: #555;
-  opacity: 0.9;
+/* Efecto de resplandor detrás del icono */
+.header-icon {
+    position: relative;
+    display: inline-block;
 }
 
-.section-header hr {
-  border: none;
-  border-top: 2px solid var(--primary-color);
-  width: 60px;
-  margin: 0.5rem auto 1.5rem auto;
+.header-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    background-color: var(--accent-gold);
+    filter: blur(40px); /* Resplandor dorado suave */
+    opacity: 0.2;
+    z-index: 0;
 }
 
-/* Tarjetas */
+.header-icon i {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Tipografía */
+.ls-1 { letter-spacing: 1px; }
+.text-accent { color: var(--accent-gold); }
+
+.display-5 {
+    font-family: 'Montserrat', sans-serif;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .buscar-equipos-header-card {
+        padding: 2rem !important; /* Menos padding en móvil */
+    }
+    .display-5 {
+        font-size: 2rem; /* Título más pequeño en móvil */
+    }
+}
+/* =========================================
+   TARJETAS DE EQUIPO PRO
+========================================= */
 .team-card {
-  border-radius: 10px;
+  background-color: var(--bg-secondary) !important; /* Fondo oscuro para la tarjeta */
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(var(--primary-rgb), 0.25);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  /* Sombra suave inicial */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* Efecto Hover: La tarjeta se levanta y brilla con el color del equipo */
 .team-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2),
+              0 0 20px var(--team-color) !important; /* Glow dinámico */
 }
 
-.team-card .card-header {
-  padding: 0.75rem;
-  background-color: var(--primary-color);
+/* Barra superior de acento */
+.card-accent-bar {
+    height: 6px;
+    width: 100%;
+    background-color: var(--team-color); /* Usa el color dinámico del equipo */
+    box-shadow: 0 2px 10px var(--team-color);
 }
 
-.team-card .card-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--contrast-text-color);
+.card-title {
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 1px;
 }
 
-.team-card .card-body {
-  padding: 1rem;
-  background-color: #f8f9fa;
+/* =========================================
+   ESCUDO MODERNO
+========================================= */
+.team-shield-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Escudo circular */
+/* El escudo en sí */
 .team-shield {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  background-color: var(--primary-color);
-  color: var(--contrast-text-color);
+  width: 90px;
+  height: 90px;
+  /* Forma hexagonal sutil para aspecto más técnico/deportivo */
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, var(--team-color), #2a2a2a);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
-  margin: 0 auto 1rem auto;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  z-index: 2;
 }
 
-/* Botón */
-.btn {
-  border-radius: 6px;
-  font-weight: 500;
-  transition: transform 0.1s ease;
+/* Resplandor detrás del escudo */
+.team-shield-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; height: 100%;
+    background-color: var(--team-color);
+    filter: blur(25px);
+    opacity: 0.3;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+.team-card:hover .team-shield-glow {
+    opacity: 0.6; /* Más brillo al pasar el mouse */
 }
 
-.btn:hover:not(:disabled) {
-  transform: scale(1.05);
+/* =========================================
+   BOTONES PRO
+========================================= */
+.btn-pro {
+    background-color: transparent !important; /* Fondo transparente inicialmente */
+    border: 2px solid var(--btn-team-color) !important; /* Borde del color del equipo */
+    color: var(--text-primary) !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
 }
 
-.btn-primary {
-  background-color: var(--primary-color);
-  border: none;
+/* Efecto de llenado al pasar el mouse */
+.btn-pro::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background-color: var(--btn-team-color);
+    z-index: -1;
+    transform: scaleX(0); /* Oculto inicialmente */
+    transform-origin: left;
+    transition: transform 0.3s ease-in-out;
 }
 
-.btn-primary:hover {
-  background-color: #1b263b; /* tono más claro del azul */
+.btn-pro:hover:not(:disabled)::before {
+    transform: scaleX(1); /* Se llena de izquierda a derecha */
+}
+
+.btn-pro:hover:not(:disabled) {
+    /* Aseguramos contraste si el color del equipo es muy claro */
+    color: #000 !important; 
+    box-shadow: 0 4px 15px var(--btn-team-color);
+    border-color: transparent !important;
+    transform: translateY(-2px);
+}
+
+/* Estilos para estados deshabilitados */
+.btn-pro:disabled {
+    border-color: #555 !important;
+    color: #888 !important;
+    background-color: #2a2a2a !important;
+    opacity: 1 !important;
+}
+
+/* Ajuste específico para "Solicitud enviada" (amarillo) */
+.btn-pro[style*="#ffc107"]:disabled {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border-color: #ffc107 !important;
+    color: #ffc107 !important;
+}
+
+/* Alertas en modo oscuro */
+.alert-info, .alert-success, .alert-danger {
+    background-color: var(--bg-secondary);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-primary);
+    border-left: 5px solid;
+}
+.alert-success { border-left-color: #28a745; }
+.alert-danger { border-left-color: #dc3545; }
+.alert-info { border-left-color: #17a2b8; }
+
+
+/* =========================================
+   BARRA DE BÚSQUEDA PROFESIONAL
+========================================= */
+.search-bar-container {
+    /* Fondo oscuro para el contenedor del input */
+    background-color: var(--bg-secondary);
+    padding: 0.5rem;
+    border-radius: 12px; /* Bordes redondeados */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-bar-container .form-control:focus {
+    /* Quitamos el brillo azul por defecto de Bootstrap */
+    box-shadow: none;
+    /* Opcional: añadir un borde sutil al enfocar */
+    /* border-color: var(--accent-gold); */
+}
+
+/* Estilo para el placeholder del input */
+.search-bar-container .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* CONTROLES DE PAGINACIÓN (CORREGIDO) */
+.pagination-container {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.btn-pagination {
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+    border-color: var(--primary-color) !important;
+    font-weight: 700;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-pagination:hover:not(:disabled) {
+    background-color: #fff !important;
+    color: var(--primary-color) !important;
+    border-color: #fff !important;
+    transform: translateY(-2px);
+}
+
+.btn-pagination:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed;
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+    border-color: var(--primary-color) !important;
+}
+.text-pepe{
+   background-color: var(--primary-color);
+   padding:  0.3rem 0.6rem;
+    border-radius: 8px;
+
 }

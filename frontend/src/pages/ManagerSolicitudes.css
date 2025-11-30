@@ -3,86 +3,124 @@
 .manager-solicitudes-container {
   max-width: 1000px;
   margin: 0 auto;
+  padding: 2rem 1rem;
 }
 
-/* Encabezado de sección */
-.section-header h2 {
+/* --- NUEVO: Banner para el título --- */
+.section-header-banner {
+  /* Fondo oscuro usando la variable del color principal del equipo */
+  background-color: var(--primary-color, #212529);
+  /* Texto claro usando la variable de contraste */
+  color: var(--contrast-text-color, #ffffff);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 2rem;
+}
+
+.section-title {
   font-weight: 700;
-  color: var(--primary-color);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
 }
 
 .section-subtitle {
-  font-size: 0.95rem;
-  color: var(--contrast-text-color);
-  opacity: 0.8;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 0;
+  color: var(--contrast-text-color, #ffffff);
 }
 
+.section-subtitle strong {
+  color: var(--contrast-text-color, #ffffff); /* Un color de acento si lo tienes, o blanco */
+}
+
+/* La línea separadora ya no es necesaria con el banner, pero si la quieres, hazla blanca */
 .section-header hr {
-  border: none;
-  border-top: 2px solid var(--primary-color);
-  width: 60px;
-  margin: 0.5rem 0 1.5rem 0;
+  border-color: rgba(255, 255, 255, 0.2);
+  width: 100%; /* Que ocupe todo el ancho del banner si se deja */
+  display: none; /* Ocultarla por ahora, el banner es suficiente */
 }
 
-/* Tabla */
-.table {
-  border: 1px solid rgba(var(--contrast-text-color-rgb), 0.2);
-  border-radius: 8px;
+/* --- Estilos de la Tabla --- */
+.table-responsive {
+  border-radius: 12px;
   overflow: hidden;
+  /* Fondo blanco para la tabla para máxima legibilidad */
+  background-color: #ffffff;
+  /* Sombra más pronunciada para dar profundidad sobre el fondo de acuarela */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.table {
+  margin-bottom: 0; /* Quitar margen inferior de la tabla */
+  border: none; /* Quitar bordes externos de la tabla */
 }
 
 .table thead {
-  background-color: var(--primary-color);
-  color: var(--contrast-text-color);
+  /* Fondo del encabezado de tabla. Puedes usar el color primario o un gris claro */
+  background-color: #f8f9fa;
+  color: #212529;
+  border-bottom: 2px solid #e9ecef;
 }
 
 .table th {
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.85rem;
+  padding: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: #212529; /* Texto de filas siempre oscuro para leer bien */
 }
 
 .table-hover tbody tr:hover {
-  background-color: rgba(var(--primary-rgb), 0.1);
+  background-color: #f1f3f5; /* Un gris muy claro al pasar el ratón */
   transition: background-color 0.2s ease;
 }
 
-/* Botones */
+/* --- Botones de Acción --- */
 .btn-sm {
-  font-weight: 500;
-  border-radius: 6px;
-  padding: 0.35rem 0.75rem;
-  transition: transform 0.1s ease;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-sm:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Alertas */
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+.btn-success:hover { background-color: #157347; }
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+.btn-danger:hover { background-color: #bb2d3b; }
+
+
+/* Alerta cuando no hay solicitudes */
 .alert {
-  border-radius: 6px;
+  border-radius: 12px;
   font-weight: 500;
-}
-/* Encabezado de sección */
-.section-header h2 {
-  font-weight: 700;
-  color: black; /* <-- usa contraste, no el color primario */
-  margin-bottom: 0.25rem;
-}
-
-.section-subtitle {
-  font-size: 0.95rem;
-  color:black;
-  opacity: 0.8;
-  margin-bottom: 0.5rem;
-}
-
-.section-header hr {
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.9); /* Fondo blanco semitransparente */
   border: none;
-  border-top: 2px solid var(--primary-color); /* aquí sí puedes usar el color del equipo */
-  width: 60px;
-  margin: 0.5rem 0 1.5rem 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  color: #000;
 }

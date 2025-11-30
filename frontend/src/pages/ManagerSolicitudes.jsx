@@ -70,17 +70,16 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
 
   return (
     <div className="manager-solicitudes-container p-4">
-      {/* Título de sección */}
-      <div className="section-header mb-4">
-        <h2 className="section-title">
-          <i className="bi bi-journal-text me-2"></i>
+      {/* Título de sección con el NUEVO estilo de banner */}
+      <div className="section-header-banner mb-4 shadow-sm">
+        <h2 className="section-title m-0">
+          <i className="bi bi-journal-text me-3"></i>
           Gestión de Solicitudes
         </h2>
-        <p className="section-subtitle">
+        <p className="section-subtitle mt-2 mb-0">
           Revisa y responde las solicitudes pendientes para{" "}
           <strong>{currentTeam.nombre}</strong>
         </p>
-        <hr />
       </div>
 
       {solicitudes.length === 0 ? (

@@ -26,6 +26,12 @@
   transition: transform 0.3s ease;
 }
 
+.btn-movil{
+  background-color: var(--primary-color);
+  border: solid 1px var(--contrast-text-color);
+  color: var(--contrast-text-color);
+}
+
 .sidebar.open {
   transform: translateX(0);
 }

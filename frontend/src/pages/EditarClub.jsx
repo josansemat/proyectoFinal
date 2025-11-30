@@ -199,11 +199,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
             {/* Botón de guardar (ocupa todo el ancho abajo) */}
             <div className="col-12 mt-4">
                 <button type="submit" className="btn btn-primary w-100 fw-bold py-3 fs-5 btn-guardar shadow-sm" 
-                    style={{ 
-                        backgroundColor: formData.color_principal, 
-                        borderColor: formData.color_principal,
-                        color: isButtonLight ? '#000' : '#fff' 
-                    }}>
+                    >
                     Guardar Cambios
                 </button>
             </div>

@@ -11,15 +11,21 @@
 /* Estilo para el banner oscuro del título */
 .club-title-banner {
     /* Usamos un color oscuro fijo como en la imagen de referencia */
-    background-color: #212529; 
-    color: #ffffff;
+    background-color:  var(--primary-color, #212529); 
+    color:var(--contrast-text-color, #ffffff);
     padding: 1.5rem;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     /* Quitamos margen inferior para que se pegue al formulario */
     margin-bottom: 0;
 }
-
+.btn-guardar{
+    color: var(--contrast-text-color, #ffffff);
+    background-color:  var(--primary-color);
+}
+.title-drop{
+    color: #ffffff;
+}
 .club-title-banner h2 {
     font-weight: 800;
     letter-spacing: 0.5px;
