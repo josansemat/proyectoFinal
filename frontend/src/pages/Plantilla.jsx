@@ -46,6 +46,7 @@ function Plantilla({ user, currentTeam }) {
   const [setPieces, setSetPieces] = useState({ penales: null, faltas: null, corner_izq: null, corner_der: null });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [saveMsg, setSaveMsg] = useState({ type: null, text: "" });
 
   // Cargar jugadores del equipo actual y estado guardado
   useEffect(() => {
@@ -88,20 +89,53 @@ function Plantilla({ user, currentTeam }) {
     return () => (ignore = true);
   }, [currentTeam?.id]);
 
-  // Cargar formación guardada por equipo
+  // Cargar formación y balón parado desde backend (fallback a localStorage si no hay)
   useEffect(() => {
-    const key = `furbo_formacion_${teamId}`;
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      try {
-        const saved = JSON.parse(raw);
-        if (saved.mode) setMode(saved.mode);
-        if (saved.formation) setFormation(saved.formation);
-        if (saved.assignments) setAssignments(saved.assignments);
-        if (saved.setPieces) setSetPieces(saved.setPieces);
-      } catch (_) {}
-    }
-  }, [teamId]);
+    const load = async () => {
+      // Fallback local
+      const key = `furbo_formacion_${teamId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          const saved = JSON.parse(raw);
+          if (saved.mode) setMode(saved.mode);
+          if (saved.formation) setFormation(saved.formation);
+          if (saved.assignments) setAssignments(saved.assignments);
+          if (saved.setPieces) setSetPieces(saved.setPieces);
+        } catch (_) {}
+      }
+
+      // Backend: formación
+      if (currentTeam?.id) {
+        try {
+          const r1 = await fetch(`/api/index.php?action=get_plantilla_equipo&id_equipo=${currentTeam.id}`);
+          const d1 = await r1.json();
+          if (d1.success && d1.plantilla) {
+            if (d1.plantilla.mode) setMode(d1.plantilla.mode);
+            if (d1.plantilla.formation) setFormation(d1.plantilla.formation);
+            if (d1.plantilla.assignments) setAssignments(d1.plantilla.assignments);
+          }
+        } catch (_) {}
+
+        // Backend: balón parado desde datos del equipo
+        try {
+          const r2 = await fetch(`/api/index.php?action=get_equipo&id=${currentTeam.id}`);
+          const d2 = await r2.json();
+          if (d2.success && d2.equipo) {
+            setSetPieces(prev => ({
+              ...prev,
+              penales: d2.equipo.id_lanzador_penalti || null,
+              faltas: d2.equipo.id_lanzador_falta_lejana || null,
+              corner_izq: d2.equipo.id_lanzador_corner_izq || null,
+              corner_der: d2.equipo.id_lanzador_corner_der || null,
+            }));
+          }
+        } catch (_) {}
+      }
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamId, currentTeam?.id]);
 
   const lines = useMemo(() => {
     const item = FORMATIONS[mode].find((f) => f.value === formation) || FORMATIONS[mode][0];
@@ -193,27 +227,66 @@ function Plantilla({ user, currentTeam }) {
   };
 
   const handleSave = async () => {
+    setSaveMsg({ type: null, text: "" });
     const key = `furbo_formacion_${teamId}`;
     const payload = { mode, formation, assignments, setPieces };
     localStorage.setItem(key, JSON.stringify(payload));
 
     // Si hay equipo y usuario, intentamos guardar los lanzadores en backend
     if (currentTeam?.id && user?.id) {
-      const form = new FormData();
-      form.append('id_equipo', String(currentTeam.id));
-      form.append('id_usuario', String(user.id));
-      form.append('rol_global', user.rol || 'usuario');
-      // Campos de lanzadores (permitimos string vacio para null)
-      form.append('id_lanzador_penalti', setPieces.penales ? String(setPieces.penales) : '');
-      form.append('id_lanzador_falta_lejana', setPieces.faltas ? String(setPieces.faltas) : '');
-      form.append('id_lanzador_corner_izq', setPieces.corner_izq ? String(setPieces.corner_izq) : '');
-      form.append('id_lanzador_corner_der', setPieces.corner_der ? String(setPieces.corner_der) : '');
+      let successCount = 0;
+      let errorMsg = "";
 
+      // Guardar balón parado
       try {
-        await fetch('/api/index.php?action=update_equipo', { method: 'POST', body: form });
-      } catch (_) {
-        // Silenciar fallo de red; ya quedó persistido en localStorage
+        const form = new FormData();
+        form.append('id_equipo', String(currentTeam.id));
+        form.append('id_usuario', String(user.id));
+        form.append('rol_global', user.rol || 'usuario');
+        form.append('id_lanzador_penalti', setPieces.penales ? String(setPieces.penales) : '');
+        form.append('id_lanzador_falta_lejana', setPieces.faltas ? String(setPieces.faltas) : '');
+        form.append('id_lanzador_corner_izq', setPieces.corner_izq ? String(setPieces.corner_izq) : '');
+        form.append('id_lanzador_corner_der', setPieces.corner_der ? String(setPieces.corner_der) : '');
+
+        const resp1 = await fetch('/api/index.php?action=update_equipo', { method: 'POST', body: form });
+        const data1 = await resp1.json();
+        if (data1.success) {
+          successCount++;
+        } else {
+          errorMsg += "Error en balón parado: " + (data1.error || "Desconocido") + ". ";
+        }
+      } catch (e) {
+        errorMsg += "Error de conexión en balón parado. ";
       }
+
+      // Guardar formación/posiciones
+      try {
+        const form2 = new FormData();
+        form2.append('id_equipo', String(currentTeam.id));
+        form2.append('id_usuario', String(user.id));
+        form2.append('rol_global', user.rol || 'usuario');
+        form2.append('mode', mode);
+        form2.append('formation', formation);
+        form2.append('assignments', JSON.stringify(assignments || {}));
+
+        const resp2 = await fetch('/api/index.php?action=save_plantilla_equipo', { method: 'POST', body: form2 });
+        const data2 = await resp2.json();
+        if (data2.success) {
+          successCount++;
+        } else {
+          errorMsg += "Error en formación: " + (data2.error || "Desconocido") + ". ";
+        }
+      } catch (e) {
+        errorMsg += "Error de conexión en formación. ";
+      }
+
+      if (successCount > 0) {
+        setSaveMsg({ type: 'success', text: 'Guardado correctamente.' });
+      } else {
+        setSaveMsg({ type: 'error', text: errorMsg || 'No se pudo guardar.' });
+      }
+    } else {
+      setSaveMsg({ type: 'success', text: 'Guardado localmente.' });
     }
   };
 
@@ -261,6 +334,11 @@ function Plantilla({ user, currentTeam }) {
                 <button className="btn btn-primary" onClick={handleSave}>Guardar</button>
               </div>
             </div>
+            {saveMsg.text && (
+              <div className={`alert alert-${saveMsg.type === 'success' ? 'success' : 'danger'} mt-2`}>
+                {saveMsg.text}
+              </div>
+            )}
           </div>
         </div>
 

@@ -137,5 +137,45 @@ class EquiposController {
             echo json_encode(["success" => false, "error" => $e->getMessage()]);
         }
     }
+
+    // GET: obtener formación del equipo (modo, formación y asignaciones)
+    public function getPlantillaEquipo() {
+        $idEquipo = $_GET['id_equipo'] ?? null;
+        if (!$idEquipo) { echo json_encode(["success" => false, "error" => "Falta id_equipo"]); return; }
+        try {
+            $plantilla = Equipo::getPlantilla((int)$idEquipo);
+            echo json_encode(["success" => true, "plantilla" => $plantilla]);
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "error" => $e->getMessage()]);
+        }
+    }
+
+    // POST: guardar formación del equipo (requiere manager o admin)
+    public function savePlantillaEquipo() {
+        if (empty($_POST['id_equipo']) || empty($_POST['id_usuario']) || empty($_POST['mode']) || empty($_POST['formation'])) {
+            echo json_encode(["success" => false, "error" => "Faltan datos obligatorios"]);
+            return;
+        }
+        $idEquipo = (int)$_POST['id_equipo'];
+        $idUsuario = (int)$_POST['id_usuario'];
+        $rolGlobal = $_POST['rol_global'] ?? 'usuario';
+        $mode = $_POST['mode'];
+        $formation = $_POST['formation'];
+        $assignments = $_POST['assignments'] ?? '{}';
+
+        $esManager = Equipo::esManager($idUsuario, $idEquipo);
+        $esAdmin = ($rolGlobal === 'admin');
+        if (!$esManager && !$esAdmin) {
+            echo json_encode(["success" => false, "error" => "No tienes permisos para guardar la formación"]);
+            return;
+        }
+
+        try {
+            $ok = Equipo::savePlantilla($idEquipo, $mode, $formation, $assignments);
+            echo json_encode(["success" => (bool)$ok]);
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "error" => $e->getMessage()]);
+        }
+    }
 }
 ?>

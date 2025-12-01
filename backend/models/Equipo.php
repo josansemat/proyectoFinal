@@ -86,5 +86,51 @@ class Equipo {
         $stmt->execute([':user' => $idUsuario, ':team' => $idEquipo]);
         return $stmt->fetchColumn();
     }
+
+    // --- Persistencia de formación (campo y posiciones) ---
+    private static function ensureTablaPlantilla($conexion) {
+        $conexion->exec("CREATE TABLE IF NOT EXISTS equipos_plantilla (
+            id INT NOT NULL AUTO_INCREMENT,
+            id_equipo INT NOT NULL,
+            mode VARCHAR(3) NOT NULL,
+            formation VARCHAR(20) NOT NULL,
+            assignments MEDIUMTEXT NULL,
+            updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_equipo (id_equipo),
+            CONSTRAINT fk_plantilla_equipo FOREIGN KEY (id_equipo) REFERENCES equipos(id) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+
+    public static function getPlantilla($idEquipo) {
+        $conexion = FutbolDB::connectDB();
+        self::ensureTablaPlantilla($conexion);
+        $stmt = $conexion->prepare("SELECT mode, formation, assignments, updated_at FROM equipos_plantilla WHERE id_equipo = :id LIMIT 1");
+        $stmt->execute([':id' => $idEquipo]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return null;
+        return [
+            'mode' => $row['mode'],
+            'formation' => $row['formation'],
+            'assignments' => $row['assignments'] ? json_decode($row['assignments'], true) : new \stdClass(),
+            'updated_at' => $row['updated_at']
+        ];
+    }
+
+    public static function savePlantilla($idEquipo, $mode, $formation, $assignments) {
+        $conexion = FutbolDB::connectDB();
+        self::ensureTablaPlantilla($conexion);
+        $json = is_string($assignments) ? $assignments : json_encode($assignments);
+        $sql = "INSERT INTO equipos_plantilla (id_equipo, mode, formation, assignments)
+                VALUES (:id, :mode, :formation, :assignments)
+                ON DUPLICATE KEY UPDATE mode = VALUES(mode), formation = VALUES(formation), assignments = VALUES(assignments)";
+        $stmt = $conexion->prepare($sql);
+        return $stmt->execute([
+            ':id' => $idEquipo,
+            ':mode' => $mode,
+            ':formation' => $formation,
+            ':assignments' => $json,
+        ]);
+    }
 }
 ?>

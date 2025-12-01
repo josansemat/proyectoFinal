@@ -85,6 +85,14 @@ switch ($action) {
         $equiposController->update();
         break;
 
+    case "get_plantilla_equipo":
+        $equiposController->getPlantillaEquipo();
+        break;
+
+    case "save_plantilla_equipo":
+        $equiposController->savePlantillaEquipo();
+        break;
+
     default:
         echo json_encode(["error" => "Invalid action"]);
         break;
