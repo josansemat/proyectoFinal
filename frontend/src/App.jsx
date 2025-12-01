@@ -188,7 +188,7 @@ function App() {
             <Route path="/mi-club/configurar" element={<EditarClub user={user} currentTeam={currentTeam} onTeamUpdate={handleTeamChange} />} />
             <Route path="/crear-jugador" element={<CreateJugador />} />
             <Route path="/plantilla" element={<Plantilla user={user} currentTeam={currentTeam} />} />
-            <Route path="/mi-perfil" element={<MiPerfil user={user} currentTeam={currentTeam} onTeamChange={handleTeamChange} />} />
+            <Route path="/mi-perfil" element={<MiPerfil user={user} currentTeam={currentTeam} onTeamChange={handleTeamChange} onUserUpdate={(u) => setUser(u)} />} />
             <Route path="*" element={<Navigate to="/inicio" replace />} />
           </Routes>
         </div>

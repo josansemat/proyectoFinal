@@ -202,6 +202,26 @@ class Jugador {
     }
 
     // ----------------------------------------------------------
+    // UPDATE DINÁMICO (parcial)
+    // ----------------------------------------------------------
+    public static function updateDinamico($id, $datos) {
+        $conexion = FutbolDB::connectDB();
+        $campos = [];
+        $params = [':id' => (int)$id];
+
+        // Permitidos
+        if (array_key_exists('nombre', $datos)) { $campos[] = 'nombre = :nombre'; $params[':nombre'] = $datos['nombre']; }
+        if (array_key_exists('apodo', $datos)) { $campos[] = 'apodo = :apodo'; $params[':apodo'] = $datos['apodo']; }
+        if (array_key_exists('email', $datos)) { $campos[] = 'email = :email'; $params[':email'] = $datos['email']; }
+        if (array_key_exists('telefono', $datos)) { $campos[] = 'telefono = :telefono'; $params[':telefono'] = $datos['telefono']; }
+
+        if (empty($campos)) return false;
+        $sql = 'UPDATE jugadores SET ' . implode(', ', $campos) . ' WHERE id = :id AND eliminado = 0';
+        $stmt = $conexion->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    // ----------------------------------------------------------
     // SALIR DE EQUIPO (ELIMINAR RELACIÓN)
     // ----------------------------------------------------------
     public static function salirDeEquipo($id_jugador, $id_equipo) {

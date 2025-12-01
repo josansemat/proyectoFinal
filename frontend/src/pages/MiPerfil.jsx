@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import "./MiPerfil.css";
 
-export default function MiPerfil({ user, currentTeam, onTeamChange }) {
+export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate }) {
   const initials = useMemo(() => {
     const name = user?.nombre || "?";
     const parts = name.trim().split(" ");
@@ -19,6 +19,23 @@ export default function MiPerfil({ user, currentTeam, onTeamChange }) {
   const [abandonMsg, setAbandonMsg] = useState({ type: null, text: "" });
   const [confirmAbandonId, setConfirmAbandonId] = useState(null);
   const [abandonLoading, setAbandonLoading] = useState(false);
+  const [saveMsg, setSaveMsg] = useState({ type: null, text: "" });
+  const [formData, setFormData] = useState({
+    nombre: user?.nombre || "",
+    apodo: user?.apodo || "",
+    email: user?.email || "",
+    telefono: user?.telefono || "",
+  });
+
+  // Sincroniza cuando cambia el user
+  useEffect(() => {
+    setFormData({
+      nombre: user?.nombre || "",
+      apodo: user?.apodo || "",
+      email: user?.email || "",
+      telefono: user?.telefono || "",
+    });
+  }, [user]);
 
   // Relación con el equipo actual (para rol y dorsal)
   const relacionEquipoActual = useMemo(() => {
@@ -49,6 +66,39 @@ export default function MiPerfil({ user, currentTeam, onTeamChange }) {
   }, [user?.id]);
 
   // Cargar total de partidos jugados (completados)
+  
+  const handleSaveDatos = async (e) => {
+    e.preventDefault();
+    setSaveMsg({ type: null, text: "" });
+    const payload = {
+      id_jugador: user.id,
+      nombre: formData.nombre,
+      apodo: formData.apodo || null,
+      email: formData.email,
+      telefono: formData.telefono || null,
+    };
+    try {
+      const resp = await fetch('/api/index.php?action=actualizar_datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (data.success) {
+        const updatedUser = { ...user, ...payload };
+        delete updatedUser.id_jugador;
+        localStorage.setItem('usuario_furbo', JSON.stringify(updatedUser));
+        if (typeof onUserUpdate === 'function') {
+          onUserUpdate(updatedUser);
+        }
+        setSaveMsg({ type: 'success', text: 'Datos guardados correctamente.' });
+      } else {
+        setSaveMsg({ type: 'error', text: data.error || 'No se pudieron guardar los cambios.' });
+      }
+    } catch (e) {
+      setSaveMsg({ type: 'error', text: 'Error de conexión.' });
+    }
+  };
   useEffect(() => {
     const loadPartidos = async () => {
       if (!user?.id) return;
@@ -101,7 +151,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange }) {
     const nueva = form.querySelector('input[type="password"][name="pwd_nueva"]').value;
     const confirma = form.querySelector('input[type="password"][name="pwd_confirma"]').value;
     if (nueva !== confirma) {
-      alert('La nueva contraseña y la confirmación no coinciden');
+      setPwdMsg({ type: 'error', text: 'La nueva contraseña y la confirmación no coinciden' });
       return;
     }
     try {
@@ -203,21 +253,46 @@ export default function MiPerfil({ user, currentTeam, onTeamChange }) {
 
           {/* Contenido de pestañas */}
           {activeTab === "datos" && (
-            <div className="form">
-              <label>Nombre Completo:</label>
-              <input type="text" defaultValue={user?.nombre || "----"} />
+            <>
+              <form className="form" onSubmit={handleSaveDatos}>
+                <label>Nombre Completo:</label>
+                <input
+                  type="text"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  required
+                />
 
-              <label>Apodo:</label>
-              <input type="text" defaultValue={user?.apodo || "----"} />
+                <label>Apodo:</label>
+                <input
+                  type="text"
+                  value={formData.apodo}
+                  onChange={(e) => setFormData({ ...formData, apodo: e.target.value })}
+                />
 
-              <label>Correo electrónico:</label>
-              <input type="email" defaultValue={user?.email || "----"} />
+                <label>Correo electrónico:</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
 
-              <label>Teléfono:</label>
-              <input type="tel" defaultValue={user?.telefono || "----"} />
+                <label>Teléfono:</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                />
 
-              <button className="save-btn">Guardar Cambios</button>
-            </div>
+                <button className="save-btn" type="submit">Guardar Cambios</button>
+              </form>
+              {saveMsg.text && (
+                <div className={saveMsg.type === 'success' ? 'success' : 'error'} style={{ marginTop: 8 }}>
+                  {saveMsg.text}
+                </div>
+              )}
+            </>
           )}
 
           {activeTab === "seguridad" && (

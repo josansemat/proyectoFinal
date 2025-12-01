@@ -1,279 +1,252 @@
-/* src/pages/BuscarEquipos.css */
-
 :root {
-  /* Paleta de colores profesional y oscura */
-  --bg-main: #0b0f19;       /* Fondo principal muy oscuro */
-  --bg-secondary: #151a28;  /* Fondo de tarjetas */
-  --text-primary: #ffffff;
-  --text-muted: #a0aec0;
-  --accent-gold: #fbbf24;   /* Color dorado para acentos premium */
+  --primary-color: #121416; /* fondo principal */
+  --contrast-text-color: #ffffff; /* texto contrastado */
+  --divider: rgba(255, 255, 255, 0.15);
+  --muted: rgba(255, 255, 255, 0.6);
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  --font: "Inter", "Segoe UI", sans-serif;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --border-radius: 12px;
+  --transition: all 0.3s ease;
 }
 
-/* Hacemos que el fondo de la página sea oscuro para inmersión total */
-body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-}
-
+/* Contenedor */
 .buscar-equipos-container {
-  max-width: 100%;
-  padding: 0;
+  font-family: var(--font);
+  /* background: var(--primary-color); */
+  color: var(--contrast-text-color);
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* src/pages/BuscarEquipos.css */
-
-/* =========================================
-   ENCABEZADO TIPO TARJETA PRO
-========================================= */
+/* Header */
 .buscar-equipos-header-card {
-    /* Fondo oscuro con un degradado sutil y profesional */
-    background:  var(--primary-color);
-    border-radius: 16px; /* Bordes redondeados */
-    border: 1px solid rgba(255, 255, 255, 0.05); /* Borde sutil */
-    position: relative;
-    overflow: hidden;
+  background: var(--primary-color);
+  border: 1px solid var(--divider);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.buscar-equipos-header-card:hover {
+  transform: translateY(-2px);
+}
+.buscar-equipos-header-card h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--contrast-text-color);
+}
+.buscar-equipos-header-card p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--muted);
 }
 
-/* Efecto de resplandor detrás del icono */
-.header-icon {
-    position: relative;
-    display: inline-block;
+/* Feedback */
+.alert {
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.5s ease;
+}
+.alert-success { background: var(--success); color: var(--contrast-text-color); }
+.alert-danger { background: var(--danger); color: var(--contrast-text-color); }
+.alert-info { background: var(--info); color: var(--primary-color); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.header-icon::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80px; height: 80px;
-    background-color: var(--accent-gold);
-    filter: blur(40px); /* Resplandor dorado suave */
-    opacity: 0.2;
-    z-index: 0;
+/* Search bar */
+.search-bar-container {
+  background: var(--primary-color);
+  border: 1px solid var(--divider);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.search-bar-container .form-control {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  color: var(--contrast-text-color);
+  font-size: 16px;
+  padding: 12px;
+  transition: var(--transition);
+}
+.search-bar-container .form-control:focus {
+  outline: none;
+  border-color: var(--contrast-text-color);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+.search-bar-container .form-control::placeholder {
+  color: var(--muted);
+}
+.btn-clear {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  align-self: flex-end;
+  transition: var(--transition);
+}
+.btn-clear:hover {
+  color: var(--contrast-text-color);
+}
+.muted {
+  color: var(--muted);
+  font-size: 14px;
 }
 
-.header-icon i {
-    position: relative;
-    z-index: 1;
-    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+/* Grid de equipos */
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
-
-/* Tipografía */
-.ls-1 { letter-spacing: 1px; }
-.text-accent { color: var(--accent-gold); }
-
-.display-5 {
-    font-family: 'Montserrat', sans-serif;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
-
-/* Ajustes para móviles */
-@media (max-width: 768px) {
-    .buscar-equipos-header-card {
-        padding: 2rem !important; /* Menos padding en móvil */
-    }
-    .display-5 {
-        font-size: 2rem; /* Título más pequeño en móvil */
-    }
-}
-/* =========================================
-   TARJETAS DE EQUIPO PRO
-========================================= */
 .team-card {
-  background-color: var(--bg-secondary) !important; /* Fondo oscuro para la tarjeta */
-  border-radius: 16px;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  /* Sombra suave inicial */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15) !important;
+  background: var(--primary-color);
+  border: 1px solid var(--divider);
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  cursor: pointer;
+  text-align: center;
 }
-
-/* Efecto Hover: La tarjeta se levanta y brilla con el color del equipo */
 .team-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2),
-              0 0 20px var(--team-color) !important; /* Glow dinámico */
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
-
-/* Barra superior de acento */
 .card-accent-bar {
-    height: 6px;
-    width: 100%;
-    background-color: var(--team-color); /* Usa el color dinámico del equipo */
-    box-shadow: 0 2px 10px var(--team-color);
+  width: 100%;
+  height: 6px;
+  margin-bottom: 16px;
+  border-radius: 3px;
 }
-
-.card-title {
-    font-family: 'Montserrat', sans-serif;
-    letter-spacing: 1px;
-}
-
-/* =========================================
-   ESCUDO MODERNO
-========================================= */
-.team-shield-container {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* El escudo en sí */
 .team-shield {
-  width: 90px;
-  height: 90px;
-  /* Forma hexagonal sutil para aspecto más técnico/deportivo */
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background: linear-gradient(135deg, var(--team-color), #2a2a2a);
-  color: var(--text-primary);
+  background: var(--contrast-text-color);
+  color: var(--primary-color);
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  z-index: 2;
+  font-weight: 700;
+  font-size: 24px;
+  margin: 0 auto 16px;
+  transition: var(--transition);
+}
+.team-card:hover .team-shield {
+  transform: scale(1.1);
+}
+.team-card h4 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--contrast-text-color);
+  text-align: center;
 }
 
-/* Resplandor detrás del escudo */
-.team-shield-glow {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%; height: 100%;
-    background-color: var(--team-color);
-    filter: blur(25px);
-    opacity: 0.3;
-    z-index: 1;
-    transition: opacity 0.3s ease;
-}
-.team-card:hover .team-shield-glow {
-    opacity: 0.6; /* Más brillo al pasar el mouse */
-}
-
-/* =========================================
-   BOTONES PRO
-========================================= */
+/* Botón */
 .btn-pro {
-    background-color: transparent !important; /* Fondo transparente inicialmente */
-    border: 2px solid var(--btn-team-color) !important; /* Borde del color del equipo */
-    color: var(--text-primary) !important;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--contrast-text-color);
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: var(--transition);
 }
-
-/* Efecto de llenado al pasar el mouse */
-.btn-pro::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; bottom: 0; right: 0;
-    background-color: var(--btn-team-color);
-    z-index: -1;
-    transform: scaleX(0); /* Oculto inicialmente */
-    transform-origin: left;
-    transition: transform 0.3s ease-in-out;
-}
-
-.btn-pro:hover:not(:disabled)::before {
-    transform: scaleX(1); /* Se llena de izquierda a derecha */
-}
-
 .btn-pro:hover:not(:disabled) {
-    /* Aseguramos contraste si el color del equipo es muy claro */
-    color: #000 !important; 
-    box-shadow: 0 4px 15px var(--btn-team-color);
-    border-color: transparent !important;
-    transform: translateY(-2px);
+  background: var(--muted);
+  color: var(--primary-color);
 }
-
-/* Estilos para estados deshabilitados */
 .btn-pro:disabled {
-    border-color: #555 !important;
-    color: #888 !important;
-    background-color: #2a2a2a !important;
-    opacity: 1 !important;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* Ajuste específico para "Solicitud enviada" (amarillo) */
-.btn-pro[style*="#ffc107"]:disabled {
-    background-color: rgba(255, 193, 7, 0.2) !important;
-    border-color: #ffc107 !important;
-    color: #ffc107 !important;
-}
-
-/* Alertas en modo oscuro */
-.alert-info, .alert-success, .alert-danger {
-    background-color: var(--bg-secondary);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--text-primary);
-    border-left: 5px solid;
-}
-.alert-success { border-left-color: #28a745; }
-.alert-danger { border-left-color: #dc3545; }
-.alert-info { border-left-color: #17a2b8; }
-
-
-/* =========================================
-   BARRA DE BÚSQUEDA PROFESIONAL
-========================================= */
-.search-bar-container {
-    /* Fondo oscuro para el contenedor del input */
-    background-color: var(--bg-secondary);
-    padding: 0.5rem;
-    border-radius: 12px; /* Bordes redondeados */
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.search-bar-container .form-control:focus {
-    /* Quitamos el brillo azul por defecto de Bootstrap */
-    box-shadow: none;
-    /* Opcional: añadir un borde sutil al enfocar */
-    /* border-color: var(--accent-gold); */
-}
-
-/* Estilo para el placeholder del input */
-.search-bar-container .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-/* CONTROLES DE PAGINACIÓN (CORREGIDO) */
+/* Paginación */
 .pagination-container {
-    border-color: rgba(255, 255, 255, 0.2) !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--divider);
+  
 }
-
 .btn-pagination {
-    background-color: var(--primary-color) !important;
-    color: #fff !important;
-    border-color: var(--primary-color) !important;
-    font-weight: 700;
-    padding: 0.3rem 0.6rem;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background: var(--primary-color);
+  border: 1px solid var(--contrast-text-color);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  color: var(--contrast-text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: var(--transition);
 }
-
 .btn-pagination:hover:not(:disabled) {
-    background-color: #fff !important;
-    color: var(--primary-color) !important;
-    border-color: #fff !important;
-    transform: translateY(-2px);
+  background: var(--contrast-text-color);
+  color: var(--primary-color);
 }
-
 .btn-pagination:disabled {
-    opacity: 0.5 !important;
-    cursor: not-allowed;
-    background-color: var(--primary-color) !important;
-    color: #fff !important;
-    border-color: var(--primary-color) !important;
+  opacity: 0.4;
+  cursor: not-allowed;
 }
-.text-pepe{
-   background-color: var(--primary-color);
-   padding:  0.3rem 0.6rem;
-    border-radius: 8px;
+.text-contrast {
+  color: var(--contrast-text-color);
+  font-weight: 600;
+  font-size: 16px;
+  background-color: var(--primary-color);
+  padding: 0.3rem;
+  border-radius: 15%;
+}
 
+/* Responsividad */
+@media (max-width: 768px) {
+  .buscar-equipos-container {
+    padding: 16px;
+  }
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+  .buscar-equipos-header-card h2 {
+    font-size: 24px;
+  }
+  .search-bar-container {
+    padding: 12px;
+  }
 }

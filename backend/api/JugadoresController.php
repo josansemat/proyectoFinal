@@ -225,4 +225,29 @@ class JugadoresController {
             echo json_encode(["success" => false, "error" => "No se pudo obtener el total de partidos"]);
         }
     }
+
+    // --------------------------
+    // ACTUALIZAR DATOS PERFIL
+    // --------------------------
+    public function actualizarDatos() {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id = $data['id_jugador'] ?? null;
+        if (!$id) { echo json_encode(["success" => false, "error" => "Falta id_jugador"]); return; }
+
+        // Filtrar solo campos permitidos
+        $permitidos = ['nombre','apodo','email','telefono'];
+        $payload = [];
+        foreach ($permitidos as $k) {
+            if (array_key_exists($k, $data)) { $payload[$k] = $data[$k]; }
+        }
+        if (empty($payload)) { echo json_encode(["success" => false, "error" => "Sin cambios"]); return; }
+
+        try {
+            $ok = Jugador::updateDinamico((int)$id, $payload);
+            echo json_encode(["success" => (bool)$ok]);
+        } catch (Exception $e) {
+            error_log('Error actualizarDatos: '.$e->getMessage());
+            echo json_encode(["success" => false, "error" => "No se pudieron guardar los cambios"]);
+        }
+    }
 }

@@ -46,6 +46,10 @@ switch ($action) {
         $controller->partidosJugados();
         break;
 
+    case "actualizar_datos":
+        $controller->actualizarDatos();
+        break;
+
     case "listar_equipos_todos":
         $equipos = Equipo::getAllEquipos();
         echo json_encode(["success" => true, "equipos" => $equipos]);
