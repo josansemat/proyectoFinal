@@ -148,4 +148,81 @@ class JugadoresController {
             echo json_encode(["success" => false, "error" => "No se pudieron cargar los jugadores del equipo"]);
         }
     }
+
+    // --------------------------
+    // SALIR DE UN EQUIPO
+    // --------------------------
+    public function salirDeEquipo() {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id_jugador = $data['id_jugador'] ?? null;
+        $id_equipo = $data['id_equipo'] ?? null;
+
+        if (!$id_jugador || !$id_equipo) {
+            echo json_encode(["success" => false, "error" => "Faltan parámetros: id_jugador o id_equipo"]);
+            return;
+        }
+
+        try {
+            $ok = Jugador::salirDeEquipo((int)$id_jugador, (int)$id_equipo);
+            if ($ok) {
+                echo json_encode(["success" => true, "message" => "Has salido del equipo correctamente"]);
+            } else {
+                echo json_encode(["success" => false, "error" => "No fue posible salir del equipo"]);
+            }
+        } catch (Exception $e) {
+            error_log("Error salirDeEquipo: ".$e->getMessage());
+            echo json_encode(["success" => false, "error" => "Error al procesar la solicitud"]);
+        }
+    }
+
+    // --------------------------
+    // CAMBIAR CONTRASEÑA
+    // --------------------------
+    public function cambiarPassword() {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id_jugador = $data['id_jugador'] ?? null;
+        $actual = $data['password_actual'] ?? null;
+        $nueva = $data['password_nueva'] ?? null;
+
+        if (!$id_jugador || !$actual || !$nueva) {
+            echo json_encode(["success" => false, "error" => "Faltan parámetros"]);
+            return;
+        }
+
+        try {
+            $jug = Jugador::getJugadorById((int)$id_jugador);
+            if (!$jug) {
+                echo json_encode(["success" => false, "error" => "Usuario no encontrado"]);
+                return;
+            }
+            if (!password_verify($actual, $jug->getPassword())) {
+                echo json_encode(["success" => false, "error" => "La contraseña actual no es válida"]);
+                return;
+            }
+            $hashNuevo = password_hash($nueva, PASSWORD_DEFAULT);
+            $ok = Jugador::updatePassword((int)$id_jugador, $hashNuevo);
+            echo json_encode(["success" => (bool)$ok]);
+        } catch (Exception $e) {
+            error_log("Error cambiarPassword: ".$e->getMessage());
+            echo json_encode(["success" => false, "error" => "No se pudo cambiar la contraseña"]);
+        }
+    }
+
+    // --------------------------
+    // PARTIDOS JUGADOS (TOTAL)
+    // --------------------------
+    public function partidosJugados() {
+        $id_jugador = $_GET['id_jugador'] ?? null;
+        if (!$id_jugador) {
+            echo json_encode(["success" => false, "error" => "Falta id_jugador"]);
+            return;
+        }
+        try {
+            $total = Jugador::countPartidosJugados((int)$id_jugador);
+            echo json_encode(["success" => true, "total" => $total]);
+        } catch (Exception $e) {
+            error_log("Error partidosJugados: ".$e->getMessage());
+            echo json_encode(["success" => false, "error" => "No se pudo obtener el total de partidos"]);
+        }
+    }
 }

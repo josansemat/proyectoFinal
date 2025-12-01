@@ -258,6 +258,7 @@ const Sidebar = ({
                   Gestión de Mi Club
                 </li>
 
+                {/* CÓDIGO CORREGIDO AQUÍ: Se eliminó el bloque anidado erróneo */}
                 <li className="nav-item">
                   <button
                     type="button"
@@ -325,9 +326,8 @@ const Sidebar = ({
             )}
           </ul>
 
-          {/* —— Sección Mi Perfil —— */}
+          {/* —— Sección Mi Perfil (ESTA SE MANTIENE) —— */}
           <div className="mt-auto pt-3 px-1">
-            
             <ul
               className="nav flex-column border-top pt-2"
               style={{ borderColor: "var(--sidebar-border-color)" }}

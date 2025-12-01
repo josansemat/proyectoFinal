@@ -201,6 +201,46 @@ class Jugador {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // ----------------------------------------------------------
+    // SALIR DE EQUIPO (ELIMINAR RELACIÓN)
+    // ----------------------------------------------------------
+    public static function salirDeEquipo($id_jugador, $id_equipo) {
+        $conexion = FutbolDB::connectDB();
+        $sql = "DELETE FROM jugadores_equipos WHERE idjugador = :idj AND idequipo = :ide";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':idj', $id_jugador, PDO::PARAM_INT);
+        $stmt->bindParam(':ide', $id_equipo, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    // ----------------------------------------------------------
+    // CAMBIAR PASSWORD
+    // ----------------------------------------------------------
+    public static function updatePassword($id_jugador, $newPasswordHash) {
+        $conexion = FutbolDB::connectDB();
+        $sql = "UPDATE jugadores SET password = :pwd WHERE id = :id AND eliminado = 0";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':pwd', $newPasswordHash, PDO::PARAM_STR);
+        $stmt->bindParam(':id', $id_jugador, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    // ----------------------------------------------------------
+    // CONTAR PARTIDOS JUGADOS (estado 'completado')
+    // ----------------------------------------------------------
+    public static function countPartidosJugados($id_jugador) {
+        $conexion = FutbolDB::connectDB();
+        $sql = "SELECT COUNT(*) AS total
+                FROM partidos_jugadores pj
+                INNER JOIN partidos p ON p.id = pj.id_partido
+                WHERE pj.id_jugador = :id AND p.eliminado = 0 AND p.estado = 'completado'";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':id', $id_jugador, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['total'] ?? 0);
+    }
+
 
 
     // GETTERS

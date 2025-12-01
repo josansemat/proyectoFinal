@@ -34,6 +34,18 @@ switch ($action) {
         $controller->jugadoresPorEquipo();
         break;
 
+    case "salir_equipo":
+        $controller->salirDeEquipo();
+        break;
+
+    case "cambiar_password":
+        $controller->cambiarPassword();
+        break;
+
+    case "partidos_jugados":
+        $controller->partidosJugados();
+        break;
+
     case "listar_equipos_todos":
         $equipos = Equipo::getAllEquipos();
         echo json_encode(["success" => true, "equipos" => $equipos]);

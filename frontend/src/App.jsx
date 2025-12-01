@@ -10,6 +10,7 @@ import ManagerSolicitudes from "./pages/ManagerSolicitudes";
 import EditarClub from "./pages/EditarClub";
 import CreateJugador from "./pages/CreateJugador.jsx";
 import Plantilla from "./pages/Plantilla.jsx";
+import MiPerfil from "./pages/MiPerfil.jsx";
 
 const hexToRgb = (hex) => {
   if (!hex) return '33, 37, 41';
@@ -187,6 +188,7 @@ function App() {
             <Route path="/mi-club/configurar" element={<EditarClub user={user} currentTeam={currentTeam} onTeamUpdate={handleTeamChange} />} />
             <Route path="/crear-jugador" element={<CreateJugador />} />
             <Route path="/plantilla" element={<Plantilla user={user} currentTeam={currentTeam} />} />
+            <Route path="/mi-perfil" element={<MiPerfil user={user} currentTeam={currentTeam} onTeamChange={handleTeamChange} />} />
             <Route path="*" element={<Navigate to="/inicio" replace />} />
           </Routes>
         </div>
