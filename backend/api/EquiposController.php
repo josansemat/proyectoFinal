@@ -97,6 +97,22 @@ class EquiposController {
                 }
             }
 
+            // Campos de lanzadores (permitir null limpiando con string vacio)
+            $mapLanzadores = [
+                'id_lanzador_corner_izq',
+                'id_lanzador_corner_der',
+                'id_lanzador_penalti',
+                'id_lanzador_falta_lejana',
+                'id_lanzador_falta_cercana_izq',
+                'id_lanzador_falta_cercana_der',
+            ];
+            foreach ($mapLanzadores as $field) {
+                if (isset($_POST[$field])) {
+                    $val = trim((string)$_POST[$field]);
+                    $datosParaActualizar[$field] = $val === '' ? null : (int)$val;
+                }
+            }
+
             if (empty($datosParaActualizar)) {
                  echo json_encode(["success" => true, "message" => "No hubo cambios para guardar."]);
                  return;

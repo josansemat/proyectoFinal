@@ -1,0 +1,106 @@
+.plantilla-page {
+  padding: 16px;
+}
+
+/* Pitch base */
+.pitch {
+  display: grid;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 420px;
+}
+
+.pitch-row {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: 12px;
+}
+
+.slot {
+  width: 120px;
+  max-width: 22vw;
+  aspect-ratio: 1 / 1;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slot.empty {
+  background: rgba(var(--primary-rgb, 33, 37, 41), 0.06);
+  border: 1px dashed rgba(0,0,0,0.25);
+}
+
+.slot.filled {
+  background: rgba(var(--primary-rgb, 33, 37, 41), 0.9);
+  color: var(--contrast-text-color, #fff);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+
+.slot:hover { transform: translateY(-1px); }
+
+.slot-inner {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 8px;
+  text-align: center;
+}
+
+.slot-label {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.slot-player-name {
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.slot-player-meta {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.slot-placeholder {
+  font-size: 0.75rem;
+  color: rgba(0,0,0,0.55);
+}
+
+/* Bench */
+.bench-zone {
+  border: 2px dashed rgba(0,0,0,0.15);
+  border-radius: 10px;
+  min-height: 220px;
+  max-height: 420px;
+  padding: 8px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.player-chip {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  cursor: grab;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.player-chip:active { cursor: grabbing; }
+.player-chip:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
+.chip-name { font-weight: 600; }
+.chip-meta { font-size: 0.75rem; color: rgba(0,0,0,0.55); }
+
+.custom-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 8px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }

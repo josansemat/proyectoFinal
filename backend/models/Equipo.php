@@ -49,6 +49,22 @@ class Equipo {
             $parametros[':fondo'] = $datos['fondo_imagen'];
         }
 
+        // Campos de lanzadores (pueden ser null o int)
+        $lanzadores = [
+            'id_lanzador_corner_izq',
+            'id_lanzador_corner_der',
+            'id_lanzador_penalti',
+            'id_lanzador_falta_lejana',
+            'id_lanzador_falta_cercana_izq',
+            'id_lanzador_falta_cercana_der',
+        ];
+        foreach ($lanzadores as $field) {
+            if (array_key_exists($field, $datos)) {
+                $campos[] = "$field = :$field";
+                $parametros[":$field"] = $datos[$field] === null || $datos[$field] === '' ? null : (int)$datos[$field];
+            }
+        }
+
         // Si no hay campos para actualizar, salimos
         if (empty($campos)) {
             return true;

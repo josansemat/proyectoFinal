@@ -129,4 +129,23 @@ class JugadoresController {
             echo json_encode(["success" => true, "equipos" => []]);
         }
     }
+
+    // --------------------------
+    // LISTAR JUGADORES DE UN EQUIPO
+    // --------------------------
+    public function jugadoresPorEquipo() {
+        $id_equipo = $_GET['id_equipo'] ?? null;
+        if (!$id_equipo) {
+            echo json_encode(["success" => false, "error" => "Falta el ID del equipo"]);
+            return;
+        }
+
+        try {
+            $jugadores = Jugador::getJugadoresByEquipoId((int)$id_equipo);
+            echo json_encode(["success" => true, "jugadores" => $jugadores]);
+        } catch (Exception $e) {
+            error_log("Error jugadoresPorEquipo: ".$e->getMessage());
+            echo json_encode(["success" => false, "error" => "No se pudieron cargar los jugadores del equipo"]);
+        }
+    }
 }

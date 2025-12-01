@@ -30,6 +30,10 @@ switch ($action) {
         $controller->misEquipos();
         break;
 
+    case "jugadores_equipo":
+        $controller->jugadoresPorEquipo();
+        break;
+
     case "listar_equipos_todos":
         $equipos = Equipo::getAllEquipos();
         echo json_encode(["success" => true, "equipos" => $equipos]);

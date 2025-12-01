@@ -185,6 +185,22 @@ class Jugador {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // ----------------------------------------------------------
+    // GET JUGADORES POR EQUIPO
+    // ----------------------------------------------------------
+    public static function getJugadoresByEquipoId($id_equipo) {
+        $conexion = FutbolDB::connectDB();
+        $sql = "SELECT j.id, j.nombre, j.apodo, j.email, j.telefono, j.rating_habilidad, j.rol, j.activo,
+                       je.dorsal, je.rol_en_equipo
+                FROM jugadores j
+                INNER JOIN jugadores_equipos je ON je.idjugador = j.id
+                WHERE je.idequipo = :id_equipo AND j.eliminado = 0";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':id_equipo', $id_equipo, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 
 
     // GETTERS
