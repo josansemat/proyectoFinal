@@ -20,6 +20,57 @@ class Equipo {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    // ADMIN: Listar equipos con filtros y paginación
+    public static function adminListEquipos($search = null, $estado = null, $page = 1, $limit = 10) {
+        $conexion = FutbolDB::connectDB();
+        $where = [];
+        $params = [];
+        if ($search) {
+            $where[] = '(e.nombre LIKE :q OR e.descripcion LIKE :q)';
+            $params[':q'] = '%' . $search . '%';
+        }
+        if ($estado !== null && $estado !== '') {
+            if ($estado === 'activo') {
+                $where[] = 'e.activo = 1';
+            } elseif ($estado === 'inactivo') {
+                $where[] = 'e.activo = 0';
+            }
+        }
+        $whereSql = empty($where) ? '' : ('WHERE ' . implode(' AND ', $where));
+
+        $stmtC = $conexion->prepare("SELECT COUNT(*) FROM equipos e $whereSql");
+        foreach ($params as $k => $v) { $stmtC->bindValue($k, $v); }
+        $stmtC->execute();
+        $total = (int)$stmtC->fetchColumn();
+
+        $page = max(1, (int)$page);
+        $limit = max(1, min(100, (int)$limit));
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT e.id, e.nombre, e.descripcion, e.color_principal, e.fondo_imagen, e.activo
+                FROM equipos e
+                $whereSql
+                ORDER BY e.id DESC
+                LIMIT :limit OFFSET :offset";
+        $stmt = $conexion->prepare($sql);
+        foreach ($params as $k => $v) { $stmt->bindValue($k, $v); }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [ 'items' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit ];
+    }
+
+    // ADMIN: actualizar activo
+    public static function updateActivo($id, $activo) {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare('UPDATE equipos SET activo = :a WHERE id = :id');
+        $stmt->bindValue(':a', (int)$activo, PDO::PARAM_INT);
+        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     // --- ACTUALIZACIÓN DINÁMICA (INTELIGENTE) ---
     public static function updateDinamico($id, $datos) {
         $conexion = FutbolDB::connectDB();
@@ -131,6 +182,41 @@ class Equipo {
             ':formation' => $formation,
             ':assignments' => $json,
         ]);
+    }
+    // ADMIN: Crear un nuevo equipo
+    public static function create($datos) {
+        $conexion = FutbolDB::connectDB();
+        
+        // Campos básicos obligatorios y opcionales
+        $nombre = $datos['nombre'] ?? '';
+        $descripcion = $datos['descripcion'] ?? '';
+        // Si no viene color, usamos el negro por defecto
+        $color = !empty($datos['color_principal']) ? $datos['color_principal'] : '#000000';
+        $fondo = $datos['fondo_imagen'] ?? '';
+        // Por defecto se crea activo (1)
+        $activo = 1; 
+
+        // Validación básica
+        if (empty($nombre)) {
+             throw new Exception("El nombre del equipo es obligatorio.");
+        }
+
+        $sql = "INSERT INTO equipos (nombre, descripcion, color_principal, fondo_imagen, activo) 
+                VALUES (:nombre, :descripcion, :color, :fondo, :activo)";
+        
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindValue(':nombre', $nombre);
+        $stmt->bindValue(':descripcion', $descripcion);
+        $stmt->bindValue(':color', $color);
+        $stmt->bindValue(':fondo', $fondo);
+        $stmt->bindValue(':activo', $activo, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            // Devolvemos el ID del nuevo equipo creado
+            return $conexion->lastInsertId();
+        } else {
+            return false;
+        }
     }
 }
 ?>

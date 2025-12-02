@@ -97,12 +97,32 @@ switch ($action) {
         $controller->adminListarJugadores();
         break;
 
+    // --- ADMIN EQUIPOS ---
+    case "admin_listar_equipos":
+        $equiposController->adminListarEquipos();
+        break;
+    case "admin_toggle_equipo_activo":
+        $equiposController->adminToggleEquipoActivo();
+        break;
+    case "admin_get_equipo_detalle":
+        $equiposController->adminGetEquipoDetalle();
+        break;
+    case "admin_update_equipo_completo":
+        $equiposController->adminUpdateEquipoCompleto();
+        break;
+
     case "admin_toggle_activo":
         $controller->adminToggleActivo();
         break;
 
     case "admin_toggle_eliminado":
         $controller->adminToggleEliminado();
+        break;
+    case "admin_crear_equipo":
+        $equiposController->adminCrearEquipo();
+        break;
+    case "update_equipo_completo": // <--- NUEVO NOMBRE
+        $equiposController->updateCompleto(); // <--- NUEVA FUNCIÓN
         break;
 
     default:
