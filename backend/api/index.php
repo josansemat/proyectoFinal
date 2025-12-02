@@ -6,10 +6,12 @@ require_once "JugadoresController.php";
 require_once "SolicitudesController.php"; 
 require_once "../models/Equipo.php";
 require_once "EquiposController.php";
+require_once "PartidosController.php";
 
 $solicitudesController = new SolicitudesController(); 
 $controller = new JugadoresController();
 $equiposController = new EquiposController(); 
+$partidosController = new PartidosController();
 
 $action = $_GET["action"] ?? "";
 
@@ -123,6 +125,20 @@ switch ($action) {
         break;
     case "update_equipo_completo": // <--- NUEVO NOMBRE
         $equiposController->updateCompleto(); // <--- NUEVA FUNCIÓN
+        break;
+
+    // --- PARTIDOS ---
+    case "partidos_listar":
+        $partidosController->listar();
+        break;
+    case "partido_crear":
+        $partidosController->crear();
+        break;
+    case "partido_actualizar":
+        $partidosController->actualizar();
+        break;
+    case "partido_eliminar":
+        $partidosController->eliminar();
         break;
 
     default:

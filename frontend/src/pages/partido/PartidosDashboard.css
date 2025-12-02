@@ -1,0 +1,59 @@
+.partidos-dashboard .resumen-card {
+  border: none;
+  border-radius: 1rem;
+  background: rgba(33, 37, 41, 0.75);
+  color: #fff;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.25);
+}
+
+.partidos-dashboard .resumen-card .card-body {
+  min-height: 110px;
+}
+
+.partidos-dashboard .resumen-card h3,
+.partidos-dashboard .resumen-card h4 {
+  font-weight: 600;
+}
+
+.partidos-dashboard .resumen-card.proximo {
+  background: linear-gradient(135deg, rgba(0, 206, 0, 0.85), rgba(0, 150, 136, 0.9));
+}
+
+.partidos-dashboard .estado {
+  text-transform: capitalize;
+}
+
+.partidos-dashboard .estado.programado {
+  background-color: #0d6efd;
+}
+
+.partidos-dashboard .estado.en_curso {
+  background-color: #ffc107;
+}
+
+.partidos-dashboard .estado.completado {
+  background-color: #198754;
+}
+
+.partidos-dashboard .estado.cancelado {
+  background-color: #dc3545;
+}
+
+.partidos-dashboard .progress {
+  height: 6px;
+}
+
+.partidos-dashboard .progress-bar {
+  background-color: var(--primary-color, #0d6efd);
+}
+
+.partidos-dashboard .table td,
+.partidos-dashboard .table th {
+  vertical-align: middle;
+}
+
+.partidos-dashboard .card {
+  border-radius: 1rem;
+  border: none;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
