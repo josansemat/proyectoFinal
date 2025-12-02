@@ -88,28 +88,77 @@ class EquiposController {
     // --------------------------
     // ADMIN: UPDATE COMPLETO (equipo + dorsales)
     // --------------------------
+    // --------------------------
+    // ADMIN: UPDATE COMPLETO (equipo + dorsales + ROLES)
+    // --------------------------
     public function adminUpdateEquipoCompleto() {
         $data = json_decode(file_get_contents('php://input'), true);
-        $id = $data['id'] ?? null;
-        if (!$id) { echo json_encode(['success'=>false,'error'=>'Falta id de equipo']); return; }
-        // Parte 1: datos básicos + lanzadores
-        $datos = [];
-        foreach (['nombre','descripcion','color_principal','fondo_imagen','id_lanzador_penalti','id_lanzador_falta_lejana','id_lanzador_corner_izq','id_lanzador_corner_der'] as $k) {
-            if (array_key_exists($k, $data)) { $datos[$k] = $data[$k]; }
+        $idEquipo = $data['id'] ?? null; // El frontend ahora envía 'id' en lugar de 'id_equipo'
+        $idUsuario = $data['id_usuario'] ?? null;
+        $rolGlobal = $data['rol_global'] ?? 'usuario';
+
+        if (!$idEquipo || !$idUsuario) {
+            echo json_encode(['success'=>false, 'error'=>'Faltan datos de identificación del equipo o usuario']);
+            return;
         }
+
+        // Verificación de Permisos (Manager del equipo o Admin global)
+        $esManager = Equipo::esManager($idUsuario, $idEquipo);
+        $esAdmin = ($rolGlobal === 'admin');
+
+        if (!$esManager && !$esAdmin) {
+            echo json_encode(["success" => false, "error" => "No tienes permisos para editar este equipo"]);
+            return;
+        }
+
         try {
-            if (!empty($datos)) {
-                Equipo::updateDinamico((int)$id, $datos);
+            // Parte 1: Actualizar datos básicos y lanzadores
+            $datos = [];
+            // Lista blanca de campos permitidos para la tabla 'equipos'
+            $camposPermitidos = ['nombre','descripcion','color_principal','fondo_imagen','id_lanzador_penalti','id_lanzador_falta_lejana','id_lanzador_corner_izq','id_lanzador_corner_der'];
+            foreach ($camposPermitidos as $k) {
+                if (array_key_exists($k, $data)) {
+                    // Para los lanzadores, si el valor es vacío o null, lo guardamos como NULL en la BD
+                    if (strpos($k, 'id_lanzador_') === 0 && ($data[$k] === '' || $data[$k] === null)) {
+                        $datos[$k] = null;
+                    } else {
+                        $datos[$k] = $data[$k];
+                    }
+                }
             }
-            // Parte 2: dorsales
+            
+            if (!empty($datos)) {
+                Equipo::updateDinamico((int)$idEquipo, $datos);
+            }
+
+            // Parte 2: Actualizar dorsales
             $dorsales = $data['dorsales'] ?? [];
             if (is_array($dorsales) && !empty($dorsales)) {
-                $this->updateDorsalesEnLote((int)$id, $dorsales);
+                $this->updateDorsalesEnLote((int)$idEquipo, $dorsales);
             }
-            echo json_encode(['success'=>true]);
+
+            // Parte 3: Actualizar roles (NUEVO)
+            $roles = $data['roles'] ?? [];
+            if (is_array($roles) && !empty($roles)) {
+                // Llamamos al nuevo método del modelo
+                Equipo::updateRolesJugadores((int)$idEquipo, $roles);
+            }
+
+            // Obtener los datos actualizados para devolverlos
+            $equipoActualizado = Equipo::getById($idEquipo);
+            
+            echo json_encode([
+                'success'=>true,
+                'message' => '¡Cambios guardados con éxito!',
+                // Devolvemos los datos clave para actualizar el frontend al instante
+                'nuevo_nombre' => $equipoActualizado['nombre'],
+                'nuevo_color' => $equipoActualizado['color_principal'],
+                'nuevo_fondo' => $equipoActualizado['fondo_imagen']
+            ]);
+
         } catch (Exception $e) {
-            error_log('adminUpdateEquipoCompleto: '.$e->getMessage());
-            echo json_encode(['success'=>false,'error'=>'No se pudo guardar cambios']);
+            error_log('adminUpdateEquipoCompleto Error: '.$e->getMessage());
+            echo json_encode(['success'=>false,'error'=>'Error interno al guardar los cambios.']);
         }
     }
 
@@ -395,5 +444,6 @@ class EquiposController {
             echo json_encode(["success" => false, "error" => "Error interno al guardar datos."]);
         }
     }
+    
 }
 ?>

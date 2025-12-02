@@ -218,5 +218,28 @@ class Equipo {
             return false;
         }
     }
+    // --- NUEVO MÉTODO: Actualizar roles de jugadores en lote ---
+    public static function updateRolesJugadores($idEquipo, $roles) {
+        $conexion = FutbolDB::connectDB();
+        
+        // Preparamos la consulta: UPDATE jugadores_equipos SET rol_en_equipo = :rol WHERE idequipo = :ide AND idjugador = :idj
+        $sql = 'UPDATE jugadores_equipos SET rol_en_equipo = :rol WHERE idequipo = :ide AND idjugador = :idj';
+        $stmt = $conexion->prepare($sql);
+        
+        // Iteramos sobre el array de roles y ejecutamos la actualización para cada uno
+        foreach ($roles as $row) {
+            $idj = (int)($row['id_jugador'] ?? 0);
+            // Validamos que el rol sea uno de los permitidos
+            $rol = $row['rol'] === 'manager' ? 'manager' : 'jugador';
+            
+            if ($idj > 0) {
+                $stmt->execute([
+                    ':rol' => $rol,
+                    ':ide' => (int)$idEquipo,
+                    ':idj' => $idj
+                ]);
+            }
+        }
+    }
 }
 ?>

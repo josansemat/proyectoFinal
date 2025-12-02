@@ -20,6 +20,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
   const [listaFondos, setListaFondos] = useState([]); 
   const [jugadores, setJugadores] = useState([]); // Lista de jugadores del equipo
   const [dorsales, setDorsales] = useState([]); // Array de objetos {id_jugador, nuevo_dorsal}
+  const [managers, setManagers] = useState({}); // Objeto {id_jugador: true/false} para el estado de manager
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -73,11 +74,19 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
       const data = await response.json();
       if (data.success) {
         setJugadores(data.jugadores || []);
-        // Inicializamos el estado de los dorsales con los valores actuales
-        setDorsales(data.jugadores.map(j => ({
-          id_jugador: j.id,
-          nuevo_dorsal: j.dorsal || '' // Si es null en BD, usamos string vacío para el input
-        })));
+        // Inicializamos el estado de los dorsales y managers
+        const initialDorsales = [];
+        const initialManagers = {};
+        data.jugadores.forEach(j => {
+            initialDorsales.push({
+                id_jugador: j.id,
+                nuevo_dorsal: j.dorsal || ''
+            });
+            // Asumimos que la API devuelve un campo 'rol_en_equipo' ('manager' o 'jugador')
+            initialManagers[j.id] = j.rol_en_equipo === 'manager';
+        });
+        setDorsales(initialDorsales);
+        setManagers(initialManagers);
       }
     } catch (error) { console.error("Error cargando jugadores", error); }
   };
@@ -96,40 +105,59 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
     );
   };
 
+  // Función para manejar el checkbox de manager
+  const handleManagerChange = (idJugador, isManager) => {
+    setManagers(prev => ({
+        ...prev,
+        [idJugador]: isManager
+    }));
+  };
+
   // --- ENVÍO DEL FORMULARIO ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ text: 'Guardando...', type: 'info' });
 
     try {
+        // Preparamos el array de roles para enviar
+        const rolesToSend = Object.entries(managers).map(([id_jugador, is_manager]) => ({
+            id_jugador: parseInt(id_jugador),
+            rol: is_manager ? 'manager' : 'jugador'
+        }));
+
         // Preparamos el objeto JSON completo a enviar
         const payload = {
-            id_equipo: currentTeam.id,
+            id: currentTeam.id, // Usamos 'id' para que coincida con el controlador del admin
             id_usuario: user.id,
             rol_global: user.rol,
             ...formData, // Todos los campos del formulario (nombre, color, lanzadores, etc.)
-            dorsales: dorsales // El array con los nuevos dorsales
+            dorsales: dorsales, // El array con los nuevos dorsales
+            roles: rolesToSend // El array con los nuevos roles
         };
 
-        const response = await fetch('/api/index.php?action=update_equipo_completo', {
+        // Usamos la misma acción que el administrador para unificar la lógica
+        const response = await fetch('/api/index.php?action=admin_update_equipo_completo', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, // Importante indicar que es JSON
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         const data = await response.json();
 
         if (data.success) {
-            setMessage({ text: data.message, type: 'success' });
+            setMessage({ text: data.message || '¡Cambios guardados con éxito!', type: 'success' });
             // Notificamos al componente padre (App.jsx) para que actualice el estado global
             if (onTeamUpdate) {
                 onTeamUpdate({
                     ...currentTeam,
-                    nombre: data.nuevo_nombre,
-                    color_principal: data.nuevo_color,
-                    fondo_imagen: data.nuevo_fondo
+                    nombre: data.nuevo_nombre || currentTeam.nombre,
+                    color_principal: data.nuevo_color || currentTeam.color_principal,
+                    fondo_imagen: data.nuevo_fondo || currentTeam.fondo_imagen,
+                    // Si el usuario actual cambió su propio rol, esto se actualizará al recargar
                 });
             }
+            // Recargamos los jugadores para reflejar los cambios de rol y dorsal
+            cargarJugadoresEquipo();
         } else {
             setMessage({ text: data.error || 'Error al guardar', type: 'error' });
         }
@@ -226,7 +254,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                 )}
             </div>
 
-            {/* --- COLUMNA DERECHA: Fondo y Dorsales --- */}
+            {/* --- COLUMNA DERECHA: Fondo, Dorsales y Managers --- */}
             <div className="col-lg-6 d-flex flex-column gap-4">
                 
                 {/* SECCIÓN 3: Imagen de Fondo */}
@@ -248,44 +276,77 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                     </div>
                 </div>
 
-                {/* SECCIÓN 4: Gestión de Dorsales */}
+                {/* SECCIÓN 4: Gestión de Plantilla (Dorsales y Managers) */}
                 <div className="p-3 bg-light border rounded flex-grow-1 d-flex flex-column" style={{minHeight: '300px'}}>
-                  <h4 className="mb-3 text-primary fw-bold">
-                    Dorsales <span className="badge bg-secondary ms-2">{jugadores.length}</span>
-                  </h4>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h4 className="m-0 text-primary fw-bold">Plantilla</h4>
+                      <span className="badge bg-secondary">{jugadores.length} jugadores</span>
+                  </div>
+                  
                   {jugadores.length === 0 ? (
                     <p className="text-muted fst-italic">No hay jugadores en el equipo.</p>
                   ) : (
-                    <div className="flex-grow-1 overflow-auto custom-scrollbar pe-2" style={{maxHeight: '400px'}}>
-                      {jugadores.map(j => {
-                        const dorsalValue = dorsales.find(d => d.id_jugador === j.id)?.nuevo_dorsal || '';
-                        return (
-                          <div key={j.id} className="d-flex align-items-center justify-content-between p-2 mb-2 bg-white border rounded">
-                            <div className="d-flex align-items-center text-truncate me-3">
-                              {/* Escudo pequeño con el color del equipo */}
-                              <div className="rounded-circle me-2 d-flex align-items-center justify-content-center fw-bold text-white" 
-                                   style={{width:'32px', height:'32px', backgroundColor: currentTeam.color_principal, fontSize:'0.8rem', border:'2px solid white', boxShadow:'0 2px 4px rgba(0,0,0,0.1)'}}>
-                                {dorsalValue || '?'}
+                    <>
+                      {/* Cabecera de la tabla */}
+                      <div className="d-flex px-2 mb-2 fw-bold text-muted small text-uppercase">
+                          <div style={{flex: '1'}}>Jugador</div>
+                          <div className="text-center" style={{width: '80px'}}>Manager</div>
+                          <div className="text-center" style={{width: '80px'}}>Dorsal</div>
+                      </div>
+                      
+                      <div className="flex-grow-1 overflow-auto custom-scrollbar pe-2" style={{maxHeight: '400px'}}>
+                        {jugadores.map(j => {
+                          const dorsalValue = dorsales.find(d => d.id_jugador === j.id)?.nuevo_dorsal || '';
+                          const isManager = managers[j.id] || false;
+                          
+                          return (
+                            <div key={j.id} className="d-flex align-items-center justify-content-between p-2 mb-2 bg-white border rounded">
+                              {/* Columna Jugador */}
+                              <div className="d-flex align-items-center text-truncate" style={{flex: '1'}}>
+                                {/* Escudo pequeño con el color del equipo */}
+                                <div className="rounded-circle me-2 d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0" 
+                                     style={{width:'32px', height:'32px', backgroundColor: currentTeam.color_principal, fontSize:'0.8rem', border:'2px solid white', boxShadow:'0 2px 4px rgba(0,0,0,0.1)'}}>
+                                  {dorsalValue || '?'}
+                                </div>
+                                <div className="text-truncate">
+                                  <span className="fw-bold text-dark">{j.nombre}</span>
+                                  {j.apodo && <small className="text-muted ms-1">({j.apodo})</small>}
+                                </div>
                               </div>
-                              <div className="text-truncate">
-                                <span className="fw-bold text-dark">{j.nombre}</span>
-                                {j.apodo && <small className="text-muted ms-1">({j.apodo})</small>}
+                              
+                              {/* Columna Manager (Checkbox) */}
+                              <div className="text-center d-flex justify-content-center" style={{width: '80px'}}>
+                                <div className="form-check form-switch">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        role="switch"
+                                        checked={isManager}
+                                        onChange={(e) => handleManagerChange(j.id, e.target.checked)}
+                                        // Evitar que un manager se quite a sí mismo el rol si es el único (opcional, requiere lógica extra)
+                                        // disabled={j.id === user.id && Object.values(managers).filter(m => m).length === 1}
+                                        style={{cursor: 'pointer'}}
+                                    />
+                                </div>
+                              </div>
+
+                              {/* Columna Dorsal (Input) */}
+                              <div style={{width: '80px'}}>
+                                  <input 
+                                    type="number" 
+                                    className="form-control text-center fw-bold" 
+                                    min="1" 
+                                    max="99" 
+                                    placeholder="#"
+                                    value={dorsalValue}
+                                    onChange={(e) => handleDorsalChange(j.id, e.target.value)}
+                                  />
                               </div>
                             </div>
-                            <input 
-                              type="number" 
-                              className="form-control text-center fw-bold" 
-                              style={{width: '70px'}}
-                              min="1" 
-                              max="99" 
-                              placeholder="#"
-                              value={dorsalValue}
-                              onChange={(e) => handleDorsalChange(j.id, e.target.value)}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
             </div>
