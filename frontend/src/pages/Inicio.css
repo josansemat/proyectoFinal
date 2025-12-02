@@ -1,0 +1,30 @@
+.inicio-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a6c1ee);
+  background-size: 400% 400%;
+  animation: gradientBG 10s ease infinite;
+  color: #fff;
+  text-align: center;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.construction-text {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+}
+
+.sub-text {
+  margin-top: 20px;
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
