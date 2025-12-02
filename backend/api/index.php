@@ -140,6 +140,18 @@ switch ($action) {
     case "partido_eliminar":
         $partidosController->eliminar();
         break;
+    case "partido_detalle":
+        $partidosController->detalle();
+        break;
+    case "partido_inscribir":
+        $partidosController->inscribirJugador();
+        break;
+    case "partido_desinscribir":
+        $partidosController->desinscribirJugador();
+        break;
+    case "partido_guardar_formacion":
+        $partidosController->guardarFormacion();
+        break;
 
     default:
         echo json_encode(["error" => "Invalid action"]);

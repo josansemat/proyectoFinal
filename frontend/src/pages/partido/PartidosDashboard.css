@@ -57,3 +57,61 @@
   border: none;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
 }
+
+.partidos-dashboard .detalle-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #fff;
+  color: #212529;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+}
+
+.partidos-dashboard .detalle-list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 1rem;
+}
+
+.partidos-dashboard .detalle-list li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.9rem;
+}
+
+.partidos-dashboard .detalle-list li:last-child {
+  border-bottom: none;
+}
+
+.partidos-dashboard .detalle-card h5,
+.partidos-dashboard .detalle-card h6 {
+  font-weight: 600;
+}
+
+.partidos-dashboard .badge.minuto {
+  background: rgba(255, 255, 255, 0.15);
+  margin-left: 0.4rem;
+}
+
+.partidos-dashboard .panel-soft {
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.partidos-dashboard .inscritos-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.partidos-dashboard .inscrito-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.partidos-dashboard .detalle-sections .card {
+  height: 100%;
+}
