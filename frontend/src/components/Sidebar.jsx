@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { path: "/plantilla", icon: "#icon-pitch", label: "Plantilla" },
   { path: "/partidos", icon: "#icon-goal", label: "Partidos" },
   { path: "/ranking", icon: "#icon-trophy", label: "Ranking" },
-  { path: "/notificaciones", icon: "#icon-bell", label: "Notificaciones" },
 ];
 
 const Sidebar = ({
