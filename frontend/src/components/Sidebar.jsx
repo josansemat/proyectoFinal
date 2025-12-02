@@ -306,7 +306,7 @@ const Sidebar = ({
                     <svg className="sidebar-nav-icon">
                       <use href="#icon-users" />
                     </svg>
-                    <span>Gestión Jugadores</span>
+                    <span>Gestión de jugadores</span>
                   </button>
                 </li>
 

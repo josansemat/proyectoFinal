@@ -93,6 +93,18 @@ switch ($action) {
         $equiposController->savePlantillaEquipo();
         break;
 
+    case "admin_listar_jugadores":
+        $controller->adminListarJugadores();
+        break;
+
+    case "admin_toggle_activo":
+        $controller->adminToggleActivo();
+        break;
+
+    case "admin_toggle_eliminado":
+        $controller->adminToggleEliminado();
+        break;
+
     default:
         echo json_encode(["error" => "Invalid action"]);
         break;

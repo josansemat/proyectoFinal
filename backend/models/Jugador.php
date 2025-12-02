@@ -261,6 +261,91 @@ class Jugador {
         return (int)($row['total'] ?? 0);
     }
 
+    // ----------------------------------------------------------
+    // ADMIN LIST: filtros + paginación
+    // ----------------------------------------------------------
+    public static function adminListJugadores($search = null, $rol = null, $estado = null, $page = 1, $limit = 10) {
+        $conexion = FutbolDB::connectDB();
+
+        $where = [];
+        $params = [];
+
+        if ($search) {
+            $where[] = "(j.nombre LIKE :q OR j.apodo LIKE :q OR j.email LIKE :q)";
+            $params[':q'] = '%' . $search . '%';
+        }
+        if ($rol && in_array($rol, ['admin','usuario'], true)) {
+            $where[] = "j.rol = :rol";
+            $params[':rol'] = $rol;
+        }
+        if ($estado) {
+            if ($estado === 'eliminado') {
+                $where[] = "j.eliminado = 1";
+            } elseif ($estado === 'activo') {
+                $where[] = "j.eliminado = 0 AND j.activo = 1";
+            } elseif ($estado === 'inactivo') {
+                $where[] = "j.eliminado = 0 AND j.activo = 0";
+            }
+        }
+
+        $whereSql = empty($where) ? '' : ('WHERE ' . implode(' AND ', $where));
+
+        // Conteo total
+        $sqlCount = "SELECT COUNT(*) AS total FROM jugadores j $whereSql";
+        $stmtC = $conexion->prepare($sqlCount);
+        foreach ($params as $k => $v) { $stmtC->bindValue($k, $v); }
+        $stmtC->execute();
+        $total = (int)$stmtC->fetchColumn();
+
+        // Paginación
+        $page = max(1, (int)$page);
+        $limit = max(1, min(100, (int)$limit));
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT j.id, j.nombre, j.apodo, j.email, j.telefono, j.rol, j.rating_habilidad, j.fecha_registro, j.activo, j.eliminado
+                FROM jugadores j
+                $whereSql
+                ORDER BY j.id DESC
+                LIMIT :limit OFFSET :offset";
+        $stmt = $conexion->prepare($sql);
+        foreach ($params as $k => $v) { $stmt->bindValue($k, $v); }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'items' => $rows,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+        ];
+    }
+
+    // ----------------------------------------------------------
+    // ADMIN: actualizar activo (banear/desbanear)
+    // ----------------------------------------------------------
+    public static function updateActivo($id, $activo) {
+        $conexion = FutbolDB::connectDB();
+        $sql = "UPDATE jugadores SET activo = :activo WHERE id = :id";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindValue(':activo', (int)$activo, PDO::PARAM_INT);
+        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    // ----------------------------------------------------------
+    // ADMIN: actualizar eliminado (eliminar/restaurar)
+    // ----------------------------------------------------------
+    public static function updateEliminado($id, $eliminado) {
+        $conexion = FutbolDB::connectDB();
+        $sql = "UPDATE jugadores SET eliminado = :eliminado, fecha_eliminacion = CASE WHEN :eliminado = 1 THEN NOW() ELSE NULL END WHERE id = :id";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindValue(':eliminado', (int)$eliminado, PDO::PARAM_INT);
+        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
 
 
     // GETTERS

@@ -250,4 +250,72 @@ class JugadoresController {
             echo json_encode(["success" => false, "error" => "No se pudieron guardar los cambios"]);
         }
     }
+
+    // --------------------------
+    // ADMIN: LISTAR JUGADORES CON FILTROS Y PÁGINA
+    // --------------------------
+    public function adminListarJugadores() {
+        // Parámetros GET
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        $rol = isset($_GET['rol']) ? trim($_GET['rol']) : null; // 'admin' | 'usuario'
+        $estado = isset($_GET['estado']) ? trim($_GET['estado']) : null; // 'activo' | 'inactivo' | 'eliminado'
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+
+        try {
+            $result = Jugador::adminListJugadores($search, $rol, $estado, $page, $limit);
+            $totalPages = (int)ceil(($result['total'] ?: 0) / ($result['limit'] ?: 1));
+            echo json_encode([
+                'success' => true,
+                'page' => $result['page'],
+                'limit' => $result['limit'],
+                'total' => $result['total'],
+                'totalPages' => $totalPages,
+                'jugadores' => $result['items'],
+            ]);
+        } catch (Exception $e) {
+            error_log('Error adminListarJugadores: '.$e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'No se pudo listar jugadores']);
+        }
+    }
+
+    // --------------------------
+    // ADMIN: BANEAR/DESBANEAR (toggle activo)
+    // --------------------------
+    public function adminToggleActivo() {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id = $data['id'] ?? null;
+        $activo = $data['activo'] ?? null; // 0 o 1
+        if ($id === null || $activo === null) {
+            echo json_encode(['success' => false, 'error' => 'Faltan parámetros']);
+            return;
+        }
+        try {
+            $ok = Jugador::updateActivo((int)$id, (int)$activo);
+            echo json_encode(['success' => (bool)$ok]);
+        } catch (Exception $e) {
+            error_log('Error adminToggleActivo: '.$e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'No se pudo actualizar el estado activo']);
+        }
+    }
+
+    // --------------------------
+    // ADMIN: ELIMINAR/RESTAURAR (toggle eliminado)
+    // --------------------------
+    public function adminToggleEliminado() {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id = $data['id'] ?? null;
+        $eliminado = $data['eliminado'] ?? null; // 0 o 1
+        if ($id === null || $eliminado === null) {
+            echo json_encode(['success' => false, 'error' => 'Faltan parámetros']);
+            return;
+        }
+        try {
+            $ok = Jugador::updateEliminado((int)$id, (int)$eliminado);
+            echo json_encode(['success' => (bool)$ok]);
+        } catch (Exception $e) {
+            error_log('Error adminToggleEliminado: '.$e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'No se pudo actualizar eliminado']);
+        }
+    }
 }
