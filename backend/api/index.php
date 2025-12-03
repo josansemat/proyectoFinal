@@ -173,6 +173,9 @@ switch ($action) {
     case "partido_votar_mvp":
         $partidosController->votarMvp();
         break;
+    case "partido_calificar_jugadores":
+        $partidosController->calificarJugadores();
+        break;
 
     default:
         echo json_encode(["error" => "Invalid action"]);

@@ -541,4 +541,45 @@ class PartidosController {
             echo json_encode(['success' => false, 'error' => 'No se pudo registrar el voto']);
         }
     }
+
+    public function calificarJugadores() {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $idPartido = (int)($data['id_partido'] ?? 0);
+        $idUsuario = (int)($data['id_usuario'] ?? 0);
+        $rolGlobal = $data['rol_global'] ?? 'usuario';
+        $ratings = $data['ratings'] ?? null;
+
+        if ($idPartido <= 0 || $idUsuario <= 0 || !is_array($ratings)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Datos inválidos para calificar']);
+            return;
+        }
+
+        try {
+            $partido = Partido::getById($idPartido);
+            if (!$partido) {
+                throw new InvalidArgumentException('Partido no encontrado');
+            }
+            if (($partido['estado'] ?? '') !== 'completado') {
+                throw new InvalidArgumentException('Solo se pueden calificar partidos completados');
+            }
+            $esAdmin = $rolGlobal === 'admin';
+            $esManager = Equipo::esManager($idUsuario, (int)$partido['id_equipo']);
+            if (!$esAdmin && !$esManager) {
+                throw new InvalidArgumentException('Solo los managers pueden asignar notas');
+            }
+            if (empty($ratings)) {
+                throw new InvalidArgumentException('Debes enviar las notas de los jugadores');
+            }
+            $result = Partido::registrarRatingsJugadores($partido, $idUsuario, $ratings);
+            echo json_encode(['success' => true] + $result);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            error_log('Error calificar jugadores: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'No se pudieron guardar las calificaciones']);
+        }
+    }
 }

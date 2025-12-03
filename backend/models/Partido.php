@@ -890,6 +890,67 @@ class Partido {
         }
     }
 
+    public static function registrarRatingsJugadores(array $partido, int $idEvaluador, array $payload): array {
+        $idPartido = (int)($partido['id'] ?? 0);
+        if ($idPartido <= 0 || $idEvaluador <= 0) {
+            throw new InvalidArgumentException('Datos de calificación inválidos');
+        }
+        if (!is_array($payload) || empty($payload)) {
+            throw new InvalidArgumentException('No se recibieron calificaciones');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        $inscritos = self::jugadoresIdsInscritos($idPartido, $conexion);
+        if (empty($inscritos)) {
+            throw new InvalidArgumentException('El partido no tiene jugadores inscritos');
+        }
+
+        $ratingsNormalizados = [];
+        foreach ($payload as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $idEvaluado = (int)($item['id_jugador'] ?? $item['id'] ?? 0);
+            $valor = isset($item['rating']) ? (float)$item['rating'] : null;
+            if ($idEvaluado <= 0 || $valor === null) {
+                throw new InvalidArgumentException('Formato de calificación inválido');
+            }
+            if (!isset($inscritos[$idEvaluado])) {
+                throw new InvalidArgumentException('Solo puedes calificar jugadores inscritos en el partido');
+            }
+            $valor = max(1.0, min(10.0, $valor));
+            $ratingsNormalizados[$idEvaluado] = round($valor, 2);
+        }
+
+        if (count($ratingsNormalizados) !== count($inscritos)) {
+            throw new InvalidArgumentException('Debes asignar una nota a cada jugador participante');
+        }
+
+        $conexion->beginTransaction();
+        try {
+            $stmt = $conexion->prepare(
+                'INSERT INTO ratings_historial (id_partido, id_evaluador, id_evaluado, rating)
+                 VALUES (:partido, :evaluador, :evaluado, :rating)
+                 ON DUPLICATE KEY UPDATE rating = VALUES(rating), fecha_rating = CURRENT_TIMESTAMP'
+            );
+            foreach ($ratingsNormalizados as $idEvaluado => $valor) {
+                $stmt->execute([
+                    ':partido' => $idPartido,
+                    ':evaluador' => $idEvaluador,
+                    ':evaluado' => $idEvaluado,
+                    ':rating' => $valor,
+                ]);
+            }
+            $conexion->commit();
+            return ['total' => count($ratingsNormalizados)];
+        } catch (Exception $e) {
+            if ($conexion->inTransaction()) {
+                $conexion->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     public static function activarVotacion(int $idPartido): bool {
         $conexion = FutbolDB::connectDB();
         $stmt = $conexion->prepare("UPDATE partidos SET votacion_habilitada = 1 WHERE id = :id AND estado = 'completado'");

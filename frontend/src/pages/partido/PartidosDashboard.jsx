@@ -54,6 +54,21 @@ const jugadorId = (jugador) => Number(jugador?.jugador_id ?? jugador?.id_jugador
 const RIVAL_OPTION_VALUE = "__rival__";
 const VOTACION_CATEGORIAS = ["regateador", "atacante", "pasador", "defensa", "portero"];
 
+const normalizeRatingInput = (value) => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  const normalized = String(value).replace(/,/g, ".").trim();
+  if (!normalized) {
+    return null;
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const createEventoFormState = () => ({
   tipo: "gol",
   equipo: "A",
@@ -103,6 +118,8 @@ function PartidosDashboard({ user, currentTeam }) {
   const [categoriaSelections, setCategoriaSelections] = useState({});
   const [mvpSelection, setMvpSelection] = useState("");
   const [votacionSending, setVotacionSending] = useState(false);
+  const [managerRatings, setManagerRatings] = useState({});
+  const [managerRatingsSending, setManagerRatingsSending] = useState(false);
 
   const canManagePartidos = useMemo(() => Boolean(isAdmin || currentTeam?.mi_rol === "manager"), [isAdmin, currentTeam]);
   const pageLimit = 10;
@@ -278,6 +295,33 @@ function PartidosDashboard({ user, currentTeam }) {
     }
     fetchChat(detalleSeleccionado);
   }, [detalleSeleccionado, fetchChat]);
+
+  useEffect(() => {
+    if (!detalle?.jugadores?.length) {
+      setManagerRatings({});
+      return;
+    }
+    const ownRatings = {};
+    if (userId && detalle?.ratings?.length) {
+      detalle.ratings.forEach((entry) => {
+        if (Number(entry.id_evaluador) === Number(userId)) {
+          const evaluadoId = Number(entry.id_evaluado);
+          if (evaluadoId > 0) {
+            const numericRating = Number(entry.rating ?? 0);
+            ownRatings[evaluadoId] = Number.isFinite(numericRating) ? numericRating.toFixed(1) : "";
+          }
+        }
+      });
+    }
+    const nextState = {};
+    detalle.jugadores.forEach((jugador) => {
+      const id = jugadorId(jugador);
+      if (id > 0) {
+        nextState[id] = ownRatings[id] ?? "";
+      }
+    });
+    setManagerRatings(nextState);
+  }, [detalle, userId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -595,6 +639,56 @@ function PartidosDashboard({ user, currentTeam }) {
     }
   };
 
+  const handleManagerRatingChange = (idJugador, value) => {
+    setManagerRatings((prev) => ({ ...prev, [idJugador]: value }));
+  };
+
+  const handleGuardarRatings = async () => {
+    if (!detalleSeleccionado || !detalle?.jugadores?.length) {
+      return;
+    }
+    const payload = [];
+    for (const jugador of detalle.jugadores) {
+      const id = jugadorId(jugador);
+      if (id <= 0) {
+        continue;
+      }
+      const parsed = normalizeRatingInput(managerRatings[id]);
+      if (parsed === null || parsed < 1 || parsed > 10) {
+        setMessage({ type: "error", text: "Debes asignar una nota entre 1 y 10 a todos los jugadores" });
+        return;
+      }
+      payload.push({ id_jugador: id, rating: Number(parsed.toFixed(2)) });
+    }
+    if (!payload.length) {
+      setMessage({ type: "error", text: "No hay jugadores para calificar" });
+      return;
+    }
+    setManagerRatingsSending(true);
+    try {
+      const response = await fetch(`/api/index.php?action=partido_calificar_jugadores`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_partido: detalleSeleccionado,
+          id_usuario: userId,
+          rol_global: globalRole,
+          ratings: payload,
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "No se pudieron guardar las notas");
+      }
+      setMessage({ type: "success", text: "Notas guardadas" });
+      await refreshDetalle();
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setManagerRatingsSending(false);
+    }
+  };
+
   const resumenCards = stats
     ? [
         { label: "Programados", value: stats.totalProgramados },
@@ -612,10 +706,33 @@ function PartidosDashboard({ user, currentTeam }) {
     return detalle.jugadores.some((j) => jugadorId(j) === Number(userId));
   }, [detalle, userId]);
 
+  const jugadoresDetalle = detalle?.jugadores ?? [];
   const perteneceEquipo = Boolean(currentTeam?.mi_rol);
   const votacionModo = detalle?.votacion_config?.[0]?.modo ?? "todos";
   const puedeVotar = Boolean(detalle?.partido?.votacion_habilitada) && Boolean(userId) && (isAdmin || canManagePartidos || (votacionModo !== "manager" && jugadorActualInscrito));
   const puedeParticiparChat = chatMeta.open && Boolean(userId) && (isAdmin || canManagePartidos || jugadorActualInscrito || perteneceEquipo);
+  const puedeCalificarJugadores = Boolean(
+    canManagePartidos &&
+      detalle?.partido?.estado === "completado" &&
+      detalle?.partido?.votacion_habilitada &&
+      jugadoresDetalle.length
+  );
+  const managerRatingIssues = useMemo(() => {
+    if (!puedeCalificarJugadores) {
+      return jugadoresDetalle.length;
+    }
+    return jugadoresDetalle.reduce((acc, jugador) => {
+      const id = jugadorId(jugador);
+      if (id <= 0) {
+        return acc + 1;
+      }
+      const parsed = normalizeRatingInput(managerRatings[id]);
+      if (parsed === null || parsed < 1 || parsed > 10) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+  }, [jugadoresDetalle, puedeCalificarJugadores, managerRatings]);
 
   if (!currentTeamId) {
     return (
@@ -1104,7 +1221,7 @@ function PartidosDashboard({ user, currentTeam }) {
                           canSend={puedeParticiparChat}
                         />
                       </div>
-                      <div className="col-12 col-xl-6">
+                      <div className="col-12 col-xl-6 d-flex flex-column gap-3">
                         <VotacionPanel
                           jugadores={detalle.jugadores}
                           enabled={Boolean(detalle.partido?.votacion_habilitada)}
@@ -1119,6 +1236,16 @@ function PartidosDashboard({ user, currentTeam }) {
                           votosCategorias={detalle.votos_categorias}
                           votosMvp={detalle.votos_mvp}
                         />
+                        {puedeCalificarJugadores && (
+                          <ManagerRatingsPanel
+                            jugadores={detalle.jugadores}
+                            ratings={managerRatings}
+                            onRatingChange={handleManagerRatingChange}
+                            onGuardar={handleGuardarRatings}
+                            submitting={managerRatingsSending}
+                            pendientes={managerRatingIssues}
+                          />
+                        )}
                       </div>
                     </div>
                   </>
@@ -1771,6 +1898,58 @@ function VotacionPanel({
             <div className="text-muted small">Aún no hay votos.</div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ManagerRatingsPanel({ jugadores = [], ratings = {}, onRatingChange, onGuardar, submitting, pendientes = 0 }) {
+  return (
+    <div className="card panel-soft h-100">
+      <div className="card-header d-flex justify-content-between align-items-center">
+        <span className="fw-semibold">Notas del manager</span>
+        <small className="text-muted">Escala 1 - 10</small>
+      </div>
+      <div className="card-body d-flex flex-column gap-3">
+        {jugadores.length ? (
+          <div className="d-flex flex-column gap-2">
+            {jugadores.map((jugador) => {
+              const id = jugadorId(jugador);
+              const value = ratings[id] ?? "";
+              return (
+                <div key={`manager-rating-${id}`} className="d-flex align-items-center gap-2">
+                  <div className="flex-grow-1">
+                    <div className="fw-semibold">{jugador.apodo || jugador.nombre}</div>
+                    <small className="text-muted">Equipo {jugador.equipo || "-"}</small>
+                  </div>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    step="0.1"
+                    className="form-control w-auto"
+                    value={value}
+                    onChange={(e) => onRatingChange(id, e.target.value)}
+                    disabled={submitting}
+                    aria-label={`Nota para ${jugador.apodo || jugador.nombre}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-muted small">Sin jugadores para calificar.</div>
+        )}
+        {jugadores.length > 0 && (
+          <div className="d-flex flex-column flex-md-row justify-content-between gap-2 align-items-md-center">
+            <small className={pendientes ? "text-danger" : "text-muted"}>
+              {pendientes ? `${pendientes} jugador(es) sin nota válida` : "Todos los jugadores tienen nota"}
+            </small>
+            <button type="button" className="btn btn-success" onClick={onGuardar} disabled={submitting || pendientes > 0}>
+              {submitting ? "Guardando..." : "Guardar notas"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
