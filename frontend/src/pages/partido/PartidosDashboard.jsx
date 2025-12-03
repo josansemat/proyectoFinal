@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./PartidosDashboard.css";
 import PartidoLineup from "./PartidoLineup";
 
+// Icono de Cerrar (X)
+const CloseIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+);
+
 const estados = [
   { value: "todos", label: "Todos" },
   { value: "programado", label: "Programados" },
@@ -1199,19 +1204,34 @@ function PartidosDashboard({ user, currentTeam }) {
           )}
         </div>
 
-        <aside className="match-detail">
+        {/* Drawer móvil: usa clase condicional y backdrop clickable */}
+        <aside
+          className={`match-detail ${detalleSeleccionado ? 'match-detail--open' : ''}`}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              // Clic en el fondo/backdrop cierra el detalle
+              setDetalleSeleccionado(null);
+              setDetalle(null);
+            }
+          }}
+        >
           {detalleSeleccionado ? (
             <div className="match-detail__card">
               <div className="match-detail__head">
                 <div>
                   <p className="match-detail__eyebrow">Partido #{detalleSeleccionado}</p>
-                  <h3>Detalle del partido</h3>
+                  <h3 className="m-0">Detalle</h3>
                   <p>Gestiona inscripciones, equipos y registro del partido.</p>
                 </div>
+                {/* Botón cerrar visible solo en móvil */}
+                <button className="btn-close-drawer" onClick={() => { setDetalleSeleccionado(null); setDetalle(null); }}>
+                  <CloseIcon />
+                </button>
                 {detalleLoading && <span className="match-detail__meta">Cargando detalle…</span>}
               </div>
-              {detalle && detalle.partido?.id === detalleSeleccionado ? (
-                <>
+              <div className="match-detail__content-scroll">
+                {detalle && detalle.partido?.id === detalleSeleccionado ? (
+                  <>
                   <div className="match-detail__grid match-detail__grid--primary">
                     <div className="match-detail__stack">
                       <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
@@ -1312,12 +1332,13 @@ function PartidosDashboard({ user, currentTeam }) {
                     </div>
                   </div>
                 </>
-              ) : (
-                !detalleLoading && <div className="match-empty">No hay detalle para mostrar.</div>
-              )}
+                ) : (
+                  !detalleLoading && <div className="match-empty">No hay detalle para mostrar.</div>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="match-empty">
+            <div className="match-empty d-none d-lg-block">
               <p>Selecciona un partido para ver su detalle.</p>
             </div>
           )}

@@ -482,6 +482,117 @@
   flex-wrap: wrap;
 }
 
+/* --- Mobile Drawer for Details --- */
+.match-detail {
+  /* Por defecto (escritorio), es un panel normal */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  /* En escritorio grande, es flexible al lado de la lista */
+  .match-detail {
+    flex: 1;
+    min-width: 0; /* Evita desbordamientos flex */
+    max-width: none;
+  }
+}
+
+/* Comportamiento MÓVIL (Pantallas < 1024px) */
+@media (max-width: 1023px) {
+  .match-detail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1050; /* Por encima de todo */
+    background: rgba(0, 0, 0, 0.6); /* Backdrop oscuro */
+    backdrop-filter: blur(4px);
+    
+    /* Centrado / Animación */
+    display: flex;
+    justify-content: flex-end; /* Drawer sale de la derecha */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Clase activa para mostrar el drawer */
+  .match-detail.match-detail--open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* La tarjeta contenedora dentro del drawer */
+  .match-detail__card {
+    width: 100%;
+    max-width: 100%; /* Ocupa toda la pantalla en móvil muy pequeño */
+    height: 100%;
+    background: #fff;
+    border-radius: 0; /* Sin bordes redondeados en full screen */
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+    
+    /* Ajustes internos */
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* Padding manejado internamente */
+  }
+
+  /* Tablet (entre 600px y 1024px) - Drawer parcial */
+  @media (min-width: 600px) {
+    .match-detail__card {
+      max-width: 600px; /* Drawer lateral estilo tablet */
+      border-left: 1px solid var(--match-border);
+    }
+  }
+
+  .match-detail.match-detail--open .match-detail__card {
+    transform: translateX(0);
+  }
+
+  /* Cabecera pegajosa dentro del drawer móvil */
+  .match-detail__head {
+    position: sticky;
+    top: 0;
+    background: #fff; /* O var(--match-surface) */
+    z-index: 10;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--match-border);
+    margin: 0; /* Reset margins */
+    align-items: center;
+  }
+  
+  /* Contenedor scrolleable del contenido */
+  .match-detail__content-scroll {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+}
+
+/* Botón cerrar solo visible en móvil */
+.btn-close-drawer {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.5rem;
+  color: var(--match-text);
+  cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  .btn-close-drawer {
+    display: block;
+    margin-left: auto; /* Empuja a la derecha */
+  }
+}
+
 .match-detail__meta {
   color: var(--match-muted);
   font-size: 0.85rem;
