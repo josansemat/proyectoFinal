@@ -115,3 +115,22 @@
 .partidos-dashboard .detalle-sections .card {
   height: 100%;
 }
+
+.partidos-dashboard .chat-panel .chat-messages {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.partidos-dashboard .chat-panel .chat-message {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.partidos-dashboard .chat-panel .chat-message:last-child {
+  border-bottom: none;
+}
+
+.partidos-dashboard .votacion-panel select {
+  font-size: 0.95rem;
+}

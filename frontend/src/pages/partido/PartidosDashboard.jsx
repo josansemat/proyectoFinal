@@ -29,58 +29,86 @@ const emptyForm = {
   metodo_generacion: "aleatorio",
 };
 
-const normalizeDateValue = (value) => {
-  if (!value) return "";
-  return value.includes("T") ? value : value.replace(" ", "T");
-};
-
 const formatDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(normalizeDateValue(value));
-  return date.toLocaleString();
+  if (!value) return "Sin fecha";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 };
 
 const toDatetimeLocal = (value) => {
   if (!value) return "";
-  const date = new Date(normalizeDateValue(value));
-  const tzOffset = date.getTimezoneOffset();
-  date.setMinutes(date.getMinutes() - tzOffset);
-  return date.toISOString().slice(0, 16);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
 };
 
-const percent = (current, max) => {
-  if (!max) return 0;
-  return Math.min(100, Math.round((current / max) * 100));
+const percent = (value, total) => {
+  if (!total) return 0;
+  return Math.min(100, Math.round(((Number(value) || 0) / Number(total)) * 100));
 };
+
+const jugadorId = (jugador) => Number(jugador?.jugador_id ?? jugador?.id_jugador ?? jugador?.id ?? 0);
+
+const normalizeDetalle = (raw) => ({
+  ...raw,
+  jugadores: (raw?.jugadores || []).map((jugador) => ({
+    ...jugador,
+    jugador_id: jugadorId(jugador),
+  })),
+});
 
 function PartidosDashboard({ user, currentTeam }) {
-  const currentTeamId = currentTeam?.id;
-  const globalRole = user?.rol || "usuario";
-  const canManagePartidos = globalRole === "admin" || currentTeam?.mi_rol === "manager";
+  const userId = user?.id ?? null;
+  const globalRole = user?.rol_global ?? user?.rol ?? "usuario";
+  const currentTeamId = currentTeam?.id ?? null;
+  const responsableDefault = currentTeam?.id_responsable_alquiler ?? "";
+  const isAdmin = globalRole === "admin";
 
-  const [partidos, setPartidos] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [filters, setFilters] = useState({ search: "", estado: "todos" });
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [formValues, setFormValues] = useState(() => ({
-    ...emptyForm,
-    id_responsable_alquiler: user?.id || "",
-  }));
-  const [editingId, setEditingId] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [filters, setFilters] = useState({ estado: "todos", search: "" });
+  const [partidos, setPartidos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formValues, setFormValues] = useState({ ...emptyForm });
+  const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [detalleSeleccionado, setDetalleSeleccionado] = useState(null);
   const [detalle, setDetalle] = useState(null);
   const [detalleLoading, setDetalleLoading] = useState(false);
+  const [stats, setStats] = useState(null);
   const [teamRoster, setTeamRoster] = useState([]);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [inscripcionLoading, setInscripcionLoading] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const [chatMeta, setChatMeta] = useState({ open: false, close: null });
+  const [categoriaSelections, setCategoriaSelections] = useState({});
+  const [categoriaSending, setCategoriaSending] = useState(null);
+  const [mvpSelection, setMvpSelection] = useState("");
+  const [mvpSending, setMvpSending] = useState(false);
 
-  const responsableDefault = useMemo(() => user?.id ?? null, [user]);
+  const canManagePartidos = useMemo(() => Boolean(isAdmin || currentTeam?.mi_rol === "manager"), [isAdmin, currentTeam]);
+  const pageLimit = 10;
+
+  const resetForm = useCallback(() => {
+    setEditingId(null);
+    setFormValues({
+      ...emptyForm,
+      id_responsable_alquiler: responsableDefault || "",
+    });
+  }, [responsableDefault]);
+
+  useEffect(() => {
+    if (!message.text) return;
+    const timeout = setTimeout(() => setMessage({ type: "", text: "" }), 4000);
+    return () => clearTimeout(timeout);
+  }, [message]);
 
   useEffect(() => {
     setFormValues((prev) => ({
@@ -89,118 +117,12 @@ function PartidosDashboard({ user, currentTeam }) {
     }));
   }, [responsableDefault]);
 
-  useEffect(() => {
-    setPage(1);
-    setDetalleSeleccionado(null);
-    setDetalle(null);
-  }, [currentTeamId]);
-
-  const loadPartidos = useCallback(async () => {
-    if (!currentTeamId) {
-      setPartidos([]);
-      setStats(null);
-      setTotalPages(1);
-      return;
-    }
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        action: "partidos_listar",
-        id_equipo: currentTeamId,
-        page: String(page),
-        limit: String(limit),
-        with_stats: "1",
-      });
-      if (filters.search) params.append("search", filters.search);
-      if (filters.estado && filters.estado !== "todos") params.append("estado", filters.estado);
-      const response = await fetch(`/api/index.php?${params.toString()}`);
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "No se pudo cargar la tabla");
-      setPartidos(data.partidos || []);
-      setStats(data.stats || null);
-      setTotalPages(data.totalPages || 1);
-    } catch (error) {
-      console.error(error);
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentTeamId, filters, page, limit]);
-
-  useEffect(() => {
-    loadPartidos();
-  }, [loadPartidos]);
-
-  useEffect(() => {
-    if (!currentTeamId) {
-      setTeamRoster([]);
-      return;
-    }
-    let ignore = false;
-    const loadRoster = async () => {
-      setRosterLoading(true);
-      try {
-        const response = await fetch(`/api/index.php?action=jugadores_equipo&id_equipo=${currentTeamId}`);
-        const data = await response.json();
-        if (!ignore) setTeamRoster(data.success ? data.jugadores || [] : []);
-      } catch (error) {
-        if (!ignore) {
-          setTeamRoster([]);
-          console.error(error);
-        }
-      } finally {
-        if (!ignore) setRosterLoading(false);
-      }
-    };
-    loadRoster();
-    return () => {
-      ignore = true;
-    };
-  }, [currentTeamId]);
-
-  const fetchDetalle = useCallback(async (partidoId) => {
-    setDetalleLoading(true);
-    try {
-      const response = await fetch(`/api/index.php?action=partido_detalle&id=${partidoId}`);
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "No se pudo obtener el detalle");
-      setDetalle({
-        ...data,
-        jugadores: data.jugadores ?? [],
-        espera: data.espera ?? [],
-        eventos: data.eventos ?? [],
-        formaciones: data.formaciones ?? [],
-        comentarios: data.comentarios ?? [],
-        ratings: data.ratings ?? [],
-        votos_categorias: data.votos_categorias ?? [],
-        votos_mvp: data.votos_mvp ?? [],
-      });
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-      setDetalleSeleccionado(null);
-      throw error;
-    } finally {
-      setDetalleLoading(false);
-    }
-  }, []);
-
-  const refreshDetalle = useCallback(async () => {
-    if (!detalleSeleccionado) return;
-    await fetchDetalle(detalleSeleccionado);
-  }, [detalleSeleccionado, fetchDetalle]);
-
-  const resetForm = useCallback(() => {
-    setFormValues({
-      ...emptyForm,
-      id_responsable_alquiler: responsableDefault || "",
-    });
-    setEditingId(null);
-  }, [responsableDefault]);
-
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const parsedValue = type === "checkbox" ? checked : value;
-    setFormValues((prev) => ({ ...prev, [name]: parsedValue }));
+    const { name, type, checked, value } = e.target;
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleFilterChange = (e) => {
@@ -209,37 +131,169 @@ function PartidosDashboard({ user, currentTeam }) {
     setPage(1);
   };
 
+  const loadPartidos = useCallback(async () => {
+    if (!currentTeamId) {
+      setPartidos([]);
+      setStats(null);
+      return;
+    }
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        action: "partidos_listar",
+        id_equipo: String(currentTeamId),
+        page: String(page),
+        limit: String(pageLimit),
+        with_stats: "1",
+      });
+      if (filters.estado && filters.estado !== "todos") {
+        params.append("estado", filters.estado);
+      }
+      if (filters.search?.trim()) {
+        params.append("search", filters.search.trim());
+      }
+      const response = await fetch(`/api/index.php?${params.toString()}`);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudieron cargar los partidos");
+      setPartidos(data.partidos || []);
+      setTotalPages(data.totalPages || 1);
+      setStats(data.stats || null);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [currentTeamId, page, filters.estado, filters.search]);
+
+  const fetchRoster = useCallback(async () => {
+    if (!currentTeamId) {
+      setTeamRoster([]);
+      return;
+    }
+    setRosterLoading(true);
+    try {
+      const response = await fetch(`/api/index.php?action=jugadores_equipo&id_equipo=${currentTeamId}`);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudo cargar la plantilla");
+      setTeamRoster(data.jugadores || []);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setRosterLoading(false);
+    }
+  }, [currentTeamId]);
+
+  const fetchDetalle = useCallback(async (idPartido) => {
+    if (!idPartido) return;
+    setDetalleLoading(true);
+    try {
+      const response = await fetch(`/api/index.php?action=partido_detalle&id=${idPartido}`);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudo cargar el detalle");
+      setDetalle(normalizeDetalle(data));
+      setCategoriaSelections({});
+      setMvpSelection("");
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setDetalleLoading(false);
+    }
+  }, []);
+
+  const fetchChat = useCallback(
+    async (idPartido) => {
+      const partidoId = idPartido ?? detalleSeleccionado;
+      if (!partidoId) return;
+      setChatLoading(true);
+      try {
+        const response = await fetch(`/api/index.php?action=partido_chat_listar&id_partido=${partidoId}`);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || "No se pudo cargar el chat");
+        setChatMessages(data.messages || []);
+        setChatMeta({ open: Boolean(data.chat_open), close: data.chat_close || null });
+      } catch (error) {
+        setMessage({ type: "error", text: error.message });
+      } finally {
+        setChatLoading(false);
+      }
+    },
+    [detalleSeleccionado]
+  );
+
+  const refreshDetalle = useCallback(async () => {
+    if (!detalleSeleccionado) return;
+    await fetchDetalle(detalleSeleccionado);
+    await fetchChat(detalleSeleccionado);
+  }, [detalleSeleccionado, fetchDetalle, fetchChat]);
+
+  useEffect(() => {
+    loadPartidos();
+  }, [loadPartidos]);
+
+  useEffect(() => {
+    fetchRoster();
+  }, [fetchRoster]);
+
+  useEffect(() => {
+    if (!currentTeamId) {
+      setPartidos([]);
+      setStats(null);
+      setDetalleSeleccionado(null);
+      setDetalle(null);
+      setChatMessages([]);
+      setChatMeta({ open: false, close: null });
+      setFilters({ estado: "todos", search: "" });
+      setPage(1);
+      setIsFormOpen(false);
+      setCategoriaSelections({});
+      setMvpSelection("");
+      setCategoriaSending(null);
+      setMvpSending(false);
+      setChatInput("");
+      resetForm();
+      return;
+    }
+    setPage(1);
+    setFilters({ estado: "todos", search: "" });
+    setIsFormOpen(false);
+    resetForm();
+  }, [currentTeamId, resetForm]);
+
+  useEffect(() => {
+    if (!detalleSeleccionado) {
+      setChatMessages([]);
+      setChatMeta({ open: false, close: null });
+      setChatInput("");
+      return;
+    }
+    fetchChat(detalleSeleccionado);
+  }, [detalleSeleccionado, fetchChat]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!currentTeamId || !userId) {
+      setMessage({ type: "error", text: "Selecciona un equipo antes de gestionar partidos" });
+      return;
+    }
     setSubmitting(true);
-    setMessage({ type: "", text: "" });
-
-    if (!currentTeamId) {
-      setSubmitting(false);
-      setMessage({ type: "error", text: "Selecciona un equipo antes de crear un partido" });
-      return;
-    }
-    if (!canManagePartidos) {
-      setSubmitting(false);
-      setMessage({ type: "error", text: "Solo los managers del equipo pueden gestionar partidos" });
-      return;
-    }
-
-    const payload = {
-      ...formValues,
-      id: editingId,
-      id_equipo: currentTeamId,
-      id_responsable_alquiler: formValues.id_responsable_alquiler || responsableDefault,
-      max_jugadores: Number(formValues.max_jugadores) || 0,
-      goles_equipo_A: Number(formValues.goles_equipo_A) || 0,
-      goles_equipo_B: Number(formValues.goles_equipo_B) || 0,
-      id_usuario: user?.id,
-      rol_global: globalRole,
-    };
-
-    const action = editingId ? "partido_actualizar" : "partido_crear";
-
     try {
+      const payload = {
+        ...formValues,
+        id_equipo: currentTeamId,
+        id_usuario: userId,
+        rol_global: globalRole,
+        max_jugadores: Number(formValues.max_jugadores) || 0,
+        precio_total_pista: formValues.precio_total_pista === "" ? null : Number(formValues.precio_total_pista),
+        id_responsable_alquiler: formValues.id_responsable_alquiler ? Number(formValues.id_responsable_alquiler) : null,
+        goles_equipo_A: Number(formValues.goles_equipo_A) || 0,
+        goles_equipo_B: Number(formValues.goles_equipo_B) || 0,
+        equipos_generados: Boolean(formValues.equipos_generados),
+        votacion_habilitada: Boolean(formValues.votacion_habilitada),
+      };
+      const action = editingId ? "partido_actualizar" : "partido_crear";
+      if (editingId) {
+        payload.id = editingId;
+      }
       const response = await fetch(`/api/index.php?action=${action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,6 +303,7 @@ function PartidosDashboard({ user, currentTeam }) {
       if (!data.success) throw new Error(data.error || "No se pudo guardar el partido");
       setMessage({ type: "success", text: editingId ? "Partido actualizado" : "Partido creado" });
       resetForm();
+      setIsFormOpen(false);
       await loadPartidos();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -287,7 +342,7 @@ function PartidosDashboard({ user, currentTeam }) {
       const response = await fetch(`/api/index.php?action=partido_eliminar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, id_usuario: userId, rol_global: globalRole }),
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || "No se pudo eliminar");
@@ -295,6 +350,13 @@ function PartidosDashboard({ user, currentTeam }) {
       if (detalleSeleccionado === id) {
         setDetalleSeleccionado(null);
         setDetalle(null);
+        setChatMessages([]);
+        setChatMeta({ open: false, close: null });
+        setChatInput("");
+        setCategoriaSelections({});
+        setMvpSelection("");
+        setCategoriaSending(null);
+        setMvpSending(false);
       }
       await loadPartidos();
     } catch (error) {
@@ -307,13 +369,25 @@ function PartidosDashboard({ user, currentTeam }) {
       if (detalleSeleccionado === partido.id) {
         setDetalleSeleccionado(null);
         setDetalle(null);
+        setChatMessages([]);
+        setChatMeta({ open: false, close: null });
+        setChatInput("");
+        setCategoriaSelections({});
+        setMvpSelection("");
+        setCategoriaSending(null);
+        setMvpSending(false);
         return;
       }
       setDetalleSeleccionado(partido.id);
       setDetalle(null);
+      setCategoriaSelections({});
+      setMvpSelection("");
+      setCategoriaSending(null);
+      setMvpSending(false);
       fetchDetalle(partido.id);
+      fetchChat(partido.id);
     },
-    [detalleSeleccionado, fetchDetalle]
+    [detalleSeleccionado, fetchDetalle, fetchChat]
   );
 
   const handleInscribirJugador = async (jugadorId) => {
@@ -326,7 +400,12 @@ function PartidosDashboard({ user, currentTeam }) {
       const response = await fetch(`/api/index.php?action=partido_inscribir`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_partido: detalleSeleccionado, id_jugador: jugadorId }),
+        body: JSON.stringify({
+          id_partido: detalleSeleccionado,
+          id_jugador: jugadorId,
+          id_usuario: userId,
+          rol_global: globalRole,
+        }),
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || "No se pudo inscribir al jugador");
@@ -350,7 +429,12 @@ function PartidosDashboard({ user, currentTeam }) {
       const response = await fetch(`/api/index.php?action=partido_desinscribir`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_partido: detalleSeleccionado, id_jugador: jugadorId }),
+        body: JSON.stringify({
+          id_partido: detalleSeleccionado,
+          id_jugador: jugadorId,
+          id_usuario: userId,
+          rol_global: globalRole,
+        }),
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || "No se pudo quitar al jugador");
@@ -369,11 +453,139 @@ function PartidosDashboard({ user, currentTeam }) {
     const response = await fetch(`/api/index.php?action=partido_guardar_formacion`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_partido: detalleSeleccionado, ...payload }),
+      body: JSON.stringify({ id_partido: detalleSeleccionado, id_usuario: userId, rol_global: globalRole, ...payload }),
     });
     const data = await response.json();
     if (!data.success) throw new Error(data.error || "No se pudo guardar la formación");
     await refreshDetalle();
+  };
+
+  const handleSendChat = async () => {
+    if (!detalleSeleccionado || !chatInput.trim()) return;
+    setChatSending(true);
+    try {
+      const response = await fetch(`/api/index.php?action=partido_chat_publicar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_partido: detalleSeleccionado,
+          id_usuario: userId,
+          rol_global: globalRole,
+          mensaje: chatInput.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudo enviar el mensaje");
+      setChatInput("");
+      await fetchChat();
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setChatSending(false);
+    }
+  };
+
+  const handleActivarVotacion = async () => {
+    if (!detalleSeleccionado) return;
+    try {
+      const response = await fetch(`/api/index.php?action=partido_activar_votacion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_partido: detalleSeleccionado, id_usuario: userId, rol_global: globalRole }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudo habilitar la votación");
+      setMessage({ type: "success", text: "Votaciones habilitadas" });
+      await refreshDetalle();
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    }
+  };
+
+  const handleRegistrarEvento = async (payload) => {
+    if (!detalleSeleccionado) throw new Error("Selecciona un partido antes de añadir eventos");
+    const response = await fetch(`/api/index.php?action=partido_registrar_evento`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_partido: detalleSeleccionado, id_usuario: userId, rol_global: globalRole, ...payload }),
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "No se pudo registrar el evento");
+    setMessage({ type: "success", text: "Evento registrado" });
+    await refreshDetalle();
+  };
+
+  const handleEliminarEvento = async (eventoId) => {
+    if (!detalleSeleccionado) return;
+    const response = await fetch(`/api/index.php?action=partido_eliminar_evento`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_partido: detalleSeleccionado, id_evento: eventoId, id_usuario: userId, rol_global: globalRole }),
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "No se pudo eliminar el evento");
+    setMessage({ type: "success", text: "Evento eliminado" });
+    await refreshDetalle();
+  };
+
+  const handleVotarCategoria = async (categoria) => {
+    if (!detalleSeleccionado) return;
+    const seleccionado = categoriaSelections[categoria];
+    if (!seleccionado) {
+      setMessage({ type: "error", text: "Selecciona un jugador antes de votar" });
+      return;
+    }
+    setCategoriaSending(categoria);
+    try {
+      const response = await fetch(`/api/index.php?action=partido_votar_categoria`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_partido: detalleSeleccionado,
+          id_usuario: userId,
+          rol_global: globalRole,
+          id_votado: Number(seleccionado),
+          categoria,
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudo registrar el voto");
+      setMessage({ type: "success", text: "Voto registrado" });
+      await refreshDetalle();
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setCategoriaSending(null);
+    }
+  };
+
+  const handleVotarMvp = async () => {
+    if (!detalleSeleccionado) return;
+    if (!mvpSelection) {
+      setMessage({ type: "error", text: "Selecciona un jugador para el MVP" });
+      return;
+    }
+    setMvpSending(true);
+    try {
+      const response = await fetch(`/api/index.php?action=partido_votar_mvp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_partido: detalleSeleccionado,
+          id_usuario: userId,
+          rol_global: globalRole,
+          id_votado: Number(mvpSelection),
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || "No se pudo registrar el voto");
+      setMessage({ type: "success", text: "Voto MVP registrado" });
+      await refreshDetalle();
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setMvpSending(false);
+    }
   };
 
   const resumenCards = stats
@@ -387,6 +599,16 @@ function PartidosDashboard({ user, currentTeam }) {
     : [];
 
   const proximo = stats?.proximoPartido;
+
+  const jugadorActualInscrito = useMemo(() => {
+    if (!detalle?.jugadores || !userId) return false;
+    return detalle.jugadores.some((j) => jugadorId(j) === Number(userId));
+  }, [detalle, userId]);
+
+  const perteneceEquipo = Boolean(currentTeam?.mi_rol);
+  const votacionModo = detalle?.votacion_config?.[0]?.modo ?? "todos";
+  const puedeVotar = Boolean(detalle?.partido?.votacion_habilitada) && Boolean(userId) && (isAdmin || canManagePartidos || (votacionModo !== "manager" && jugadorActualInscrito));
+  const puedeParticiparChat = chatMeta.open && Boolean(userId) && (isAdmin || canManagePartidos || jugadorActualInscrito || perteneceEquipo);
 
   if (!currentTeamId) {
     return (
@@ -734,15 +956,19 @@ function PartidosDashboard({ user, currentTeam }) {
                       </td>
                       <td className="text-end">
                         <div className="btn-group btn-group-sm">
-                          <button type="button" className="btn btn-outline-primary" onClick={() => handleEdit(partido)}>
-                            Editar
-                          </button>
+                          {canManagePartidos && (
+                            <button type="button" className="btn btn-outline-primary" onClick={() => handleEdit(partido)}>
+                              Editar
+                            </button>
+                          )}
                           <button type="button" className="btn btn-outline-secondary" onClick={() => handleDetalle(partido)}>
                             {detalleSeleccionado === partido.id ? "Ocultar" : "Detalle"}
                           </button>
-                          <button type="button" className="btn btn-outline-danger" onClick={() => handleDelete(partido.id)}>
-                            Eliminar
-                          </button>
+                          {canManagePartidos && (
+                            <button type="button" className="btn btn-outline-danger" onClick={() => handleDelete(partido.id)}>
+                              Eliminar
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -787,6 +1013,11 @@ function PartidosDashboard({ user, currentTeam }) {
                     <div className="row g-4 detalle-sections">
                       <div className="col-12 col-xl-4 d-flex flex-column gap-3">
                         <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
+                        {canManagePartidos && detalle.partido?.estado === 'completado' && !detalle.partido?.votacion_habilitada && (
+                          <button type="button" className="btn btn-sm btn-warning" onClick={handleActivarVotacion}>
+                            Habilitar votaciones
+                          </button>
+                        )}
                         <InscripcionesPanel
                           jugadores={detalle.jugadores}
                           roster={teamRoster}
@@ -796,33 +1027,27 @@ function PartidosDashboard({ user, currentTeam }) {
                           rosterLoading={rosterLoading}
                           onAdd={handleInscribirJugador}
                           onRemove={handleDesinscribirJugador}
+                          canManage={canManagePartidos}
+                          currentUserId={userId}
                         />
                         <ListaEsperaPanel espera={detalle.espera} />
                       </div>
                       <div className="col-12 col-xl-8">
-                        <PartidoLineup detalle={detalle} onSave={handleGuardarFormacion} />
+                        <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
                       </div>
                     </div>
                     <div className="row g-4 mt-1">
-                      <div className="col-12 col-lg-4">
-                        <SimpleListCard
-                          title="Eventos"
-                          items={detalle.eventos}
-                          emptyText="Sin eventos registrados"
-                          getKey={(item) => `event-${item.id}`}
-                          renderItem={(ev) => (
-                            <div className="d-flex flex-column">
-                              <div className="fw-semibold text-capitalize">{ev.tipo}</div>
-                              <small className="text-muted">
-                                {ev.jugador_nombre}
-                                {ev.asistente_nombre && ` · asist. ${ev.asistente_nombre}`}
-                                {ev.minuto && ` · ${ev.minuto}'`}
-                              </small>
-                            </div>
-                          )}
+                      <div className="col-12 col-xl-4">
+                        <EventosPanel
+                          eventos={detalle.eventos}
+                          jugadores={detalle.jugadores}
+                          onAdd={handleRegistrarEvento}
+                          onDelete={handleEliminarEvento}
+                          canManage={canManagePartidos}
+                          estado={detalle.partido?.estado}
                         />
                       </div>
-                      <div className="col-12 col-lg-4">
+                      <div className="col-12 col-xl-4">
                         <SimpleListCard
                           title="Comentarios"
                           items={detalle.comentarios}
@@ -836,7 +1061,7 @@ function PartidosDashboard({ user, currentTeam }) {
                           )}
                         />
                       </div>
-                      <div className="col-12 col-lg-4">
+                      <div className="col-12 col-xl-4">
                         <SimpleListCard
                           title="Ratings & Votos"
                           items={[
@@ -858,7 +1083,7 @@ function PartidosDashboard({ user, currentTeam }) {
                             if (item.__type === "categoria") {
                               return (
                                 <div>
-                                  <div className="fw-semibold">{item.categoria}</div>
+                                  <div className="fw-semibold text-capitalize">{item.categoria}</div>
                                   <small className="text-muted">
                                     {item.votado_nombre} · por {item.votante_nombre}
                                   </small>
@@ -872,6 +1097,39 @@ function PartidosDashboard({ user, currentTeam }) {
                               </div>
                             );
                           }}
+                        />
+                      </div>
+                    </div>
+                    <div className="row g-4 mt-1">
+                      <div className="col-12 col-xl-6">
+                        <PartidoChatPanel
+                          messages={chatMessages}
+                          loading={chatLoading}
+                          chatOpen={chatMeta.open}
+                          chatClose={chatMeta.close}
+                          input={chatInput}
+                          sending={chatSending}
+                          onInputChange={setChatInput}
+                          onSend={handleSendChat}
+                          canSend={puedeParticiparChat}
+                        />
+                      </div>
+                      <div className="col-12 col-xl-6">
+                        <VotacionPanel
+                          jugadores={detalle.jugadores}
+                          enabled={Boolean(detalle.partido?.votacion_habilitada)}
+                          modo={votacionModo}
+                          puedeVotar={puedeVotar}
+                          selections={categoriaSelections}
+                          onSelectionChange={setCategoriaSelections}
+                          categoriaSending={categoriaSending}
+                          onVotarCategoria={handleVotarCategoria}
+                          mvpSelection={mvpSelection}
+                          onMvpSelectionChange={setMvpSelection}
+                          onVotarMvp={handleVotarMvp}
+                          mvpSending={mvpSending}
+                          votosCategorias={detalle.votos_categorias}
+                          votosMvp={detalle.votos_mvp}
                         />
                       </div>
                     </div>
@@ -932,12 +1190,21 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
   );
 }
 
-function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loading, rosterLoading, onAdd, onRemove }) {
+function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loading, rosterLoading, onAdd, onRemove, canManage, currentUserId }) {
   const [selected, setSelected] = useState("");
   const disponibles = useMemo(
-    () => roster.filter((p) => !jugadores.some((j) => Number(j.id) === Number(p.id))),
+    () => roster.filter((p) => !jugadores.some((j) => jugadorId(j) === Number(p.id))),
     [roster, jugadores]
   );
+  const isSelfInscrito = currentUserId ? jugadores.some((j) => jugadorId(j) === Number(currentUserId)) : false;
+  const handleSelfToggle = () => {
+    if (!currentUserId) return;
+    if (isSelfInscrito) {
+      onRemove(currentUserId);
+    } else {
+      onAdd(currentUserId);
+    }
+  };
 
   const handleAdd = () => {
     if (!selected) return;
@@ -957,24 +1224,39 @@ function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loa
         </div>
       </div>
       <div className="card-body">
-        <div className="d-flex gap-2 mb-3">
-          <select
-            className="form-select"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            disabled={loading || rosterLoading || !disponibles.length}
-          >
-            <option value="">Selecciona jugador</option>
-            {disponibles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.apodo || p.nombre}
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-primary" type="button" onClick={handleAdd} disabled={!selected || loading}>
-            Agregar
-          </button>
-        </div>
+        {canManage ? (
+          <div className="d-flex gap-2 mb-3">
+            <select
+              className="form-select"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              disabled={loading || rosterLoading || !disponibles.length}
+            >
+              <option value="">Selecciona jugador</option>
+              {disponibles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.apodo || p.nombre}
+                </option>
+              ))}
+            </select>
+            <button className="btn btn-primary" type="button" onClick={handleAdd} disabled={!selected || loading}>
+              Agregar
+            </button>
+          </div>
+        ) : (
+          currentUserId && (
+            <div className="d-flex gap-2 mb-3">
+              <button
+                className={`btn ${isSelfInscrito ? "btn-outline-danger" : "btn-primary"}`}
+                type="button"
+                onClick={handleSelfToggle}
+                disabled={loading}
+              >
+                {isSelfInscrito ? "Salir del partido" : "Inscribirme"}
+              </button>
+            </div>
+          )
+        )}
         <div className="inscritos-table">
           {jugadores.length ? (
             jugadores.map((j) => (
@@ -985,9 +1267,16 @@ function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loa
                     Equipo {j.equipo || "-"} · Rating {Number(j.rating_habilidad ?? 0).toFixed(1)}
                   </small>
                 </div>
-                <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => onRemove(j.id)} disabled={loading}>
-                  Quitar
-                </button>
+                {(canManage || jugadorId(j) === Number(currentUserId)) && (
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    type="button"
+                    onClick={() => onRemove(jugadorId(j))}
+                    disabled={loading}
+                  >
+                    {jugadorId(j) === Number(currentUserId) ? "Salir" : "Quitar"}
+                  </button>
+                )}
               </div>
             ))
           ) : (
@@ -1016,6 +1305,315 @@ function ListaEsperaPanel({ espera }) {
         ) : (
           <div className="text-muted small">Sin jugadores en espera.</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function EventosPanel({ eventos = [], jugadores = [], onAdd, onDelete, canManage, estado }) {
+  const [form, setForm] = useState({ tipo: "gol", equipo: "A", id_jugador: "", id_asistente: "", minuto: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [localError, setLocalError] = useState("");
+  const estadoPermiteEventos = ["en_curso", "completado"].includes(estado);
+  const jugadorOptions = jugadores.map((j) => ({ value: jugadorId(j), label: j.apodo || j.nombre }));
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.id_jugador) {
+      setLocalError("Selecciona un jugador");
+      return;
+    }
+    setSubmitting(true);
+    setLocalError("");
+    try {
+      await onAdd({
+        tipo: form.tipo,
+        equipo: form.equipo,
+        id_jugador: Number(form.id_jugador),
+        id_asistente: form.id_asistente ? Number(form.id_asistente) : null,
+        minuto: form.minuto ? Number(form.minuto) : null,
+      });
+      setForm((prev) => ({ ...prev, id_jugador: "", id_asistente: "", minuto: "" }));
+    } catch (error) {
+      setLocalError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await onDelete(id);
+    } catch (error) {
+      setLocalError(error.message);
+    }
+  };
+
+  return (
+    <div className="card panel-soft h-100">
+      <div className="card-header d-flex justify-content-between align-items-center">
+        <span className="fw-semibold">Eventos</span>
+        {estado && <small className="text-muted text-capitalize">Estado: {estado.replace("_", " ")}</small>}
+      </div>
+      <div className="card-body d-flex flex-column gap-3">
+        {canManage && estadoPermiteEventos ? (
+          <form className="row g-2" onSubmit={handleSubmit}>
+            <div className="col-6">
+              <label className="form-label small mb-1">Tipo</label>
+              <select className="form-select" name="tipo" value={form.tipo} onChange={handleChange}>
+                <option value="gol">Gol</option>
+                <option value="autogol">Autogol</option>
+                <option value="tarjeta_amarilla">Tarjeta amarilla</option>
+                <option value="tarjeta_roja">Tarjeta roja</option>
+              </select>
+            </div>
+            <div className="col-6">
+              <label className="form-label small mb-1">Equipo</label>
+              <select className="form-select" name="equipo" value={form.equipo} onChange={handleChange}>
+                <option value="A">Equipo A</option>
+                <option value="B">Equipo B</option>
+              </select>
+            </div>
+            <div className="col-12">
+              <label className="form-label small mb-1">Jugador</label>
+              <select className="form-select" name="id_jugador" value={form.id_jugador} onChange={handleChange}>
+                <option value="">Selecciona jugador</option>
+                {jugadorOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12">
+              <label className="form-label small mb-1">Asistente (opcional)</label>
+              <select className="form-select" name="id_asistente" value={form.id_asistente} onChange={handleChange}>
+                <option value="">Sin asistente</option>
+                {jugadorOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-6">
+              <label className="form-label small mb-1">Minuto</label>
+              <input type="number" min="0" max="120" name="minuto" className="form-control" value={form.minuto} onChange={handleChange} />
+            </div>
+            <div className="col-6 d-flex align-items-end">
+              <button type="submit" className="btn btn-primary w-100" disabled={submitting}>
+                {submitting ? "Guardando..." : "Registrar"}
+              </button>
+            </div>
+            {localError && (
+              <div className="col-12">
+                <div className="alert alert-danger py-2 mb-0">{localError}</div>
+              </div>
+            )}
+          </form>
+        ) : (
+          <div className="alert alert-light border mb-0">Los eventos solo pueden registrarse por el manager cuando el partido está en curso o finalizado.</div>
+        )}
+        <div className="detalle-list flex-grow-1 overflow-auto">
+          {eventos.length ? (
+            eventos.map((ev) => (
+              <div key={ev.id} className="d-flex justify-content-between align-items-start py-2 border-bottom">
+                <div>
+                  <div className="fw-semibold text-capitalize">{ev.tipo} · Equipo {ev.equipo}</div>
+                  <small className="text-muted">
+                    {ev.jugador_nombre}
+                    {ev.asistente_nombre && ` · asist. ${ev.asistente_nombre}`}
+                    {ev.minuto && ` · ${ev.minuto}'`}
+                  </small>
+                </div>
+                {canManage && (
+                  <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(ev.id)}>
+                    Borrar
+                  </button>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-muted small">Sin eventos registrados.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PartidoChatPanel({ messages, loading, chatOpen, chatClose, input, onInputChange, onSend, sending, canSend }) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSend();
+  };
+  const cierreDate = chatClose ? new Date(chatClose) : null;
+  const cierreTexto = cierreDate && !Number.isNaN(cierreDate.getTime()) ? cierreDate.toLocaleString() : null;
+
+  return (
+    <div className="card panel-soft h-100 chat-panel">
+      <div className="card-header d-flex justify-content-between align-items-center">
+        <span className="fw-semibold">Chat del partido</span>
+        {cierreTexto && <small className="text-muted">Cierra: {cierreTexto}</small>}
+      </div>
+      <div className="card-body d-flex flex-column gap-3">
+        <div className="chat-messages flex-grow-1">
+          {loading ? (
+            <div className="text-muted small">Cargando chat...</div>
+          ) : messages.length ? (
+            messages.map((msg) => (
+              <div key={msg.id} className="chat-message">
+                <div className="fw-semibold">{msg.apodo || msg.nombre || "Jugador"}</div>
+                <small className="text-muted">{new Date(msg.fecha_creacion).toLocaleString()}</small>
+                <p className="mb-0">{msg.comentario}</p>
+              </div>
+            ))
+          ) : (
+            <div className="text-muted small">Aún no hay mensajes.</div>
+          )}
+        </div>
+        {chatOpen ? (
+          canSend ? (
+            <form className="d-flex gap-2" onSubmit={handleSubmit}>
+              <input
+                type="text"
+                className="form-control"
+                value={input}
+                onChange={(e) => onInputChange(e.target.value)}
+                placeholder="Escribe un mensaje"
+                disabled={sending}
+              />
+              <button type="submit" className="btn btn-primary" disabled={sending || !input.trim()}>
+                {sending ? "Enviando..." : "Enviar"}
+              </button>
+            </form>
+          ) : (
+            <div className="alert alert-warning py-2 mb-0">No tienes permisos para escribir en este chat.</div>
+          )
+        ) : (
+          <div className="alert alert-secondary py-2 mb-0">El chat está cerrado para este partido.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VotacionPanel({
+  jugadores = [],
+  enabled,
+  modo,
+  puedeVotar,
+  selections,
+  onSelectionChange,
+  categoriaSending,
+  onVotarCategoria,
+  mvpSelection,
+  onMvpSelectionChange,
+  onVotarMvp,
+  mvpSending,
+  votosCategorias = [],
+  votosMvp = [],
+}) {
+  const categorias = ["regateador", "atacante", "pasador", "defensa", "portero"];
+  const jugadorOptions = jugadores.map((j) => ({ value: jugadorId(j), label: j.apodo || j.nombre }));
+  const resumenVotos = votosCategorias.reduce((acc, voto) => {
+    acc[voto.categoria] = (acc[voto.categoria] || 0) + 1;
+    return acc;
+  }, {});
+
+  const handleCategoriaChange = (categoria, value) => {
+    onSelectionChange((prev) => ({ ...prev, [categoria]: value }));
+  };
+
+  return (
+    <div className="card panel-soft h-100 votacion-panel">
+      <div className="card-header d-flex justify-content-between align-items-center">
+        <span className="fw-semibold">Votaciones</span>
+        <small className="text-muted">Modo: {modo === "manager" ? "Solo manager" : "Todos los jugadores"}</small>
+      </div>
+      <div className="card-body d-flex flex-column gap-3">
+        {!enabled && <div className="alert alert-light border mb-0">Las votaciones se habilitarán una vez el manager las active.</div>}
+        {enabled && (
+          puedeVotar ? (
+            <div className="d-flex flex-column gap-3">
+              {categorias.map((categoria) => (
+                <div key={categoria} className="d-flex gap-2 align-items-end">
+                  <div className="flex-grow-1">
+                    <label className="form-label small mb-1 text-capitalize">{categoria}</label>
+                    <select
+                      className="form-select"
+                      value={selections[categoria] ?? ""}
+                      onChange={(e) => handleCategoriaChange(categoria, e.target.value)}
+                      disabled={categoriaSending === categoria || mvpSending}
+                    >
+                      <option value="">Selecciona jugador</option>
+                      {jugadorOptions.map((opt) => (
+                        <option key={`${categoria}-${opt.value}`} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    disabled={!selections[categoria] || categoriaSending === categoria}
+                    onClick={() => onVotarCategoria(categoria)}
+                  >
+                    {categoriaSending === categoria ? "Guardando..." : "Votar"}
+                  </button>
+                </div>
+              ))}
+              <div className="d-flex gap-2 align-items-end">
+                <div className="flex-grow-1">
+                  <label className="form-label small mb-1">MVP</label>
+                  <select
+                    className="form-select"
+                    value={mvpSelection}
+                    onChange={(e) => onMvpSelectionChange(e.target.value)}
+                    disabled={mvpSending}
+                  >
+                    <option value="">Selecciona jugador</option>
+                    {jugadorOptions.map((opt) => (
+                      <option key={`mvp-${opt.value}`} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button type="button" className="btn btn-primary" disabled={!mvpSelection || mvpSending} onClick={onVotarMvp}>
+                  {mvpSending ? "Guardando..." : "Votar MVP"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="alert alert-warning mb-0">No tienes permisos para votar en este partido.</div>
+          )
+        )}
+        <div>
+          <h6 className="small text-uppercase text-muted mb-2">Resumen</h6>
+          {enabled ? (
+            <ul className="detalle-list mb-0">
+              {categorias.map((categoria) => (
+                <li key={`res-${categoria}`} className="d-flex justify-content-between">
+                  <span className="text-capitalize">{categoria}</span>
+                  <span className="fw-semibold">{resumenVotos[categoria] ?? 0}</span>
+                </li>
+              ))}
+              <li className="d-flex justify-content-between">
+                <span>MVP</span>
+                <span className="fw-semibold">{votosMvp.length}</span>
+              </li>
+            </ul>
+          ) : (
+            <div className="text-muted small">Aún no hay votos.</div>
+          )}
+        </div>
       </div>
     </div>
   );

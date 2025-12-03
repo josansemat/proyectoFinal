@@ -34,6 +34,8 @@ const shortName = (player) => {
 
 const ratingValue = (player) => Number(player?.rating_habilidad ?? player?.rating ?? 0);
 
+const jugadorId = (player) => Number(player?.jugadorId ?? player?.id_jugador ?? player?.id ?? 0);
+
 const buildSlots = (mode, formation) => {
   const catalog = FORMATIONS[mode] ?? FORMATIONS["7"];
   const selected = catalog.find((f) => f.value === formation) ?? catalog[0];
@@ -64,11 +66,15 @@ const buildAssignmentsFromRows = (rows, mode, formation) => {
   return assignments;
 };
 
-function PartidoLineup({ detalle, onSave }) {
-  const jugadores = detalle?.jugadores ?? [];
+function PartidoLineup({ detalle, onSave, canEdit }) {
+  const jugadores = useMemo(
+    () => (detalle?.jugadores ?? []).map((j) => ({ ...j, jugadorId: jugadorId(j) })),
+    [detalle]
+  );
   const formacionesDb = detalle?.formaciones ?? [];
   const configDb = detalle?.formacion_config ?? [];
   const partido = detalle?.partido ?? null;
+  const readOnly = !canEdit;
 
   const [selectedTeam, setSelectedTeam] = useState("A");
   const [mode, setMode] = useState("7");
@@ -132,7 +138,7 @@ function PartidoLineup({ detalle, onSave }) {
 
   const jugadoresById = useMemo(() => {
     const map = new Map();
-    jugadores.forEach((j) => map.set(Number(j.id), j));
+    jugadores.forEach((j) => map.set(j.jugadorId, j));
     return map;
   }, [jugadores]);
 
@@ -147,7 +153,7 @@ function PartidoLineup({ detalle, onSave }) {
   }, [assignments]);
 
   const benchPlayers = useMemo(
-    () => jugadores.filter((j) => !usedPlayers.has(Number(j.id))),
+    () => jugadores.filter((j) => !usedPlayers.has(j.jugadorId)),
     [jugadores, usedPlayers]
   );
 
@@ -177,6 +183,7 @@ function PartidoLineup({ detalle, onSave }) {
   };
 
   const handleDropOnSlot = (e, slotId) => {
+    if (readOnly) return;
     e.preventDefault();
     const playerId = parseInt(e.dataTransfer.getData("text/plain"), 10);
     if (!playerId) return;
@@ -190,6 +197,7 @@ function PartidoLineup({ detalle, onSave }) {
   };
 
   const handleDropOnBench = (e) => {
+    if (readOnly) return;
     e.preventDefault();
     const playerId = parseInt(e.dataTransfer.getData("text/plain"), 10);
     if (!playerId) return;
@@ -197,11 +205,13 @@ function PartidoLineup({ detalle, onSave }) {
   };
 
   const allowDrop = (e) => {
+    if (readOnly) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
 
   const handleChangeMode = (e) => {
+    if (readOnly) return;
     const newMode = e.target.value;
     const defaultFormation = FORMATIONS[newMode][0].value;
     setMode(newMode);
@@ -210,13 +220,14 @@ function PartidoLineup({ detalle, onSave }) {
   };
 
   const handleChangeFormation = (e) => {
+    if (readOnly) return;
     const value = e.target.value;
     setFormationByTeam((prev) => ({ ...prev, [selectedTeam]: value }));
     setAssignments((prev) => ({ ...prev, [selectedTeam]: {} }));
   };
 
   const handleSave = async () => {
-    if (!onSave) return;
+    if (!onSave || readOnly) return;
     const grid = [];
     slots.forEach((slot) => {
       const playerId = assignments[selectedTeam]?.[slot.id];
@@ -247,7 +258,7 @@ function PartidoLineup({ detalle, onSave }) {
         <div className="card-body gap-3 d-flex flex-wrap align-items-end">
           <div>
             <label className="form-label mb-1">Modalidad</label>
-            <select className="form-select" value={mode} onChange={handleChangeMode}>
+            <select className="form-select" value={mode} onChange={handleChangeMode} disabled={readOnly}>
               <option value="11">Fútbol 11</option>
               <option value="7">Fútbol 7</option>
               <option value="5">Fútbol Sala</option>
@@ -255,7 +266,7 @@ function PartidoLineup({ detalle, onSave }) {
           </div>
           <div>
             <label className="form-label mb-1">Formación</label>
-            <select className="form-select" value={formationByTeam[selectedTeam]} onChange={handleChangeFormation}>
+            <select className="form-select" value={formationByTeam[selectedTeam]} onChange={handleChangeFormation} disabled={readOnly}>
               {FORMATIONS[mode].map((f) => (
                 <option key={f.value} value={f.value}>{f.value}</option>
               ))}
@@ -264,15 +275,15 @@ function PartidoLineup({ detalle, onSave }) {
           <div>
             <label className="form-label mb-1">Equipo</label>
             <div className="btn-group" role="group">
-              <input type="radio" className="btn-check" name="teamLineup" id="teamA" autoComplete="off" checked={selectedTeam === 'A'} onChange={() => setSelectedTeam('A')} />
+              <input type="radio" className="btn-check" name="teamLineup" id="teamA" autoComplete="off" checked={selectedTeam === 'A'} onChange={() => !readOnly && setSelectedTeam('A')} disabled={readOnly} />
               <label className="btn btn-outline-primary" htmlFor="teamA">Equipo A</label>
-              <input type="radio" className="btn-check" name="teamLineup" id="teamB" autoComplete="off" checked={selectedTeam === 'B'} onChange={() => setSelectedTeam('B')} />
+              <input type="radio" className="btn-check" name="teamLineup" id="teamB" autoComplete="off" checked={selectedTeam === 'B'} onChange={() => !readOnly && setSelectedTeam('B')} disabled={readOnly} />
               <label className="btn btn-outline-primary" htmlFor="teamB">Equipo B</label>
             </div>
           </div>
           <div className="ms-auto d-flex gap-2">
-            <button className="btn btn-outline-secondary" type="button" onClick={() => setAssignments((prev) => ({ ...prev, [selectedTeam]: {} }))}>Vaciar</button>
-            <button className="btn btn-primary" type="button" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar formación'}</button>
+            <button className="btn btn-outline-secondary" type="button" onClick={() => setAssignments((prev) => ({ ...prev, [selectedTeam]: {} }))} disabled={readOnly}>Vaciar</button>
+            <button className="btn btn-primary" type="button" onClick={handleSave} disabled={saving || readOnly}>{saving ? 'Guardando...' : 'Guardar formación'}</button>
           </div>
         </div>
         {statusMsg && (
@@ -294,6 +305,7 @@ function PartidoLineup({ detalle, onSave }) {
                 playersMap={playersMap}
                 onDropSlot={handleDropOnSlot}
                 onAllowDrop={allowDrop}
+                readOnly={readOnly}
               />
             </div>
           </div>
@@ -315,11 +327,12 @@ function PartidoLineup({ detalle, onSave }) {
                 ) : (
                   benchPlayers.map((p) => (
                     <div
-                      key={p.id}
+                      key={p.jugadorId}
                       className="player-chip"
-                      draggable
+                      draggable={!readOnly}
                       onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", String(p.id));
+                        if (readOnly) return;
+                        e.dataTransfer.setData("text/plain", String(p.jugadorId));
                         e.dataTransfer.effectAllowed = "move";
                       }}
                     >
@@ -340,7 +353,7 @@ function PartidoLineup({ detalle, onSave }) {
   );
 }
 
-function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop }) {
+function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop, readOnly }) {
   const rows = 1 + (lines?.length || 0);
   const templateRows = `repeat(${rows}, 1fr)`;
   let slotIndex = 0;
@@ -348,7 +361,7 @@ function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop }) {
 
   renderedRows.push(
     <div key="row-gk" className="pitch-row">
-      <Slot slot={slots[slotIndex++]} player={playersMap.GK} onDrop={onDropSlot} onAllowDrop={onAllowDrop} />
+      <Slot slot={slots[slotIndex++]} player={playersMap.GK} onDrop={onDropSlot} onAllowDrop={onAllowDrop} readOnly={readOnly} />
     </div>
   );
 
@@ -363,6 +376,7 @@ function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop }) {
           player={playersMap[slot.id]}
           onDrop={onDropSlot}
           onAllowDrop={onAllowDrop}
+          readOnly={readOnly}
         />
       );
     }
@@ -380,16 +394,16 @@ function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop }) {
   );
 }
 
-function Slot({ slot, player, onDrop, onAllowDrop }) {
+function Slot({ slot, player, onDrop, onAllowDrop, readOnly }) {
   const onDragStart = (e) => {
-    if (!player) return;
-    e.dataTransfer.setData("text/plain", String(player.id));
+    if (!player || readOnly) return;
+    e.dataTransfer.setData("text/plain", String(player.jugadorId));
     e.dataTransfer.effectAllowed = "move";
   };
 
   return (
-    <div className={`slot ${player ? "filled" : "empty"}`} onDrop={(e) => onDrop(e, slot.id)} onDragOver={onAllowDrop}>
-      <div className="slot-inner" draggable={!!player} onDragStart={onDragStart}>
+    <div className={`slot ${player ? "filled" : "empty"}`} onDrop={(e) => onDrop && onDrop(e, slot.id)} onDragOver={onAllowDrop}>
+      <div className="slot-inner" draggable={!!player && !readOnly} onDragStart={onDragStart}>
         <div className="slot-label">{slot.label}</div>
         {player ? (
           <>

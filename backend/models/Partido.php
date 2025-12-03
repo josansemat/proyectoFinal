@@ -10,6 +10,9 @@ class Partido {
         'f7' => ['2-3-1', '3-2-1', '2-2-2'],
         'f11' => ['4-3-3', '4-4-2', '3-5-2', '4-2-3-1', '5-3-2'],
     ];
+    private const CHAT_RETENTION_HOURS = 72;
+    private const CHAT_CLOSE_INTERVAL = '+1 day';
+    private const VOTACION_CATEGORIAS = ['regateador','atacante','pasador','defensa','portero'];
 
     private static function parseDateTime(?string $value): ?string {
         if (!$value) { return null; }
@@ -295,11 +298,36 @@ class Partido {
         return $stmt->fetchColumn();
     }
 
-    private static function jugadorPerteneceEquipo(int $idJugador, int $idEquipo): bool {
+    public static function jugadorPerteneceEquipo(int $idJugador, int $idEquipo): bool {
         $conexion = FutbolDB::connectDB();
         $stmt = $conexion->prepare('SELECT 1 FROM jugadores_equipos WHERE idjugador = :jugador AND idequipo = :equipo LIMIT 1');
         $stmt->execute([':jugador' => $idJugador, ':equipo' => $idEquipo]);
         return (bool)$stmt->fetchColumn();
+    }
+
+    private static function obtenerRelacionJugadorPartido(int $idPartido, int $idJugador, ?PDO $conexion = null): ?array {
+        if (!$conexion) {
+            $conexion = FutbolDB::connectDB();
+        }
+        $stmt = $conexion->prepare('SELECT id_jugador, equipo FROM partidos_jugadores WHERE id_partido = :partido AND id_jugador = :jugador LIMIT 1');
+        $stmt->execute([':partido' => $idPartido, ':jugador' => $idJugador]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public static function jugadorInscritoEnPartido(int $idPartido, int $idJugador): bool {
+        return (bool)self::obtenerRelacionJugadorPartido($idPartido, $idJugador);
+    }
+
+    public static function obtenerModoVotacion(int $idPartido): string {
+        if ($idPartido <= 0) {
+            return 'todos';
+        }
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare('SELECT modo FROM partidos_votacion_config WHERE id_partido = :id LIMIT 1');
+        $stmt->execute([':id' => $idPartido]);
+        $modo = $stmt->fetchColumn();
+        return in_array($modo, ['manager','todos'], true) ? $modo : 'todos';
     }
 
     private static function fetchJugadoresInscritos(int $idPartido): array {
@@ -321,6 +349,88 @@ class Partido {
             $ids[(int)$row['id_jugador']] = true;
         }
         return $ids;
+    }
+
+    private static function eliminarMensajesAntiguos(PDO $conexion): void {
+        $stmt = $conexion->prepare('DELETE FROM partidos_comentarios WHERE fecha_creacion < DATE_SUB(NOW(), INTERVAL :horas HOUR)');
+        $stmt->bindValue(':horas', self::CHAT_RETENTION_HOURS, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    private static function chatCloseDate(array $partido): ?DateTimeImmutable {
+        if (empty($partido['fecha_hora'])) {
+            return null;
+        }
+        try {
+            $fecha = new DateTimeImmutable($partido['fecha_hora']);
+            return $fecha->modify(self::CHAT_CLOSE_INTERVAL);
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    public static function chatEstaAbierto(array $partido): bool {
+        $cierre = self::chatCloseDate($partido);
+        if (!$cierre) {
+            return true;
+        }
+        return new DateTimeImmutable() <= $cierre;
+    }
+
+    public static function chatCierreIso(array $partido): ?string {
+        $cierre = self::chatCloseDate($partido);
+        return $cierre ? $cierre->format(DateTimeInterface::ATOM) : null;
+    }
+
+    public static function jugadorPuedeParticiparChat(array $partido, int $idJugador): bool {
+        $idEquipo = isset($partido['id_equipo']) ? (int)$partido['id_equipo'] : 0;
+        if ($idEquipo && self::jugadorPerteneceEquipo($idJugador, $idEquipo)) {
+            return true;
+        }
+        if (!empty($partido['id'])) {
+            return self::jugadorInscritoEnPartido((int)$partido['id'], $idJugador);
+        }
+        return false;
+    }
+
+    public static function listarChat(int $idPartido, int $limit = 100): array {
+        $limit = max(10, min(200, $limit));
+        $conexion = FutbolDB::connectDB();
+        self::eliminarMensajesAntiguos($conexion);
+        $stmt = $conexion->prepare(
+            "SELECT pc.id, pc.id_jugador, pc.comentario, pc.fecha_creacion, j.nombre, j.apodo\n             FROM partidos_comentarios pc\n             INNER JOIN jugadores j ON j.id = pc.id_jugador\n             WHERE pc.id_partido = :partido\n             ORDER BY pc.fecha_creacion DESC\n             LIMIT :limit"
+        );
+        $stmt->bindValue(':partido', $idPartido, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_reverse($rows);
+    }
+
+    public static function agregarChatMensaje(array $partido, int $idJugador, string $mensaje): array {
+        $mensaje = trim($mensaje);
+        if ($mensaje === '') {
+            throw new InvalidArgumentException('El mensaje no puede estar vacío');
+        }
+        if (!self::chatEstaAbierto($partido)) {
+            throw new InvalidArgumentException('El chat está cerrado para este partido');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare('INSERT INTO partidos_comentarios (id_partido, id_jugador, comentario) VALUES (:partido, :jugador, :mensaje)');
+        $stmt->execute([
+            ':partido' => (int)$partido['id'],
+            ':jugador' => $idJugador,
+            ':mensaje' => $mensaje,
+        ]);
+
+        $id = (int)$conexion->lastInsertId();
+        $stmtSelect = $conexion->prepare(
+            "SELECT pc.id, pc.id_jugador, pc.comentario, pc.fecha_creacion, j.nombre, j.apodo\n             FROM partidos_comentarios pc\n             INNER JOIN jugadores j ON j.id = pc.id_jugador\n             WHERE pc.id = :id"
+        );
+        $stmtSelect->execute([':id' => $id]);
+        $row = $stmtSelect->fetch(PDO::FETCH_ASSOC);
+        return $row ?: [];
     }
 
     private static function guardarAsignacionesEquipos(int $idPartido, array $equipoA, array $equipoB): void {
@@ -347,6 +457,28 @@ class Partido {
             $conexion->rollBack();
             throw $e;
         }
+    }
+
+    private static function resolverCampoMarcador(string $tipo, string $equipo): ?string {
+        if (!in_array($equipo, ['A','B'], true)) {
+            return null;
+        }
+        if ($tipo === 'gol') {
+            return $equipo === 'A' ? 'goles_equipo_A' : 'goles_equipo_B';
+        }
+        if ($tipo === 'autogol') {
+            return $equipo === 'A' ? 'goles_equipo_B' : 'goles_equipo_A';
+        }
+        return null;
+    }
+
+    private static function ajustarMarcador(PDO $conexion, int $idPartido, string $campo, int $delta): void {
+        if (!in_array($campo, ['goles_equipo_A','goles_equipo_B'], true)) {
+            return;
+        }
+        $sql = "UPDATE partidos SET $campo = CASE WHEN $campo + :delta < 0 THEN 0 ELSE $campo + :delta END WHERE id = :id";
+        $stmt = $conexion->prepare($sql);
+        $stmt->execute([':delta' => $delta, ':id' => $idPartido]);
     }
 
     public static function detalleCompleto(int $id): array {
@@ -473,7 +605,237 @@ class Partido {
             'votacion_config' => $votacionConfig,
             'votos_categorias' => $votosCategorias,
             'votos_mvp' => $votosMvp,
+            'chat_abierto' => self::chatEstaAbierto($partido),
+            'chat_cierre' => self::chatCierreIso($partido),
         ];
+    }
+
+    public static function estadoPermiteEventos(string $estado): bool {
+        return in_array($estado, ['en_curso', 'completado'], true);
+    }
+
+    private static function obtenerEventoPorId(int $id): ?array {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare(
+            "SELECT ev.*, j.nombre AS jugador_nombre, j.apodo AS jugador_apodo,\n                    ja.nombre AS asistente_nombre, ja.apodo AS asistente_apodo\n             FROM partidos_eventos ev\n             INNER JOIN jugadores j ON j.id = ev.id_jugador\n             LEFT JOIN jugadores ja ON ja.id = ev.id_asistente\n             WHERE ev.id = :id"
+        );
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public static function registrarEvento(array $partido, array $data): array {
+        $idPartido = (int)($partido['id'] ?? 0);
+        if ($idPartido <= 0) {
+            throw new InvalidArgumentException('Partido inválido');
+        }
+        $tipo = $data['tipo'] ?? 'gol';
+        $equipo = strtoupper($data['equipo'] ?? '');
+        $idJugador = (int)($data['id_jugador'] ?? 0);
+        $idAsistente = isset($data['id_asistente']) && $data['id_asistente'] !== '' ? (int)$data['id_asistente'] : null;
+        $minuto = isset($data['minuto']) && $data['minuto'] !== '' ? (int)$data['minuto'] : null;
+
+        $tiposPermitidos = ['gol','autogol','tarjeta_amarilla','tarjeta_roja'];
+        if (!in_array($tipo, $tiposPermitidos, true)) {
+            throw new InvalidArgumentException('Tipo de evento no soportado');
+        }
+        if (!in_array($equipo, ['A','B'], true)) {
+            throw new InvalidArgumentException('Equipo inválido para el evento');
+        }
+        if ($idJugador <= 0) {
+            throw new InvalidArgumentException('Jugador inválido');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        $conexion->beginTransaction();
+        try {
+            $relacionPrincipal = self::obtenerRelacionJugadorPartido($idPartido, $idJugador, $conexion);
+            if (!$relacionPrincipal) {
+                throw new InvalidArgumentException('El jugador no está inscrito en el partido');
+            }
+            if ($idAsistente) {
+                $relacionAsistente = self::obtenerRelacionJugadorPartido($idPartido, $idAsistente, $conexion);
+                if (!$relacionAsistente) {
+                    throw new InvalidArgumentException('El asistente no está inscrito en el partido');
+                }
+            }
+
+            $stmt = $conexion->prepare('INSERT INTO partidos_eventos (id_partido, id_jugador, id_asistente, equipo, tipo, minuto) VALUES (:partido, :jugador, :asistente, :equipo, :tipo, :minuto)');
+            $stmt->execute([
+                ':partido' => $idPartido,
+                ':jugador' => $idJugador,
+                ':asistente' => $idAsistente,
+                ':equipo' => $equipo,
+                ':tipo' => $tipo,
+                ':minuto' => $minuto,
+            ]);
+
+            $campo = self::resolverCampoMarcador($tipo, $equipo);
+            if ($campo) {
+                self::ajustarMarcador($conexion, $idPartido, $campo, 1);
+            }
+
+            $nuevoId = (int)$conexion->lastInsertId();
+            $conexion->commit();
+            $evento = self::obtenerEventoPorId($nuevoId);
+            if (!$evento) {
+                throw new RuntimeException('No se pudo recuperar el evento guardado');
+            }
+            return $evento;
+        } catch (Exception $e) {
+            $conexion->rollBack();
+            throw $e;
+        }
+    }
+
+    public static function eliminarEvento(int $idPartido, int $idEvento): bool {
+        $conexion = FutbolDB::connectDB();
+        $conexion->beginTransaction();
+        try {
+            $stmt = $conexion->prepare('SELECT * FROM partidos_eventos WHERE id = :id AND id_partido = :partido FOR UPDATE');
+            $stmt->execute([':id' => $idEvento, ':partido' => $idPartido]);
+            $evento = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$evento) {
+                throw new InvalidArgumentException('Evento no encontrado');
+            }
+
+            $conexion->prepare('DELETE FROM partidos_eventos WHERE id = :id')->execute([':id' => $idEvento]);
+            $campo = self::resolverCampoMarcador($evento['tipo'], $evento['equipo']);
+            if ($campo) {
+                self::ajustarMarcador($conexion, $idPartido, $campo, -1);
+            }
+            $conexion->commit();
+            return true;
+        } catch (Exception $e) {
+            $conexion->rollBack();
+            throw $e;
+        }
+    }
+
+    private static function obtenerVotoCategoriaPorId(int $id): ?array {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare(
+            "SELECT vc.*, vot.nombre AS votante_nombre, vot.apodo AS votante_apodo,
+                    vo.nombre AS votado_nombre, vo.apodo AS votado_apodo
+             FROM votos_categorias vc
+             INNER JOIN jugadores vot ON vot.id = vc.id_votante
+             INNER JOIN jugadores vo ON vo.id = vc.id_votado
+             WHERE vc.id = :id"
+        );
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    private static function obtenerVotoMvpPorId(int $id): ?array {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare(
+            "SELECT vm.*, vot.nombre AS votante_nombre, vot.apodo AS votante_apodo,
+                    vo.nombre AS votado_nombre, vo.apodo AS votado_apodo
+             FROM votos_mvp vm
+             INNER JOIN jugadores vot ON vot.id = vm.id_votante
+             INNER JOIN jugadores vo ON vo.id = vm.id_votado
+             WHERE vm.id = :id"
+        );
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public static function registrarVotoCategoria(array $partido, int $idVotante, string $categoria, int $idVotado, bool $permitirExcepcion = false): array {
+        $idPartido = (int)($partido['id'] ?? 0);
+        if ($idPartido <= 0) {
+            throw new InvalidArgumentException('Partido inválido');
+        }
+        $categoria = strtolower(trim($categoria));
+        if (!in_array($categoria, self::VOTACION_CATEGORIAS, true)) {
+            throw new InvalidArgumentException('Categoría no permitida');
+        }
+        if ($idVotante <= 0 || $idVotado <= 0) {
+            throw new InvalidArgumentException('Jugador no válido para votar');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        if (!$permitirExcepcion && !self::jugadorInscritoEnPartido($idPartido, $idVotante)) {
+            throw new InvalidArgumentException('Debes haber disputado el partido para votar');
+        }
+        if (!self::jugadorInscritoEnPartido($idPartido, $idVotado)) {
+            throw new InvalidArgumentException('Solo puedes votar a jugadores inscritos');
+        }
+
+        $conexion->beginTransaction();
+        try {
+            $conexion->prepare('DELETE FROM votos_categorias WHERE id_partido = :partido AND id_votante = :votante AND categoria = :categoria')
+                ->execute([':partido' => $idPartido, ':votante' => $idVotante, ':categoria' => $categoria]);
+
+            $stmtInsert = $conexion->prepare('INSERT INTO votos_categorias (id_partido, id_votante, id_votado, categoria) VALUES (:partido, :votante, :votado, :categoria)');
+            $stmtInsert->execute([
+                ':partido' => $idPartido,
+                ':votante' => $idVotante,
+                ':votado' => $idVotado,
+                ':categoria' => $categoria,
+            ]);
+
+            $id = (int)$conexion->lastInsertId();
+            $conexion->commit();
+            $voto = self::obtenerVotoCategoriaPorId($id);
+            if (!$voto) {
+                throw new RuntimeException('No se pudo recuperar el voto recién emitido');
+            }
+            return $voto;
+        } catch (Exception $e) {
+            $conexion->rollBack();
+            throw $e;
+        }
+    }
+
+    public static function registrarVotoMvp(array $partido, int $idVotante, int $idVotado, bool $permitirExcepcion = false): array {
+        $idPartido = (int)($partido['id'] ?? 0);
+        if ($idPartido <= 0) {
+            throw new InvalidArgumentException('Partido inválido');
+        }
+        if ($idVotante <= 0 || $idVotado <= 0) {
+            throw new InvalidArgumentException('Jugador no válido para votar');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        if (!$permitirExcepcion && !self::jugadorInscritoEnPartido($idPartido, $idVotante)) {
+            throw new InvalidArgumentException('Debes haber disputado el partido para votar');
+        }
+        if (!self::jugadorInscritoEnPartido($idPartido, $idVotado)) {
+            throw new InvalidArgumentException('Solo puedes votar a jugadores inscritos');
+        }
+
+        $conexion->beginTransaction();
+        try {
+            $conexion->prepare('DELETE FROM votos_mvp WHERE id_partido = :partido AND id_votante = :votante')
+                ->execute([':partido' => $idPartido, ':votante' => $idVotante]);
+
+            $stmtInsert = $conexion->prepare('INSERT INTO votos_mvp (id_partido, id_votante, id_votado) VALUES (:partido, :votante, :votado)');
+            $stmtInsert->execute([
+                ':partido' => $idPartido,
+                ':votante' => $idVotante,
+                ':votado' => $idVotado,
+            ]);
+
+            $id = (int)$conexion->lastInsertId();
+            $conexion->commit();
+            $voto = self::obtenerVotoMvpPorId($id);
+            if (!$voto) {
+                throw new RuntimeException('No se pudo recuperar el voto recién emitido');
+            }
+            return $voto;
+        } catch (Exception $e) {
+            $conexion->rollBack();
+            throw $e;
+        }
+    }
+
+    public static function activarVotacion(int $idPartido): bool {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare("UPDATE partidos SET votacion_habilitada = 1 WHERE id = :id AND estado = 'completado'");
+        $stmt->execute([':id' => $idPartido]);
+        return $stmt->rowCount() > 0;
     }
 
     public static function inscribirJugador(int $idPartido, int $idJugador, array $options = []): array {

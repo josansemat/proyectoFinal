@@ -152,6 +152,27 @@ switch ($action) {
     case "partido_guardar_formacion":
         $partidosController->guardarFormacion();
         break;
+    case "partido_chat_listar":
+        $partidosController->listarChat();
+        break;
+    case "partido_chat_publicar":
+        $partidosController->publicarChat();
+        break;
+    case "partido_activar_votacion":
+        $partidosController->activarVotacion();
+        break;
+    case "partido_registrar_evento":
+        $partidosController->registrarEvento();
+        break;
+    case "partido_eliminar_evento":
+        $partidosController->eliminarEvento();
+        break;
+    case "partido_votar_categoria":
+        $partidosController->votarCategoria();
+        break;
+    case "partido_votar_mvp":
+        $partidosController->votarMvp();
+        break;
 
     default:
         echo json_encode(["error" => "Invalid action"]);

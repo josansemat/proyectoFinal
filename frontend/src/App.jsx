@@ -122,20 +122,24 @@ function App() {
   // --- CORREGIDO: refrescar equipo al instante ---
   const handleTeamChange = async (team) => {
     if (!team) return;
+    const withRole = (base) => ({ ...base, mi_rol: team.mi_rol ?? base.mi_rol ?? null });
     try {
       const resp = await fetch(`/api/index.php?action=get_equipo&id=${team.id}`);
       const raw = await resp.json();
-      if (raw.success) {
-        setCurrentTeam(raw.equipo);
-        localStorage.setItem("equipo_actual_furbo", JSON.stringify(raw.equipo));
+      if (raw.success && raw.equipo) {
+        const enriched = withRole(raw.equipo);
+        setCurrentTeam(enriched);
+        localStorage.setItem("equipo_actual_furbo", JSON.stringify(enriched));
       } else {
-        setCurrentTeam(team);
-        localStorage.setItem("equipo_actual_furbo", JSON.stringify(team));
+        const fallback = withRole(team);
+        setCurrentTeam(fallback);
+        localStorage.setItem("equipo_actual_furbo", JSON.stringify(fallback));
       }
     } catch (err) {
       console.error("Error refrescando equipo:", err);
-      setCurrentTeam(team);
-      localStorage.setItem("equipo_actual_furbo", JSON.stringify(team));
+      const fallback = withRole(team);
+      setCurrentTeam(fallback);
+      localStorage.setItem("equipo_actual_furbo", JSON.stringify(fallback));
     }
   };
 
