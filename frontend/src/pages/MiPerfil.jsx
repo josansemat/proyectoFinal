@@ -1,6 +1,11 @@
 import { useMemo, useState, useEffect } from "react";
 import "./MiPerfil.css";
 
+// Iconos simples SVG
+const UserIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const ShieldIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+const BellIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+
 export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate }) {
   const initials = useMemo(() => {
     const name = user?.nombre || "?";
@@ -27,7 +32,6 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
     telefono: user?.telefono || "",
   });
 
-  // Sincroniza cuando cambia el user
   useEffect(() => {
     setFormData({
       nombre: user?.nombre || "",
@@ -37,13 +41,11 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
     });
   }, [user]);
 
-  // Relación con el equipo actual (para rol y dorsal)
   const relacionEquipoActual = useMemo(() => {
     if (!currentTeam || !misEquipos?.length) return null;
     return misEquipos.find(e => e.id === currentTeam.id) || null;
   }, [misEquipos, currentTeam]);
 
-  // Cargar mis equipos para poder abandonar desde Seguridad
   useEffect(() => {
     const loadEquipos = async () => {
       if (!user?.id) return;
@@ -54,7 +56,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
         if (data.success) {
           setMisEquipos(data.equipos || []);
         } else {
-          setErrorEquipos(data.error || "No se pudieron cargar tus equipos");
+          setErrorEquipos(data.error || "Error al cargar equipos");
         }
       } catch (e) {
         setErrorEquipos("Error de conexión");
@@ -65,8 +67,21 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
     loadEquipos();
   }, [user?.id]);
 
-  // Cargar total de partidos jugados (completados)
-  
+  useEffect(() => {
+    const loadPartidos = async () => {
+      if (!user?.id) return;
+      try {
+        const resp = await fetch(`/api/index.php?action=partidos_jugados&id_jugador=${user.id}`);
+        const data = await resp.json();
+        if (data.success) setPartidosTotal(data.total);
+        else setPartidosTotal(0);
+      } catch {
+        setPartidosTotal(0);
+      }
+    };
+    loadPartidos();
+  }, [user?.id]);
+
   const handleSaveDatos = async (e) => {
     e.preventDefault();
     setSaveMsg({ type: null, text: "" });
@@ -93,26 +108,12 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
         }
         setSaveMsg({ type: 'success', text: 'Datos guardados correctamente.' });
       } else {
-        setSaveMsg({ type: 'error', text: data.error || 'No se pudieron guardar los cambios.' });
+        setSaveMsg({ type: 'error', text: data.error || 'Error al guardar.' });
       }
     } catch (e) {
       setSaveMsg({ type: 'error', text: 'Error de conexión.' });
     }
   };
-  useEffect(() => {
-    const loadPartidos = async () => {
-      if (!user?.id) return;
-      try {
-        const resp = await fetch(`/api/index.php?action=partidos_jugados&id_jugador=${user.id}`);
-        const data = await resp.json();
-        if (data.success) setPartidosTotal(data.total);
-        else setPartidosTotal(0);
-      } catch {
-        setPartidosTotal(0);
-      }
-    };
-    loadPartidos();
-  }, [user?.id]);
 
   const abandonarEquipo = async (equipoId) => {
     if (!equipoId) return;
@@ -132,10 +133,10 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
           onTeamChange?.(nueva[0] || null);
           if (!nueva[0]) localStorage.removeItem('equipo_actual_furbo');
         }
-        setAbandonMsg({ type: 'success', text: 'Has abandonado el equipo.' });
+        setAbandonMsg({ type: 'success', text: 'Equipo abandonado.' });
         setConfirmAbandonId(null);
       } else {
-        setAbandonMsg({ type: 'error', text: data.error || 'No fue posible abandonar el equipo.' });
+        setAbandonMsg({ type: 'error', text: data.error || 'Error al salir.' });
       }
     } catch (e) {
       setAbandonMsg({ type: 'error', text: 'Error de conexión.' });
@@ -147,11 +148,11 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
   const handleChangePassword = async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const actual = form.querySelector('input[type="password"][name="pwd_actual"]').value;
-    const nueva = form.querySelector('input[type="password"][name="pwd_nueva"]').value;
-    const confirma = form.querySelector('input[type="password"][name="pwd_confirma"]').value;
+    const actual = form.querySelector('input[name="pwd_actual"]').value;
+    const nueva = form.querySelector('input[name="pwd_nueva"]').value;
+    const confirma = form.querySelector('input[name="pwd_confirma"]').value;
     if (nueva !== confirma) {
-      setPwdMsg({ type: 'error', text: 'La nueva contraseña y la confirmación no coinciden' });
+      setPwdMsg({ type: 'error', text: 'Las contraseñas no coinciden' });
       return;
     }
     try {
@@ -161,8 +162,10 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
         body: JSON.stringify({ id_jugador: user.id, password_actual: actual, password_nueva: nueva })
       });
       const data = await resp.json();
-      if (data.success) setPwdMsg({ type: 'success', text: 'Contraseña actualizada.' });
-      else setPwdMsg({ type: 'error', text: data.error || 'No se pudo cambiar la contraseña.' });
+      if (data.success) {
+        setPwdMsg({ type: 'success', text: 'Contraseña actualizada.' });
+        form.reset();
+      } else setPwdMsg({ type: 'error', text: data.error || 'Error al cambiar contraseña.' });
     } catch (e) {
       setPwdMsg({ type: 'error', text: 'Error de conexión.' });
     }
@@ -170,202 +173,214 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
 
   return (
     <div className="perfil-page">
-      {/* Fondo ilustración */}
-      <div className="perfil-bg" aria-hidden="true" />
-
-      {/* Banner de título */}
-      <div className="perfil-banner">
+      <header className="perfil-header">
         <h1>Mi Perfil</h1>
-      </div>
+      </header>
 
-      {/* Layout dos columnas */}
       <div className="perfil-grid">
-        {/* Panel Izquierdo: Ficha del Jugador */}
-        <section className="panel panel-left">
-          <div className="panel-header">Ficha del Jugador</div>
-
-          {/* Avatar */}
-          <div className="avatar">
-            <span className="avatar-text">{initials}</span>
-          </div>
-
-          {/* Nombre y apodo */}
-          <div className="identity">
-            <div className="name">{user?.nombre || "Jugador"}</div>
-            <div className="nickname">{user?.apodo || "Sin apodo"}</div>
-          </div>
-
-          {/* Valoración */}
-          <div className="rating-block">
-            <div className="stars" aria-label="5 estrellas">
-              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        {/* Panel Izquierdo: Ficha Estilo "Carta de Jugador" */}
+        <aside className="profile-card">
+          <div className="profile-card__header">
+            <div className="avatar-container">
+              <div className="avatar">{initials}</div>
+              <div className="avatar-ring"></div>
             </div>
-            <div className="rating-value">{Number(user?.rating || 5).toFixed(2)} Rating</div>
-            <div className="rating-label">Rating</div>
+            <h2 className="profile-name">{user?.nombre || "Jugador"}</h2>
+            <p className="profile-nickname">{user?.apodo || "Sin apodo"}</p>
           </div>
 
-          {/* Lista de atributos */}
-          <ul className="attributes">
-            <li>
-              <span className="attr-label">Rol en el equipo</span>
-              <span className="attr-value">{relacionEquipoActual?.mi_rol || '—'}</span>
-            </li>
-            <li>
-              <span className="attr-label">Dorsal en el equipo</span>
-              <span className="attr-value">{relacionEquipoActual?.dorsal ?? '—'}</span>
-            </li>
-            <li>
-              <span className="attr-label">Apodo</span>
-              <span className="attr-value">{user?.apodo || '—'}</span>
-            </li>
-            <li>
-              <span className="attr-label">Partidos Jugados</span>
-              <span className="attr-value">{partidosTotal ?? '—'}</span>
-            </li>
-          </ul>
-        </section>
+          <div className="profile-stats">
+            <div className="stat-box">
+              <div className="stat-label">Rating</div>
+              <div className="stat-value text-accent">{Number(user?.rating || 5).toFixed(1)}</div>
+              <div className="stat-stars">★★★★★</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">Partidos</div>
+              <div className="stat-value">{partidosTotal ?? '-'}</div>
+              <div className="stat-sub">Jugados</div>
+            </div>
+          </div>
 
-        {/* Panel Derecho: Ajustes y Datos */}
-        <section className="panel panel-right">
-          <div className="panel-header">Ajustes y Datos</div>
+          <div className="profile-details">
+            <div className="detail-row">
+              <span>Equipo actual</span>
+              <strong>{currentTeam?.nombre || "Sin equipo"}</strong>
+            </div>
+            <div className="detail-row">
+              <span>Rol</span>
+              <span className="badge badge-role">{relacionEquipoActual?.mi_rol || "Agente libre"}</span>
+            </div>
+            <div className="detail-row">
+              <span>Dorsal</span>
+              <span className="badge badge-number">{relacionEquipoActual?.dorsal ?? "#"}</span>
+            </div>
+          </div>
+        </aside>
 
-          {/* Tabs */}
-          <div className="tabs">
+        {/* Panel Derecho: Tabs y Formularios */}
+        <main className="settings-panel">
+          <div className="settings-tabs">
             <button
-              className={`tab ${activeTab === "datos" ? "active" : ""}`}
+              className={`tab-btn ${activeTab === "datos" ? "active" : ""}`}
               onClick={() => setActiveTab("datos")}
             >
-              Mis Datos
+              <UserIcon /> Datos
             </button>
             <button
-              className={`tab ${activeTab === "seguridad" ? "active" : ""}`}
+              className={`tab-btn ${activeTab === "seguridad" ? "active" : ""}`}
               onClick={() => setActiveTab("seguridad")}
             >
-              Seguridad
+              <ShieldIcon /> Seguridad
             </button>
             <button
-              className={`tab ${activeTab === "notificaciones" ? "active" : ""}`}
+              className={`tab-btn ${activeTab === "notificaciones" ? "active" : ""}`}
               onClick={() => setActiveTab("notificaciones")}
             >
-              Notificaciones
+              <BellIcon /> Alertas
             </button>
           </div>
 
-          {/* Contenido de pestañas */}
-          {activeTab === "datos" && (
-            <>
-              <form className="form" onSubmit={handleSaveDatos}>
-                <label>Nombre Completo:</label>
-                <input
-                  type="text"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  required
-                />
-
-                <label>Apodo:</label>
-                <input
-                  type="text"
-                  value={formData.apodo}
-                  onChange={(e) => setFormData({ ...formData, apodo: e.target.value })}
-                />
-
-                <label>Correo electrónico:</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-
-                <label>Teléfono:</label>
-                <input
-                  type="tel"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                />
-
-                <button className="save-btn" type="submit">Guardar Cambios</button>
-              </form>
-              {saveMsg.text && (
-                <div className={saveMsg.type === 'success' ? 'success' : 'error'} style={{ marginTop: 8 }}>
-                  {saveMsg.text}
+          <div className="settings-content">
+            {activeTab === "datos" && (
+              <form className="settings-form" onSubmit={handleSaveDatos}>
+                <div className="form-group">
+                  <label>Nombre Completo</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
                 </div>
-              )}
-            </>
-          )}
-
-          {activeTab === "seguridad" && (
-            <div className="seguridad">
-              <form className="password-form" onSubmit={handleChangePassword}>
-                <label>Contraseña actual</label>
-                <input type="password" name="pwd_actual" placeholder="••••••••" required />
-
-                <label>Nueva contraseña</label>
-                <input type="password" name="pwd_nueva" placeholder="Nueva contraseña" required />
-
-                <label>Confirmar nueva contraseña</label>
-                <input type="password" name="pwd_confirma" placeholder="Repite la contraseña" required />
-
-                <button className="save-btn" type="submit">Guardar Cambios</button>
-              </form>
-
-              {pwdMsg.text && (
-                <div className={pwdMsg.type === 'success' ? 'success' : 'error'} style={{ marginTop: 8 }}>
-                  {pwdMsg.text}
+                <div className="form-group">
+                  <label>Apodo (Nombre en camiseta)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.apodo}
+                    onChange={(e) => setFormData({ ...formData, apodo: e.target.value })}
+                  />
                 </div>
-              )}
+                <div className="form-group">
+                  <label>Correo Electrónico</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Teléfono</label>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    value={formData.telefono}
+                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  />
+                </div>
 
-              <div className="abandonar">
-                <div className="abandonar-title">Abandonar equipo</div>
-                {abandonMsg.text && (
-                  <div className={abandonMsg.type === 'success' ? 'success' : 'error'} style={{ marginBottom: 8 }}>
-                    {abandonMsg.text}
+                {saveMsg.text && (
+                  <div className={`alert-msg ${saveMsg.type}`}>
+                    {saveMsg.text}
                   </div>
                 )}
-                {loadingEquipos && <div className="muted">Cargando equipos...</div>}
-                {errorEquipos && <div className="error">{errorEquipos}</div>}
-                {!loadingEquipos && misEquipos.length === 0 && (
-                  <div className="muted">No perteneces a ningún equipo.</div>
-                )}
-                {!loadingEquipos && misEquipos.length > 0 && (
-                  <div className="abandonar-list">
-                    {misEquipos.map(eq => (
-                      <div key={eq.id} className="abandonar-item">
-                        <span className="eq-name">{eq.nombre}</span>
-                        {confirmAbandonId === eq.id ? (
-                          <div className="d-flex gap-2">
-                            <button
-                              className="btn-abandonar"
-                              disabled={abandonLoading}
-                              onClick={() => abandonarEquipo(eq.id)}
-                            >
-                              {abandonLoading ? 'Abandonando…' : 'Confirmar'}
-                            </button>
-                            <button
-                              className="btn btn-sm"
-                              onClick={() => setConfirmAbandonId(null)}
-                              style={{ background: 'transparent', color: 'var(--text)' }}
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        ) : (
-                          <button className="btn-abandonar" onClick={() => setConfirmAbandonId(eq.id)}>
-                            Abandonar
-                          </button>
-                        )}
-                      </div>
-                    ))}
+
+                <div className="form-actions">
+                  <button className="btn-primary" type="submit">Guardar Cambios</button>
+                </div>
+              </form>
+            )}
+
+            {activeTab === "seguridad" && (
+              <div className="security-section">
+                <form className="settings-form mb-4" onSubmit={handleChangePassword}>
+                  <h3 className="section-title">Cambiar Contraseña</h3>
+                  <div className="form-group">
+                    <label>Contraseña Actual</label>
+                    <input type="password" name="pwd_actual" className="form-input" placeholder="••••••••" required />
                   </div>
-                )}
+                  <div className="row-2-col">
+                    <div className="form-group">
+                      <label>Nueva Contraseña</label>
+                      <input type="password" name="pwd_nueva" className="form-input" required />
+                    </div>
+                    <div className="form-group">
+                      <label>Confirmar</label>
+                      <input type="password" name="pwd_confirma" className="form-input" required />
+                    </div>
+                  </div>
+                  
+                  {pwdMsg.text && (
+                    <div className={`alert-msg ${pwdMsg.type}`}>
+                      {pwdMsg.text}
+                    </div>
+                  )}
+                  
+                  <div className="form-actions">
+                    <button className="btn-primary" type="submit">Actualizar Password</button>
+                  </div>
+                </form>
+
+                <div className="danger-zone">
+                  <h3 className="section-title text-danger">Zona de Peligro</h3>
+                  <p className="text-muted small mb-3">Gestiona tu salida de los equipos a los que perteneces.</p>
+                  
+                  {abandonMsg.text && (
+                    <div className={`alert-msg ${abandonMsg.type} mb-3`}>
+                      {abandonMsg.text}
+                    </div>
+                  )}
+
+                  {loadingEquipos ? (
+                    <div className="text-muted small">Cargando equipos...</div>
+                  ) : misEquipos.length > 0 ? (
+                    <div className="teams-list">
+                      {misEquipos.map(eq => (
+                        <div key={eq.id} className="team-item">
+                          <span className="team-name">{eq.nombre}</span>
+                          {confirmAbandonId === eq.id ? (
+                            <div className="confirm-actions">
+                              <button
+                                className="btn-danger btn-sm"
+                                disabled={abandonLoading}
+                                onClick={() => abandonarEquipo(eq.id)}
+                              >
+                                {abandonLoading ? '...' : 'Confirmar'}
+                              </button>
+                              <button
+                                className="btn-text btn-sm"
+                                onClick={() => setConfirmAbandonId(null)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button className="btn-outline-danger btn-sm" onClick={() => setConfirmAbandonId(eq.id)}>
+                              Abandonar
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-muted small italic">No perteneces a ningún equipo actualmente.</div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-          {activeTab === "notificaciones" && (
-            <div className="tab-placeholder">Preferencias de notificaciones próximamente.</div>
-          )}
-        </section>
+            )}
+
+            {activeTab === "notificaciones" && (
+              <div className="empty-state">
+                <div className="empty-icon">🔕</div>
+                <p>Las preferencias de notificaciones estarán disponibles en la próxima versión.</p>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );
