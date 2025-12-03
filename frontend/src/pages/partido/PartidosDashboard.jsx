@@ -689,17 +689,134 @@ function PartidosDashboard({ user, currentTeam }) {
     }
   };
 
-  const resumenCards = stats
-    ? [
-        { label: "Programados", value: stats.totalProgramados },
-        { label: "Completados", value: stats.totalCompletados },
-        { label: "Pendiente €", value: `€${stats.pendienteCobrar?.toFixed(2) ?? "0.00"}` },
-        { label: "Recaudado €", value: `€${stats.totalRecaudado?.toFixed(2) ?? "0.00"}` },
-        { label: "Ocupación", value: `${stats.promedioOcupacion ?? 0}%` },
-      ]
-    : [];
-
   const proximo = stats?.proximoPartido;
+
+  const matchCounts = useMemo(() => {
+    const fallback = partidos.reduce((acc, partido) => {
+      const key = partido.estado;
+      if (!key) {
+        return acc;
+      }
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      programados: stats?.totalProgramados ?? fallback.programado ?? 0,
+      enCurso: stats?.totalEnCurso ?? fallback.en_curso ?? 0,
+      completados: stats?.totalCompletados ?? fallback.completado ?? 0,
+      cancelados: stats?.totalCancelados ?? fallback.cancelado ?? 0,
+    };
+  }, [stats, partidos]);
+
+  const ocupacionPromedio = useMemo(() => {
+    if (typeof stats?.promedioOcupacion === "number") {
+      return Math.round(stats.promedioOcupacion);
+    }
+    if (!partidos.length) {
+      return 0;
+    }
+    const total = partidos.reduce(
+      (acc, partido) => acc + percent(partido.total_inscritos || 0, partido.max_jugadores || 0),
+      0
+    );
+    return Math.round(total / partidos.length);
+  }, [stats, partidos]);
+
+  const cupoPromedio = useMemo(() => {
+    if (!partidos.length) {
+      return 0;
+    }
+    const total = partidos.reduce((acc, partido) => acc + (Number(partido.max_jugadores) || 0), 0);
+    return Math.round(total / partidos.length);
+  }, [partidos]);
+
+  const heroChips = useMemo(() => {
+    const chips = [
+      { label: "Programados", value: matchCounts.programados },
+      { label: "En curso", value: matchCounts.enCurso },
+      { label: "Completados", value: matchCounts.completados },
+      { label: "Cancelados", value: matchCounts.cancelados },
+      { label: "Ocupación media", value: `${ocupacionPromedio}%` },
+    ];
+
+    if (stats) {
+      chips.push({ label: "Pendiente (€)", value: `€${Number(stats.pendienteCobrar ?? 0).toFixed(2)}` });
+      chips.push({ label: "Recaudado (€)", value: `€${Number(stats.totalRecaudado ?? 0).toFixed(2)}` });
+    }
+
+    if (cupoPromedio) {
+      chips.push({ label: "Cupo promedio", value: cupoPromedio });
+    }
+
+    return chips;
+  }, [matchCounts, ocupacionPromedio, stats, cupoPromedio]);
+
+  const renderMatchCard = (partido) => {
+    const inscritos = partido.total_inscritos || 0;
+    const cupo = partido.max_jugadores || 0;
+    const progress = percent(inscritos, cupo);
+    const isActive = detalleSeleccionado === partido.id;
+
+    return (
+      <article key={partido.id} className={`match-card ${isActive ? "match-card--active" : ""}`}>
+        <div className="match-card__head">
+          <div>
+            <p className="match-card__date">{formatDate(partido.fecha_hora)}</p>
+            <h3>{partido.lugar_nombre}</h3>
+          </div>
+          <span className={`match-card__status match-card__status--${partido.estado}`}>
+            {partido.estado?.replace("_", " ")}
+          </span>
+        </div>
+        {partido.lugar_enlace_maps && (
+          <a href={partido.lugar_enlace_maps} target="_blank" rel="noreferrer" className="match-card__link">
+            Ver ubicación ↗
+          </a>
+        )}
+        <div className="match-card__body">
+          <div className="match-card__info">
+            <small>Tipo</small>
+            <strong>{partido.tipo_partido === "externo" ? "Externo" : "Interno"}</strong>
+          </div>
+          <div className="match-card__info">
+            <small>Modalidad</small>
+            <strong>{partido.modalidad_juego?.toUpperCase() || "—"}</strong>
+          </div>
+          <div className="match-card__info">
+            <small>Costo/jugador</small>
+            <strong>{partido.costo_jugador ? `€${Number(partido.costo_jugador).toFixed(2)}` : "—"}</strong>
+          </div>
+        </div>
+        <div className="match-card__progress">
+          <div>
+            <small>Inscritos</small>
+            <strong>
+              {inscritos}/{cupo || "—"}
+            </strong>
+          </div>
+          <div className="match-card__progress-bar">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+        <div className="match-card__actions">
+          {canManagePartidos && (
+            <button type="button" className="button button--ghost" onClick={() => handleEdit(partido)}>
+              Editar
+            </button>
+          )}
+          <button type="button" className="button button--secondary" onClick={() => handleDetalle(partido)}>
+            {isActive ? "Ocultar" : "Detalle"}
+          </button>
+          {canManagePartidos && (
+            <button type="button" className="button button--danger" onClick={() => handleDelete(partido.id)}>
+              Eliminar
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  };
 
   const jugadorActualInscrito = useMemo(() => {
     if (!detalle?.jugadores || !userId) return false;
@@ -736,124 +853,135 @@ function PartidosDashboard({ user, currentTeam }) {
 
   if (!currentTeamId) {
     return (
-      <div className="partidos-dashboard container py-4">
-        <div className="alert alert-info">
-          Selecciona un equipo en la barra lateral para gestionar sus partidos.
+      <div className="partidos-dashboard">
+        <div className="match-empty match-empty--centered">
+          <p>Selecciona un equipo en la barra lateral para gestionar sus partidos.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="partidos-dashboard container py-4">
-      <header className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-        <div>
-          <h1 className="h3 mb-1">Dashboard de Partidos</h1>
-          <p className="text-muted mb-0">Administra el calendario y controla la ocupación de cada fecha.</p>
-        </div>
-        <div className="d-flex gap-2">
-          {editingId && (
-            <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
-              Cancelar edición
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!canManagePartidos}
-            onClick={() => setIsFormOpen((prev) => !prev)}
-          >
-            {isFormOpen ? "Ocultar formulario" : "Nuevo partido"}
-          </button>
-        </div>
-      </header>
-
+    <div className="partidos-dashboard">
       {message.text && (
-        <div className={`alert ${message.type === "error" ? "alert-danger" : "alert-success"}`}>
+        <div className={`match-message ${message.type === "error" ? "match-message--danger" : "match-message--success"}`}>
           {message.text}
         </div>
       )}
 
-      <section className="row g-3 mb-4">
-        {resumenCards.map((card) => (
-          <div key={card.label} className="col-6 col-md-4 col-xl-2">
-            <div className="card resumen-card h-100">
-              <div className="card-body">
-                <p className="text-muted text-uppercase small mb-1">{card.label}</p>
-                <h3 className="mb-0">{card.value}</h3>
-              </div>
-            </div>
+      <section className="match-section">
+        <div className="match-hero">
+          <div className="match-hero__head">
+            <p className="match-hero__eyebrow">Calendario competitivo</p>
+            <h1>Dashboard de Partidos</h1>
+            <p className="match-hero__subtitle">Administra el calendario y controla la ocupación de cada fecha.</p>
           </div>
-        ))}
-        {proximo && (
-          <div className="col-12 col-xl-4">
-            <div className="card resumen-card proximo h-100">
-              <div className="card-body">
-                <p className="text-muted text-uppercase small mb-1">Próximo partido</p>
-                <h4 className="mb-2">{proximo.lugar_nombre}</h4>
-                <div className="text-muted small">{formatDate(proximo.fecha_hora)}</div>
-                <span className={`badge estado ${proximo.estado}`}>{proximo.estado}</span>
+          <div className="match-hero__actions">
+            {editingId && (
+              <button type="button" className="button button--ghost" onClick={resetForm}>
+                Cancelar edición
+              </button>
+            )}
+            <button
+              type="button"
+              className="button button--primary"
+              disabled={!canManagePartidos}
+              onClick={() => setIsFormOpen((prev) => !prev)}
+            >
+              {isFormOpen ? "Ocultar formulario" : "Nuevo partido"}
+            </button>
+          </div>
+        </div>
+
+        {heroChips.length > 0 && (
+          <div className="match-metrics">
+            {heroChips.map((chip) => (
+              <div key={chip.label} className="match-metric">
+                <span>{chip.label}</span>
+                <strong>{chip.value}</strong>
               </div>
+            ))}
+          </div>
+        )}
+
+        {proximo && (
+          <div className="match-highlight">
+            <div>
+              <p className="match-highlight__label">Próximo partido</p>
+              <h2>{proximo.lugar_nombre}</h2>
+              <p>{formatDate(proximo.fecha_hora)}</p>
             </div>
+            <span className={`match-card__status match-card__status--${proximo.estado}`}>
+              {proximo.estado?.replace("_", " ")}
+            </span>
           </div>
         )}
       </section>
 
-      <section className="mb-4">
-        {!canManagePartidos && (
-          <div className="alert alert-light border">
-            Solo los managers del equipo (o administradores) pueden crear y actualizar partidos.
-          </div>
-        )}
-        {canManagePartidos && isFormOpen && (
-          <div className="card">
-            <div className="card-body">
-              <h2 className="h5 mb-3">{editingId ? "Editar partido" : "Nuevo partido"}</h2>
-              <form className="row g-3" onSubmit={handleSubmit}>
-                <div className="col-md-4">
-                  <label className="form-label">Fecha y hora*</label>
+
+      {canManagePartidos && (
+        <section className={`match-section match-form ${isFormOpen ? "match-form--open" : "match-form--collapsed"}`}>
+          {isFormOpen ? (
+            <>
+              <header className="match-form__head">
+                <div>
+                  <p className="match-form__eyebrow">{editingId ? "Estás editando un partido" : "Nuevo partido"}</p>
+                  <h2>{editingId ? "Editar partido" : "Crear partido"}</h2>
+                </div>
+                <button type="button" className="button button--ghost" onClick={resetForm}>
+                  Limpiar formulario
+                </button>
+              </header>
+
+              <form className="match-form__grid" onSubmit={handleSubmit}>
+                <div className="match-field">
+                  <label htmlFor="fecha_hora">Fecha y hora*</label>
                   <input
+                    id="fecha_hora"
                     type="datetime-local"
                     name="fecha_hora"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.fecha_hora}
                     onChange={handleChange}
                     required
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Fecha límite inscripción</label>
+                <div className="match-field">
+                  <label htmlFor="fecha_limite_inscripcion">Fecha límite inscripción</label>
                   <input
+                    id="fecha_limite_inscripcion"
                     type="datetime-local"
                     name="fecha_limite_inscripcion"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.fecha_limite_inscripcion}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Lugar*</label>
+                <div className="match-field">
+                  <label htmlFor="lugar_nombre">Lugar*</label>
                   <input
+                    id="lugar_nombre"
                     type="text"
                     name="lugar_nombre"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.lugar_nombre}
                     onChange={handleChange}
                     required
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Tipo de partido</label>
-                  <select name="tipo_partido" className="form-select" value={formValues.tipo_partido} onChange={handleChange}>
+                <div className="match-field">
+                  <label htmlFor="tipo_partido">Tipo de partido</label>
+                  <select id="tipo_partido" name="tipo_partido" className="match-input" value={formValues.tipo_partido} onChange={handleChange}>
                     <option value="interno">Interno</option>
                     <option value="externo">Externo</option>
                   </select>
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Modalidad</label>
+                <div className="match-field">
+                  <label htmlFor="modalidad_juego">Modalidad</label>
                   <select
+                    id="modalidad_juego"
                     name="modalidad_juego"
-                    className="form-select"
+                    className="match-input"
                     value={formValues.modalidad_juego}
                     onChange={handleChange}
                   >
@@ -862,11 +990,12 @@ function PartidosDashboard({ user, currentTeam }) {
                     <option value="f11">Fútbol 11</option>
                   </select>
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Método generación equipos</label>
+                <div className="match-field">
+                  <label htmlFor="metodo_generacion">Método generación equipos</label>
                   <select
+                    id="metodo_generacion"
                     name="metodo_generacion"
-                    className="form-select"
+                    className="match-input"
                     value={formValues.metodo_generacion}
                     onChange={handleChange}
                   >
@@ -875,42 +1004,45 @@ function PartidosDashboard({ user, currentTeam }) {
                     <option value="equilibrado">Equilibrado</option>
                   </select>
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Enlace Maps</label>
+                <div className="match-field">
+                  <label htmlFor="lugar_enlace_maps">Enlace Maps</label>
                   <input
+                    id="lugar_enlace_maps"
                     type="url"
                     name="lugar_enlace_maps"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.lugar_enlace_maps}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Cupo máximo*</label>
+                <div className="match-field">
+                  <label htmlFor="max_jugadores">Cupo máximo*</label>
                   <input
+                    id="max_jugadores"
                     type="number"
                     min="2"
                     name="max_jugadores"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.max_jugadores}
                     onChange={handleChange}
                     required
                   />
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Precio total (€)</label>
+                <div className="match-field">
+                  <label htmlFor="precio_total_pista">Precio total (€)</label>
                   <input
+                    id="precio_total_pista"
                     type="number"
                     step="0.01"
                     name="precio_total_pista"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.precio_total_pista}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-3">
-                  <label className="form-label">Estado</label>
-                  <select name="estado" className="form-select" value={formValues.estado} onChange={handleChange}>
+                <div className="match-field">
+                  <label htmlFor="estado">Estado</label>
+                  <select id="estado" name="estado" className="match-input" value={formValues.estado} onChange={handleChange}>
                     {estados
                       .filter((opt) => opt.value !== "todos")
                       .map((opt) => (
@@ -920,106 +1052,107 @@ function PartidosDashboard({ user, currentTeam }) {
                       ))}
                   </select>
                 </div>
-                <div className="col-md-3">
-                  <label className="form-label">ID responsable</label>
+                <div className="match-field">
+                  <label htmlFor="id_responsable_alquiler">ID responsable</label>
                   <input
+                    id="id_responsable_alquiler"
                     type="number"
                     name="id_responsable_alquiler"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.id_responsable_alquiler || responsableDefault || ""}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-3">
-                  <label className="form-label">Comprobante (PDF)</label>
+                <div className="match-field">
+                  <label htmlFor="comprobante_pdf">Comprobante (PDF)</label>
                   <input
+                    id="comprobante_pdf"
                     type="text"
                     name="comprobante_pdf"
-                    className="form-control"
+                    className="match-input"
                     placeholder="ej: recibo_12_2025.pdf"
                     value={formValues.comprobante_pdf}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-3">
-                  <label className="form-label">Goles equipo A</label>
+                <div className="match-field">
+                  <label htmlFor="goles_equipo_A">Goles equipo A</label>
                   <input
+                    id="goles_equipo_A"
                     type="number"
                     name="goles_equipo_A"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.goles_equipo_A}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-3">
-                  <label className="form-label">Goles equipo B</label>
+                <div className="match-field">
+                  <label htmlFor="goles_equipo_B">Goles equipo B</label>
                   <input
+                    id="goles_equipo_B"
                     type="number"
                     name="goles_equipo_B"
-                    className="form-control"
+                    className="match-input"
                     value={formValues.goles_equipo_B}
                     onChange={handleChange}
                   />
                 </div>
-                <div className="col-md-3 d-flex align-items-end gap-3">
-                  <div className="form-check">
+                <div className="match-field match-field--cluster">
+                  <label className="match-checkbox" htmlFor="equipos_generados">
                     <input
-                      className="form-check-input"
+                      id="equipos_generados"
                       type="checkbox"
-                      id="equiposGenerados"
                       name="equipos_generados"
                       checked={formValues.equipos_generados}
                       onChange={handleChange}
                     />
-                    <label htmlFor="equiposGenerados" className="form-check-label">
-                      Equipos generados
-                    </label>
-                  </div>
-                  <div className="form-check">
+                    <span>Equipos generados</span>
+                  </label>
+                  <label className="match-checkbox" htmlFor="votacion_habilitada">
                     <input
-                      className="form-check-input"
+                      id="votacion_habilitada"
                       type="checkbox"
-                      id="votacionHabilitada"
                       name="votacion_habilitada"
                       checked={formValues.votacion_habilitada}
                       onChange={handleChange}
                     />
-                    <label htmlFor="votacionHabilitada" className="form-check-label">
-                      Votación habilitada
-                    </label>
-                  </div>
+                    <span>Votación habilitada</span>
+                  </label>
                 </div>
-                <div className="col-12 d-flex gap-3 flex-wrap">
-                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                <div className="match-form__actions">
+                  <button type="submit" className="button button--primary" disabled={submitting}>
                     {submitting ? "Guardando..." : editingId ? "Actualizar partido" : "Crear partido"}
                   </button>
-                  <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
-                    Limpiar
+                  <button type="button" className="button button--ghost" onClick={resetForm}>
+                    Cancelar
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        )}
-      </section>
+            </>
+          ) : (
+            <p className="match-form__hint">Despliega el formulario para programar un nuevo encuentro.</p>
+          )}
+        </section>
+      )}
 
-      <section className="card">
-        <div className="card-body">
-          <div className="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-end mb-3">
+      <section className="match-section match-layout">
+        <div className="match-list">
+          <header className="match-list__head">
             <div>
-              <h2 className="h5 mb-1">Listado de partidos</h2>
-              <p className="text-muted small mb-0">Filtra por estado, busca por lugar o fecha.</p>
+              <p className="match-list__eyebrow">Planificación semanal</p>
+              <h2>Listado de partidos</h2>
+              <p className="match-list__subtitle">Filtra por estado, busca por lugar o fecha.</p>
             </div>
-            <div className="d-flex flex-column flex-md-row gap-2 w-100 w-md-auto">
+            <div className="match-filters">
               <input
                 type="text"
                 name="search"
                 placeholder="Buscar por lugar o fecha"
-                className="form-control"
+                className="match-input"
                 value={filters.search}
                 onChange={handleFilterChange}
               />
-              <select name="estado" className="form-select" value={filters.estado} onChange={handleFilterChange}>
+              <select name="estado" className="match-input" value={filters.estado} onChange={handleFilterChange}>
                 {estados.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -1027,235 +1160,168 @@ function PartidosDashboard({ user, currentTeam }) {
                 ))}
               </select>
             </div>
+          </header>
+
+          <div className="match-list__content">
+            {loading ? (
+              <div className="match-empty">Cargando partidos...</div>
+            ) : partidos.length ? (
+              partidos.map((partido) => renderMatchCard(partido))
+            ) : (
+              <div className="match-empty">
+                <p>No hay partidos con los filtros actuales.</p>
+                <button
+                  type="button"
+                  className="button button--ghost"
+                  onClick={() => {
+                    setFilters({ estado: "todos", search: "" });
+                    setPage(1);
+                  }}
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="table-responsive">
-            <table className="table table-striped align-middle">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Lugar</th>
-                  <th>Cupo</th>
-                  <th>Inscritos</th>
-                  <th>Estado</th>
-                  <th>Costo estimado</th>
-                  <th className="text-end">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" className="text-center py-4">
-                      Cargando...
-                    </td>
-                  </tr>
-                ) : partidos.length ? (
-                  partidos.map((partido) => (
-                    <tr key={partido.id} className={partido.eliminado ? "text-muted" : ""}>
-                      <td>{formatDate(partido.fecha_hora)}</td>
-                      <td>
-                        <div className="fw-semibold">{partido.lugar_nombre}</div>
-                        {partido.lugar_enlace_maps && (
-                          <a href={partido.lugar_enlace_maps} target="_blank" rel="noreferrer" className="text-decoration-none small">
-                            Ver ubicación ↗
-                          </a>
-                        )}
-                      </td>
-                      <td>{partido.max_jugadores}</td>
-                      <td>
-                        <div className="d-flex flex-column gap-1">
-                          <span>{partido.total_inscritos || 0} jugadores</span>
-                          <div
-                            className="progress"
-                            role="progressbar"
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                            aria-valuenow={percent(partido.total_inscritos || 0, partido.max_jugadores)}
-                          >
-                            <div className="progress-bar" style={{ width: `${percent(partido.total_inscritos || 0, partido.max_jugadores)}%` }} />
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`badge estado ${partido.estado}`}>{partido.estado}</span>
-                      </td>
-                      <td>
-                        {partido.costo_jugador !== null && partido.costo_jugador !== undefined ? (
-                          <div>
-                            <div className="fw-semibold">€{Number(partido.costo_jugador).toFixed(2)}</div>
-                            <small className="text-muted text-capitalize">
-                              {partido.tipo_partido === 'externo' ? 'Partido externo' : 'Partido interno'}
-                            </small>
-                          </div>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
-                      </td>
-                      <td className="text-end">
-                        <div className="btn-group btn-group-sm">
-                          {canManagePartidos && (
-                            <button type="button" className="btn btn-outline-primary" onClick={() => handleEdit(partido)}>
-                              Editar
-                            </button>
-                          )}
-                          <button type="button" className="btn btn-outline-secondary" onClick={() => handleDetalle(partido)}>
-                            {detalleSeleccionado === partido.id ? "Ocultar" : "Detalle"}
-                          </button>
-                          {canManagePartidos && (
-                            <button type="button" className="btn btn-outline-danger" onClick={() => handleDelete(partido.id)}>
-                              Eliminar
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="text-center py-4">
-                      No hay partidos
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            <p className="mb-0 text-muted small">
-              Página {page} de {totalPages}
-            </p>
-            <div className="btn-group">
-              <button type="button" className="btn btn-outline-secondary" disabled={page === 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))}>
+          {totalPages > 1 && (
+            <div className="match-pagination">
+              <button type="button" className="button button--ghost" disabled={page === 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))}>
                 Anterior
               </button>
-              <button type="button" className="btn btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage((prev) => prev + 1)}>
+              <span>
+                Página {page} de {totalPages}
+              </span>
+              <button type="button" className="button button--ghost" disabled={page >= totalPages} onClick={() => setPage((prev) => prev + 1)}>
                 Siguiente
               </button>
             </div>
-          </div>
-
-          {detalleSeleccionado && (
-            <div className="card detalle-card mt-4">
-              <div className="card-body">
-                <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                  <div>
-                    <h3 className="h5 mb-1">Detalle del partido #{detalleSeleccionado}</h3>
-                    <p className="text-muted small mb-0">Gestiona inscripciones, equipos y registro del partido.</p>
-                  </div>
-                  {detalleLoading && <span className="text-muted small">Cargando detalle…</span>}
-                </div>
-                {detalle && detalle.partido?.id === detalleSeleccionado ? (
-                  <>
-                    <div className="row g-4 detalle-sections">
-                      <div className="col-12 col-xl-4 d-flex flex-column gap-3">
-                        <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
-                        {canManagePartidos && detalle.partido?.estado === 'completado' && !detalle.partido?.votacion_habilitada && (
-                          <button type="button" className="btn btn-sm btn-warning" onClick={handleActivarVotacion}>
-                            Habilitar votaciones
-                          </button>
-                        )}
-                        <InscripcionesPanel
-                          jugadores={detalle.jugadores}
-                          roster={teamRoster}
-                          costoJugador={detalle.costo_jugador}
-                          maxJugadores={detalle.partido?.max_jugadores}
-                          tipoPartido={detalle.partido?.tipo_partido}
-                          loading={inscripcionLoading}
-                          rosterLoading={rosterLoading}
-                          onAdd={handleInscribirJugador}
-                          onRemove={handleDesinscribirJugador}
-                          canManage={canManagePartidos}
-                          currentUserId={userId}
-                        />
-                        <ListaEsperaPanel espera={detalle.espera} />
-                      </div>
-                      <div className="col-12 col-xl-8">
-                        <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
-                      </div>
-                    </div>
-                    <div className="row g-4 mt-1">
-                      <div className="col-12 col-xl-4">
-                        <EventosPanel
-                          eventos={detalle.eventos}
-                          jugadores={detalle.jugadores}
-                          onAdd={handleRegistrarEvento}
-                          onDelete={handleEliminarEvento}
-                          canManage={canManagePartidos}
-                          estado={detalle.partido?.estado}
-                        />
-                      </div>
-                      <div className="col-12 col-xl-4">
-                        <SimpleListCard
-                          title="Comentarios"
-                          items={detalle.comentarios}
-                          emptyText="Sin comentarios"
-                          getKey={(item) => `coment-${item.id}`}
-                          renderItem={(c) => (
-                            <div>
-                              <div className="fw-semibold">{c.nombre}</div>
-                              <small className="text-muted">{c.comentario}</small>
-                            </div>
-                          )}
-                        />
-                      </div>
-                      <div className="col-12 col-xl-4">
-                        <RatingsOverview
-                          ratings={detalle.ratings}
-                          votosCategorias={detalle.votos_categorias}
-                          votosMvp={detalle.votos_mvp}
-                        />
-                      </div>
-                    </div>
-                    <div className="row g-4 mt-1">
-                      <div className="col-12 col-xl-6">
-                        <PartidoChatPanel
-                          messages={chatMessages}
-                          loading={chatLoading}
-                          chatOpen={chatMeta.open}
-                          chatClose={chatMeta.close}
-                          input={chatInput}
-                          sending={chatSending}
-                          onInputChange={setChatInput}
-                          onSend={handleSendChat}
-                          canSend={puedeParticiparChat}
-                        />
-                      </div>
-                      <div className="col-12 col-xl-6 d-flex flex-column gap-3">
-                        <VotacionPanel
-                          jugadores={detalle.jugadores}
-                          enabled={Boolean(detalle.partido?.votacion_habilitada)}
-                          modo={votacionModo}
-                          puedeVotar={puedeVotar}
-                          selections={categoriaSelections}
-                          onSelectionChange={setCategoriaSelections}
-                          mvpSelection={mvpSelection}
-                          onMvpSelectionChange={setMvpSelection}
-                          onEnviarVotos={handleEnviarVotos}
-                          votacionSending={votacionSending}
-                          votosCategorias={detalle.votos_categorias}
-                          votosMvp={detalle.votos_mvp}
-                        />
-                        {puedeCalificarJugadores && (
-                          <ManagerRatingsPanel
-                            jugadores={detalle.jugadores}
-                            ratings={managerRatings}
-                            onRatingChange={handleManagerRatingChange}
-                            onGuardar={handleGuardarRatings}
-                            submitting={managerRatingsSending}
-                            pendientes={managerRatingIssues}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  !detalleLoading && <p className="text-muted mb-0">No hay detalle para mostrar.</p>
-                )}
-              </div>
-            </div>
           )}
         </div>
+
+        <aside className="match-detail">
+          {detalleSeleccionado ? (
+            <div className="match-detail__card">
+              <div className="match-detail__head">
+                <div>
+                  <p className="match-detail__eyebrow">Partido #{detalleSeleccionado}</p>
+                  <h3>Detalle del partido</h3>
+                  <p>Gestiona inscripciones, equipos y registro del partido.</p>
+                </div>
+                {detalleLoading && <span className="match-detail__meta">Cargando detalle…</span>}
+              </div>
+              {detalle && detalle.partido?.id === detalleSeleccionado ? (
+                <>
+                  <div className="match-detail__grid match-detail__grid--primary">
+                    <div className="match-detail__stack">
+                      <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
+                      {canManagePartidos && detalle.partido?.estado === "completado" && !detalle.partido?.votacion_habilitada && (
+                        <button type="button" className="button button--warning" onClick={handleActivarVotacion}>
+                          Habilitar votaciones
+                        </button>
+                      )}
+                      <InscripcionesPanel
+                        jugadores={detalle.jugadores}
+                        roster={teamRoster}
+                        costoJugador={detalle.costo_jugador}
+                        maxJugadores={detalle.partido?.max_jugadores}
+                        tipoPartido={detalle.partido?.tipo_partido}
+                        loading={inscripcionLoading}
+                        rosterLoading={rosterLoading}
+                        onAdd={handleInscribirJugador}
+                        onRemove={handleDesinscribirJugador}
+                        canManage={canManagePartidos}
+                        currentUserId={userId}
+                      />
+                      <ListaEsperaPanel espera={detalle.espera} />
+                    </div>
+                    <div className="match-detail__panel">
+                      <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
+                    </div>
+                  </div>
+
+                  <div className="match-detail__grid match-detail__grid--triple">
+                    <div className="match-detail__panel">
+                      <EventosPanel
+                        eventos={detalle.eventos}
+                        jugadores={detalle.jugadores}
+                        onAdd={handleRegistrarEvento}
+                        onDelete={handleEliminarEvento}
+                        canManage={canManagePartidos}
+                        estado={detalle.partido?.estado}
+                      />
+                    </div>
+                    <div className="match-detail__panel">
+                      <SimpleListCard
+                        title="Comentarios"
+                        items={detalle.comentarios}
+                        emptyText="Sin comentarios"
+                        getKey={(item) => `coment-${item.id}`}
+                        renderItem={(c) => (
+                          <div>
+                            <div className="fw-semibold">{c.nombre}</div>
+                            <small className="text-muted">{c.comentario}</small>
+                          </div>
+                        )}
+                      />
+                    </div>
+                    <div className="match-detail__panel">
+                      <RatingsOverview ratings={detalle.ratings} votosCategorias={detalle.votos_categorias} votosMvp={detalle.votos_mvp} />
+                    </div>
+                  </div>
+
+                  <div className="match-detail__grid match-detail__grid--secondary">
+                    <div className="match-detail__panel">
+                      <PartidoChatPanel
+                        messages={chatMessages}
+                        loading={chatLoading}
+                        chatOpen={chatMeta.open}
+                        chatClose={chatMeta.close}
+                        input={chatInput}
+                        sending={chatSending}
+                        onInputChange={setChatInput}
+                        onSend={handleSendChat}
+                        canSend={puedeParticiparChat}
+                      />
+                    </div>
+                    <div className="match-detail__panel match-detail__panel--stacked">
+                      <VotacionPanel
+                        jugadores={detalle.jugadores}
+                        enabled={Boolean(detalle.partido?.votacion_habilitada)}
+                        modo={votacionModo}
+                        puedeVotar={puedeVotar}
+                        selections={categoriaSelections}
+                        onSelectionChange={setCategoriaSelections}
+                        mvpSelection={mvpSelection}
+                        onMvpSelectionChange={setMvpSelection}
+                        onEnviarVotos={handleEnviarVotos}
+                        votacionSending={votacionSending}
+                        votosCategorias={detalle.votos_categorias}
+                        votosMvp={detalle.votos_mvp}
+                      />
+                      {puedeCalificarJugadores && (
+                        <ManagerRatingsPanel
+                          jugadores={detalle.jugadores}
+                          ratings={managerRatings}
+                          onRatingChange={handleManagerRatingChange}
+                          onGuardar={handleGuardarRatings}
+                          submitting={managerRatingsSending}
+                          pendientes={managerRatingIssues}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                !detalleLoading && <div className="match-empty">No hay detalle para mostrar.</div>
+              )}
+            </div>
+          ) : (
+            <div className="match-empty">
+              <p>Selecciona un partido para ver su detalle.</p>
+            </div>
+          )}
+        </aside>
       </section>
     </div>
   );
