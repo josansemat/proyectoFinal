@@ -13,6 +13,8 @@ class Partido {
     private const CHAT_RETENTION_HOURS = 72;
     private const CHAT_CLOSE_INTERVAL = '+1 day';
     private const VOTACION_CATEGORIAS = ['regateador','atacante','pasador','defensa','portero'];
+    private const RIVAL_PLACEHOLDER_EMAIL = 'jugador.rival@furbo.local';
+    private const RIVAL_PLACEHOLDER_NAME = 'Jugador rival';
 
     private static function parseDateTime(?string $value): ?string {
         if (!$value) { return null; }
@@ -66,6 +68,42 @@ class Partido {
         $divisor = $partido['tipo_partido'] === 'externo' ? $registrados * 2 : $registrados;
         if ($divisor <= 0) { return null; }
         return round($total / $divisor, 2);
+    }
+
+    private static function obtenerJugadorRivalId(PDO $conexion): int {
+        $stmt = $conexion->prepare('SELECT id FROM jugadores WHERE email = :email LIMIT 1');
+        $stmt->execute([':email' => self::RIVAL_PLACEHOLDER_EMAIL]);
+        $id = $stmt->fetchColumn();
+        if ($id) {
+            return (int)$id;
+        }
+
+        $passwordSeed = function_exists('random_bytes') ? bin2hex(random_bytes(16)) : uniqid('rival_', true);
+        $hashedPassword = password_hash($passwordSeed, PASSWORD_BCRYPT);
+        try {
+            $stmtInsert = $conexion->prepare(
+                'INSERT INTO jugadores (nombre, apodo, email, telefono, password, rol, activo) VALUES (:nombre, :apodo, :email, NULL, :password, :rol, 0)'
+            );
+            $stmtInsert->execute([
+                ':nombre' => self::RIVAL_PLACEHOLDER_NAME,
+                ':apodo' => self::RIVAL_PLACEHOLDER_NAME,
+                ':email' => self::RIVAL_PLACEHOLDER_EMAIL,
+                ':password' => $hashedPassword,
+                ':rol' => 'usuario',
+            ]);
+            return (int)$conexion->lastInsertId();
+        } catch (PDOException $e) {
+            if ($e->getCode() !== '23000') {
+                throw $e;
+            }
+            $stmtRetry = $conexion->prepare('SELECT id FROM jugadores WHERE email = :email LIMIT 1');
+            $stmtRetry->execute([':email' => self::RIVAL_PLACEHOLDER_EMAIL]);
+            $retryId = $stmtRetry->fetchColumn();
+            if ($retryId) {
+                return (int)$retryId;
+            }
+            throw $e;
+        }
     }
 
     public static function listar(array $filters = []): array {
@@ -631,9 +669,13 @@ class Partido {
         }
         $tipo = $data['tipo'] ?? 'gol';
         $equipo = strtoupper($data['equipo'] ?? '');
-        $idJugador = (int)($data['id_jugador'] ?? 0);
+        $idJugador = isset($data['id_jugador']) ? (int)$data['id_jugador'] : 0;
         $idAsistente = isset($data['id_asistente']) && $data['id_asistente'] !== '' ? (int)$data['id_asistente'] : null;
         $minuto = isset($data['minuto']) && $data['minuto'] !== '' ? (int)$data['minuto'] : null;
+        $esRival = !empty($data['es_rival']);
+        if ($esRival) {
+            $idAsistente = null;
+        }
 
         $tiposPermitidos = ['gol','autogol','tarjeta_amarilla','tarjeta_roja'];
         if (!in_array($tipo, $tiposPermitidos, true)) {
@@ -642,16 +684,20 @@ class Partido {
         if (!in_array($equipo, ['A','B'], true)) {
             throw new InvalidArgumentException('Equipo inválido para el evento');
         }
-        if ($idJugador <= 0) {
+        if (!$esRival && $idJugador <= 0) {
             throw new InvalidArgumentException('Jugador inválido');
         }
 
         $conexion = FutbolDB::connectDB();
         $conexion->beginTransaction();
         try {
-            $relacionPrincipal = self::obtenerRelacionJugadorPartido($idPartido, $idJugador, $conexion);
-            if (!$relacionPrincipal) {
-                throw new InvalidArgumentException('El jugador no está inscrito en el partido');
+            if ($esRival) {
+                $idJugador = self::obtenerJugadorRivalId($conexion);
+            } else {
+                $relacionPrincipal = self::obtenerRelacionJugadorPartido($idPartido, $idJugador, $conexion);
+                if (!$relacionPrincipal) {
+                    throw new InvalidArgumentException('El jugador no está inscrito en el partido');
+                }
             }
             if ($idAsistente) {
                 $relacionAsistente = self::obtenerRelacionJugadorPartido($idPartido, $idAsistente, $conexion);
@@ -677,15 +723,28 @@ class Partido {
 
             $nuevoId = (int)$conexion->lastInsertId();
             $conexion->commit();
-            $evento = self::obtenerEventoPorId($nuevoId);
-            if (!$evento) {
-                throw new RuntimeException('No se pudo recuperar el evento guardado');
-            }
-            return $evento;
         } catch (Exception $e) {
-            $conexion->rollBack();
+            if ($conexion->inTransaction()) {
+                $conexion->rollBack();
+            }
             throw $e;
         }
+
+        $evento = self::obtenerEventoPorId($nuevoId ?? 0);
+        if ($evento) {
+            return $evento;
+        }
+
+        error_log('registrarEvento: no se pudo recuperar el evento guardado, devolviendo payload base');
+        return [
+            'id' => $nuevoId,
+            'id_partido' => $idPartido,
+            'id_jugador' => $idJugador,
+            'id_asistente' => $idAsistente,
+            'equipo' => $equipo,
+            'tipo' => $tipo,
+            'minuto' => $minuto,
+        ];
     }
 
     public static function eliminarEvento(int $idPartido, int $idEvento): bool {

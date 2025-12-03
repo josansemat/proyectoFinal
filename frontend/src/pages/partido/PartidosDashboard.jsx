@@ -51,6 +51,18 @@ const percent = (value, total) => {
 
 const jugadorId = (jugador) => Number(jugador?.jugador_id ?? jugador?.id_jugador ?? jugador?.id ?? 0);
 
+const RIVAL_OPTION_VALUE = "__rival__";
+const VOTACION_CATEGORIAS = ["regateador", "atacante", "pasador", "defensa", "portero"];
+
+const createEventoFormState = () => ({
+  tipo: "gol",
+  equipo: "A",
+  id_jugador: "",
+  id_asistente: "",
+  minuto: "",
+  es_rival: false,
+});
+
 const normalizeDetalle = (raw) => ({
   ...raw,
   jugadores: (raw?.jugadores || []).map((jugador) => ({
@@ -89,9 +101,8 @@ function PartidosDashboard({ user, currentTeam }) {
   const [chatSending, setChatSending] = useState(false);
   const [chatMeta, setChatMeta] = useState({ open: false, close: null });
   const [categoriaSelections, setCategoriaSelections] = useState({});
-  const [categoriaSending, setCategoriaSending] = useState(null);
   const [mvpSelection, setMvpSelection] = useState("");
-  const [mvpSending, setMvpSending] = useState(false);
+  const [votacionSending, setVotacionSending] = useState(false);
 
   const canManagePartidos = useMemo(() => Boolean(isAdmin || currentTeam?.mi_rol === "manager"), [isAdmin, currentTeam]);
   const pageLimit = 10;
@@ -247,8 +258,7 @@ function PartidosDashboard({ user, currentTeam }) {
       setIsFormOpen(false);
       setCategoriaSelections({});
       setMvpSelection("");
-      setCategoriaSending(null);
-      setMvpSending(false);
+      setVotacionSending(false);
       setChatInput("");
       resetForm();
       return;
@@ -355,8 +365,7 @@ function PartidosDashboard({ user, currentTeam }) {
         setChatInput("");
         setCategoriaSelections({});
         setMvpSelection("");
-        setCategoriaSending(null);
-        setMvpSending(false);
+        setVotacionSending(false);
       }
       await loadPartidos();
     } catch (error) {
@@ -374,16 +383,14 @@ function PartidosDashboard({ user, currentTeam }) {
         setChatInput("");
         setCategoriaSelections({});
         setMvpSelection("");
-        setCategoriaSending(null);
-        setMvpSending(false);
+        setVotacionSending(false);
         return;
       }
       setDetalleSeleccionado(partido.id);
       setDetalle(null);
       setCategoriaSelections({});
       setMvpSelection("");
-      setCategoriaSending(null);
-      setMvpSending(false);
+      setVotacionSending(false);
       fetchDetalle(partido.id);
       fetchChat(partido.id);
     },
@@ -528,63 +535,63 @@ function PartidosDashboard({ user, currentTeam }) {
     await refreshDetalle();
   };
 
-  const handleVotarCategoria = async (categoria) => {
+  const handleEnviarVotos = async () => {
     if (!detalleSeleccionado) return;
-    const seleccionado = categoriaSelections[categoria];
-    if (!seleccionado) {
-      setMessage({ type: "error", text: "Selecciona un jugador antes de votar" });
+    const categoriasSeleccionadas = VOTACION_CATEGORIAS.filter((categoria) => categoriaSelections[categoria]);
+    const incluyeMvp = Boolean(mvpSelection);
+    if (!categoriasSeleccionadas.length && !incluyeMvp) {
+      setMessage({ type: "error", text: "Selecciona al menos un voto para enviar" });
       return;
     }
-    setCategoriaSending(categoria);
+    setVotacionSending(true);
     try {
-      const response = await fetch(`/api/index.php?action=partido_votar_categoria`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_partido: detalleSeleccionado,
-          id_usuario: userId,
-          rol_global: globalRole,
-          id_votado: Number(seleccionado),
-          categoria,
-        }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "No se pudo registrar el voto");
-      setMessage({ type: "success", text: "Voto registrado" });
-      await refreshDetalle();
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setCategoriaSending(null);
-    }
-  };
+      for (const categoria of categoriasSeleccionadas) {
+        const idVotado = Number(categoriaSelections[categoria]);
+        if (!idVotado) {
+          continue;
+        }
+        const response = await fetch(`/api/index.php?action=partido_votar_categoria`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_partido: detalleSeleccionado,
+            id_usuario: userId,
+            rol_global: globalRole,
+            id_votado: idVotado,
+            categoria,
+          }),
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || `No se pudo registrar el voto de ${categoria}`);
+        }
+      }
 
-  const handleVotarMvp = async () => {
-    if (!detalleSeleccionado) return;
-    if (!mvpSelection) {
-      setMessage({ type: "error", text: "Selecciona un jugador para el MVP" });
-      return;
-    }
-    setMvpSending(true);
-    try {
-      const response = await fetch(`/api/index.php?action=partido_votar_mvp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_partido: detalleSeleccionado,
-          id_usuario: userId,
-          rol_global: globalRole,
-          id_votado: Number(mvpSelection),
-        }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "No se pudo registrar el voto");
-      setMessage({ type: "success", text: "Voto MVP registrado" });
+      if (incluyeMvp) {
+        const response = await fetch(`/api/index.php?action=partido_votar_mvp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_partido: detalleSeleccionado,
+            id_usuario: userId,
+            rol_global: globalRole,
+            id_votado: Number(mvpSelection),
+          }),
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || "No se pudo registrar el MVP");
+        }
+      }
+
+      setMessage({ type: "success", text: "Votos registrados" });
+      setCategoriaSelections({});
+      setMvpSelection("");
       await refreshDetalle();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     } finally {
-      setMvpSending(false);
+      setVotacionSending(false);
     }
   };
 
@@ -914,6 +921,7 @@ function PartidosDashboard({ user, currentTeam }) {
                   <th>Cupo</th>
                   <th>Inscritos</th>
                   <th>Estado</th>
+                  <th>Costo estimado</th>
                   <th className="text-end">Acciones</th>
                 </tr>
               </thead>
@@ -953,6 +961,18 @@ function PartidosDashboard({ user, currentTeam }) {
                       </td>
                       <td>
                         <span className={`badge estado ${partido.estado}`}>{partido.estado}</span>
+                      </td>
+                      <td>
+                        {partido.costo_jugador !== null && partido.costo_jugador !== undefined ? (
+                          <div>
+                            <div className="fw-semibold">€{Number(partido.costo_jugador).toFixed(2)}</div>
+                            <small className="text-muted text-capitalize">
+                              {partido.tipo_partido === 'externo' ? 'Partido externo' : 'Partido interno'}
+                            </small>
+                          </div>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
                       </td>
                       <td className="text-end">
                         <div className="btn-group btn-group-sm">
@@ -1023,6 +1043,7 @@ function PartidosDashboard({ user, currentTeam }) {
                           roster={teamRoster}
                           costoJugador={detalle.costo_jugador}
                           maxJugadores={detalle.partido?.max_jugadores}
+                          tipoPartido={detalle.partido?.tipo_partido}
                           loading={inscripcionLoading}
                           rosterLoading={rosterLoading}
                           onAdd={handleInscribirJugador}
@@ -1062,41 +1083,10 @@ function PartidosDashboard({ user, currentTeam }) {
                         />
                       </div>
                       <div className="col-12 col-xl-4">
-                        <SimpleListCard
-                          title="Ratings & Votos"
-                          items={[
-                            ...detalle.ratings.map((r) => ({ ...r, __type: "rating" })),
-                            ...detalle.votos_categorias.map((v) => ({ ...v, __type: "categoria" })),
-                            ...detalle.votos_mvp.map((v) => ({ ...v, __type: "mvp" })),
-                          ]}
-                          emptyText="Sin datos registrados"
-                          getKey={(item) => `${item.__type}-${item.id}`}
-                          renderItem={(item) => {
-                            if (item.__type === "rating") {
-                              return (
-                                <div>
-                                  <div className="fw-semibold">{item.evaluador_nombre} → {item.evaluado_nombre}</div>
-                                  <small className="text-muted">Rating {item.rating}</small>
-                                </div>
-                              );
-                            }
-                            if (item.__type === "categoria") {
-                              return (
-                                <div>
-                                  <div className="fw-semibold text-capitalize">{item.categoria}</div>
-                                  <small className="text-muted">
-                                    {item.votado_nombre} · por {item.votante_nombre}
-                                  </small>
-                                </div>
-                              );
-                            }
-                            return (
-                              <div>
-                                <div className="fw-semibold">MVP</div>
-                                <small className="text-muted">{item.votado_nombre} · por {item.votante_nombre}</small>
-                              </div>
-                            );
-                          }}
+                        <RatingsOverview
+                          ratings={detalle.ratings}
+                          votosCategorias={detalle.votos_categorias}
+                          votosMvp={detalle.votos_mvp}
                         />
                       </div>
                     </div>
@@ -1122,12 +1112,10 @@ function PartidosDashboard({ user, currentTeam }) {
                           puedeVotar={puedeVotar}
                           selections={categoriaSelections}
                           onSelectionChange={setCategoriaSelections}
-                          categoriaSending={categoriaSending}
-                          onVotarCategoria={handleVotarCategoria}
                           mvpSelection={mvpSelection}
                           onMvpSelectionChange={setMvpSelection}
-                          onVotarMvp={handleVotarMvp}
-                          mvpSending={mvpSending}
+                          onEnviarVotos={handleEnviarVotos}
+                          votacionSending={votacionSending}
                           votosCategorias={detalle.votos_categorias}
                           votosMvp={detalle.votos_mvp}
                         />
@@ -1149,6 +1137,8 @@ function PartidosDashboard({ user, currentTeam }) {
 function PartidoResumenCard({ partido, costo, inscritos }) {
   if (!partido) return null;
   const cupoTexto = partido.max_jugadores ? `${inscritos}/${partido.max_jugadores}` : `${inscritos}`;
+  const costoDisponible = costo !== null && costo !== undefined;
+  const costoDetalle = partido.tipo_partido === "externo" ? "Se reparte entre ambos equipos." : "Se reparte entre los inscritos.";
   return (
     <div className="card panel-soft">
       <div className="card-body">
@@ -1178,10 +1168,11 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
             <div className="text-muted small">Inscritos</div>
             <div className="fw-semibold">{cupoTexto}</div>
           </div>
-          {costo && (
+          {costoDisponible && (
             <div className="text-end">
               <div className="text-muted small">Costo estimado</div>
               <div className="fw-semibold">€{Number(costo).toFixed(2)} / jugador</div>
+              <small className="text-muted">{costoDetalle}</small>
             </div>
           )}
         </div>
@@ -1190,13 +1181,16 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
   );
 }
 
-function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loading, rosterLoading, onAdd, onRemove, canManage, currentUserId }) {
+function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loading, rosterLoading, onAdd, onRemove, canManage, currentUserId, tipoPartido = "interno" }) {
   const [selected, setSelected] = useState("");
   const disponibles = useMemo(
     () => roster.filter((p) => !jugadores.some((j) => jugadorId(j) === Number(p.id))),
     [roster, jugadores]
   );
+  const costoDisponible = costoJugador !== null && costoJugador !== undefined;
+  const tipoDescripcion = tipoPartido === "externo" ? "Partido externo" : "Partido interno";
   const isSelfInscrito = currentUserId ? jugadores.some((j) => jugadorId(j) === Number(currentUserId)) : false;
+
   const handleSelfToggle = () => {
     if (!currentUserId) return;
     if (isSelfInscrito) {
@@ -1220,7 +1214,11 @@ function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loa
             Inscripciones ({jugadores.length}
             {maxJugadores ? `/${maxJugadores}` : ""})
           </div>
-          {costoJugador && <small className="text-muted">€{Number(costoJugador).toFixed(2)} por jugador</small>}
+          {costoDisponible && (
+            <small className="text-muted d-block">
+              €{Number(costoJugador).toFixed(2)} por jugador · {tipoDescripcion}
+            </small>
+          )}
         </div>
       </div>
       <div className="card-body">
@@ -1311,34 +1309,48 @@ function ListaEsperaPanel({ espera }) {
 }
 
 function EventosPanel({ eventos = [], jugadores = [], onAdd, onDelete, canManage, estado }) {
-  const [form, setForm] = useState({ tipo: "gol", equipo: "A", id_jugador: "", id_asistente: "", minuto: "" });
+  const [form, setForm] = useState(() => createEventoFormState());
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState("");
   const estadoPermiteEventos = ["en_curso", "completado"].includes(estado);
   const jugadorOptions = jugadores.map((j) => ({ value: jugadorId(j), label: j.apodo || j.nombre }));
+  const selectOptions = [...jugadorOptions, { value: RIVAL_OPTION_VALUE, label: "Jugador rival" }];
+  const rivalSeleccionado = Boolean(form.es_rival);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "id_jugador") {
+      if (value === RIVAL_OPTION_VALUE) {
+        setForm((prev) => ({ ...prev, id_jugador: value, es_rival: true, id_asistente: "" }));
+      } else {
+        setForm((prev) => ({ ...prev, id_jugador: value, es_rival: false }));
+      }
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.id_jugador) {
+    if (!form.es_rival && !form.id_jugador) {
       setLocalError("Selecciona un jugador");
       return;
     }
     setSubmitting(true);
     setLocalError("");
     try {
-      await onAdd({
+      const payload = {
         tipo: form.tipo,
         equipo: form.equipo,
-        id_jugador: Number(form.id_jugador),
-        id_asistente: form.id_asistente ? Number(form.id_asistente) : null,
         minuto: form.minuto ? Number(form.minuto) : null,
-      });
-      setForm((prev) => ({ ...prev, id_jugador: "", id_asistente: "", minuto: "" }));
+        id_asistente: !form.es_rival && form.id_asistente ? Number(form.id_asistente) : null,
+        id_jugador: form.es_rival ? null : Number(form.id_jugador),
+      };
+      if (form.es_rival) {
+        payload.es_rival = true;
+      }
+      await onAdd(payload);
+      setForm(createEventoFormState());
     } catch (error) {
       setLocalError(error.message);
     } finally {
@@ -1383,16 +1395,17 @@ function EventosPanel({ eventos = [], jugadores = [], onAdd, onDelete, canManage
               <label className="form-label small mb-1">Jugador</label>
               <select className="form-select" name="id_jugador" value={form.id_jugador} onChange={handleChange}>
                 <option value="">Selecciona jugador</option>
-                {jugadorOptions.map((opt) => (
+                {selectOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
                 ))}
               </select>
+              <small className="text-muted">Usa "Jugador rival" si no conoces su nombre.</small>
             </div>
             <div className="col-12">
               <label className="form-label small mb-1">Asistente (opcional)</label>
-              <select className="form-select" name="id_asistente" value={form.id_asistente} onChange={handleChange}>
+              <select className="form-select" name="id_asistente" value={form.id_asistente} onChange={handleChange} disabled={rivalSeleccionado}>
                 <option value="">Sin asistente</option>
                 {jugadorOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -1400,6 +1413,7 @@ function EventosPanel({ eventos = [], jugadores = [], onAdd, onDelete, canManage
                   </option>
                 ))}
               </select>
+              {rivalSeleccionado && <small className="text-muted d-block">Los rivales no admiten asistente.</small>}
             </div>
             <div className="col-6">
               <label className="form-label small mb-1">Minuto</label>
@@ -1503,6 +1517,155 @@ function PartidoChatPanel({ messages, loading, chatOpen, chatClose, input, onInp
   );
 }
 
+function RatingsOverview({ ratings = [], votosCategorias = [], votosMvp = [] }) {
+  const totalRatings = ratings.length;
+  const promedioRating = totalRatings
+    ? ratings.reduce((acc, item) => acc + Number(item.rating || 0), 0) / totalRatings
+    : null;
+
+  const categoriaStats = VOTACION_CATEGORIAS.map((categoria) => {
+    const votos = votosCategorias.filter((v) => v.categoria === categoria);
+    const porJugador = {};
+    votos.forEach((voto) => {
+      const key = voto.id_votado;
+      if (!porJugador[key]) {
+        porJugador[key] = {
+          id: key,
+          nombre: voto.votado_apodo || voto.votado_nombre || "Jugador",
+          count: 0,
+        };
+      }
+      porJugador[key].count += 1;
+    });
+    const ranking = Object.values(porJugador)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+    const maxCount = ranking[0]?.count ?? 0;
+    const enrichedRanking = ranking.map((entry) => ({
+      ...entry,
+      percent: maxCount ? Math.round((entry.count / maxCount) * 100) : 0,
+    }));
+    return { categoria, total: votos.length, ranking: enrichedRanking };
+  });
+
+  const mvpRankingMap = {};
+  votosMvp.forEach((voto) => {
+    const key = voto.id_votado;
+    if (!mvpRankingMap[key]) {
+      mvpRankingMap[key] = {
+        id: key,
+        nombre: voto.votado_apodo || voto.votado_nombre || "Jugador",
+        count: 0,
+      };
+    }
+    mvpRankingMap[key].count += 1;
+  });
+  const mvpRankingBase = Object.values(mvpRankingMap).sort((a, b) => b.count - a.count).slice(0, 3);
+  const mvpMax = mvpRankingBase[0]?.count ?? 0;
+  const mvpRanking = mvpRankingBase.map((entry) => ({
+    ...entry,
+    percent: mvpMax ? Math.round((entry.count / mvpMax) * 100) : 0,
+  }));
+
+  const resumenCards = [
+    { label: "Promedio rating", value: promedioRating !== null ? promedioRating.toFixed(1) : "—" },
+    { label: "Ratings", value: totalRatings },
+    { label: "Votos categorías", value: votosCategorias.length },
+    { label: "Votos MVP", value: votosMvp.length },
+  ];
+
+  const ratingHistory = ratings.slice(0, 5);
+
+  return (
+    <div className="card panel-soft h-100">
+      <div className="card-header fw-semibold">Rendimiento & votos</div>
+      <div className="card-body d-flex flex-column gap-3">
+        <div className="row g-2">
+          {resumenCards.map((card) => (
+            <div key={card.label} className="col-6">
+              <div className="p-3 bg-light rounded-3 border h-100">
+                <div className="text-muted small text-uppercase">{card.label}</div>
+                <div className="fw-semibold fs-5">{card.value}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <h6 className="small text-uppercase text-muted mb-2">Votos por categoría</h6>
+          {votosCategorias.length ? (
+            categoriaStats.map((stat) => (
+              <div key={`cat-${stat.categoria}`} className="mb-3">
+                <div className="d-flex justify-content-between align-items-center">
+                  <span className="text-capitalize fw-semibold">{stat.categoria}</span>
+                  <small className="text-muted">{stat.total} voto(s)</small>
+                </div>
+                {stat.ranking.length ? (
+                  stat.ranking.map((entry) => (
+                    <div key={`cat-${stat.categoria}-${entry.id}`} className="mb-1">
+                      <div className="d-flex justify-content-between small">
+                        <span>{entry.nombre}</span>
+                        <span className="fw-semibold">{entry.count}</span>
+                      </div>
+                      <div className="progress bg-body-secondary" style={{ height: 6 }}>
+                        <div className="progress-bar" role="progressbar" style={{ width: `${entry.percent}%` }} />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-muted small">Sin votos registrados.</div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-muted small">Cuando lleguen votos se mostrarán los líderes de cada categoría.</div>
+          )}
+        </div>
+
+        <div>
+          <h6 className="small text-uppercase text-muted mb-2">MVP</h6>
+          {votosMvp.length ? (
+            mvpRanking.map((entry) => (
+              <div key={`mvp-${entry.id}`} className="mb-2">
+                <div className="d-flex justify-content-between small">
+                  <span>{entry.nombre}</span>
+                  <span className="fw-semibold">{entry.count}</span>
+                </div>
+                <div className="progress bg-body-secondary" style={{ height: 6 }}>
+                  <div className="progress-bar bg-success" role="progressbar" style={{ width: `${entry.percent}%` }} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-muted small">Sin votos MVP registrados.</div>
+          )}
+        </div>
+
+        <div>
+          <h6 className="small text-uppercase text-muted mb-2">Ratings recientes</h6>
+          {ratingHistory.length ? (
+            <ul className="detalle-list mb-0">
+              {ratingHistory.map((item) => (
+                <li key={`rating-${item.id}`} className="d-flex justify-content-between align-items-center gap-2">
+                  <div>
+                    <div className="fw-semibold">{item.evaluado_nombre}</div>
+                    <small className="text-muted">
+                      {item.evaluador_nombre} · {new Date(item.fecha_rating).toLocaleString()}
+                    </small>
+                  </div>
+                  <span className="badge text-bg-primary">{Number(item.rating || 0).toFixed(1)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-muted small">Sin ratings registrados aún.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function VotacionPanel({
   jugadores = [],
   enabled,
@@ -1510,21 +1673,20 @@ function VotacionPanel({
   puedeVotar,
   selections,
   onSelectionChange,
-  categoriaSending,
-  onVotarCategoria,
   mvpSelection,
   onMvpSelectionChange,
-  onVotarMvp,
-  mvpSending,
+  onEnviarVotos,
+  votacionSending,
   votosCategorias = [],
   votosMvp = [],
 }) {
-  const categorias = ["regateador", "atacante", "pasador", "defensa", "portero"];
+  const categorias = VOTACION_CATEGORIAS;
   const jugadorOptions = jugadores.map((j) => ({ value: jugadorId(j), label: j.apodo || j.nombre }));
   const resumenVotos = votosCategorias.reduce((acc, voto) => {
     acc[voto.categoria] = (acc[voto.categoria] || 0) + 1;
     return acc;
   }, {});
+  const tieneSelecciones = categorias.some((categoria) => selections[categoria]) || Boolean(mvpSelection);
 
   const handleCategoriaChange = (categoria, value) => {
     onSelectionChange((prev) => ({ ...prev, [categoria]: value }));
@@ -1542,52 +1704,47 @@ function VotacionPanel({
           puedeVotar ? (
             <div className="d-flex flex-column gap-3">
               {categorias.map((categoria) => (
-                <div key={categoria} className="d-flex gap-2 align-items-end">
-                  <div className="flex-grow-1">
-                    <label className="form-label small mb-1 text-capitalize">{categoria}</label>
-                    <select
-                      className="form-select"
-                      value={selections[categoria] ?? ""}
-                      onChange={(e) => handleCategoriaChange(categoria, e.target.value)}
-                      disabled={categoriaSending === categoria || mvpSending}
-                    >
-                      <option value="">Selecciona jugador</option>
-                      {jugadorOptions.map((opt) => (
-                        <option key={`${categoria}-${opt.value}`} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary"
-                    disabled={!selections[categoria] || categoriaSending === categoria}
-                    onClick={() => onVotarCategoria(categoria)}
-                  >
-                    {categoriaSending === categoria ? "Guardando..." : "Votar"}
-                  </button>
-                </div>
-              ))}
-              <div className="d-flex gap-2 align-items-end">
-                <div className="flex-grow-1">
-                  <label className="form-label small mb-1">MVP</label>
+                <div key={categoria}>
+                  <label className="form-label small mb-1 text-capitalize">{categoria}</label>
                   <select
                     className="form-select"
-                    value={mvpSelection}
-                    onChange={(e) => onMvpSelectionChange(e.target.value)}
-                    disabled={mvpSending}
+                    value={selections[categoria] ?? ""}
+                    onChange={(e) => handleCategoriaChange(categoria, e.target.value)}
+                    disabled={votacionSending}
                   >
                     <option value="">Selecciona jugador</option>
                     {jugadorOptions.map((opt) => (
-                      <option key={`mvp-${opt.value}`} value={opt.value}>
+                      <option key={`${categoria}-${opt.value}`} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
                   </select>
                 </div>
-                <button type="button" className="btn btn-primary" disabled={!mvpSelection || mvpSending} onClick={onVotarMvp}>
-                  {mvpSending ? "Guardando..." : "Votar MVP"}
+              ))}
+              <div>
+                <label className="form-label small mb-1">MVP</label>
+                <select
+                  className="form-select"
+                  value={mvpSelection}
+                  onChange={(e) => onMvpSelectionChange(e.target.value)}
+                  disabled={votacionSending}
+                >
+                  <option value="">Selecciona jugador</option>
+                  {jugadorOptions.map((opt) => (
+                    <option key={`mvp-${opt.value}`} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="d-flex justify-content-end">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!tieneSelecciones || votacionSending}
+                  onClick={onEnviarVotos}
+                >
+                  {votacionSending ? "Enviando..." : "Enviar votos"}
                 </button>
               </div>
             </div>
