@@ -106,6 +106,223 @@ class Partido {
         }
     }
 
+    public static function rankingEquipo(int $idEquipo): array {
+        $idEquipo = self::normalizeEquipoId($idEquipo);
+        $conexion = FutbolDB::connectDB();
+
+        $jugadoresRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT j.id, j.nombre, j.apodo, j.rating_habilidad, je.rol_en_equipo\n             FROM jugadores j\n             INNER JOIN jugadores_equipos je ON je.idjugador = j.id\n             WHERE je.idequipo = :equipo\n             ORDER BY j.nombre ASC",
+            [':equipo' => $idEquipo]
+        );
+
+        $jugadores = [];
+        foreach ($jugadoresRows as $row) {
+            $id = (int)$row['id'];
+            $jugadores[$id] = [
+                'id' => $id,
+                'nombre' => $row['nombre'],
+                'apodo' => $row['apodo'],
+                'rol' => $row['rol_en_equipo'],
+                'rating_base' => isset($row['rating_habilidad']) ? (float)$row['rating_habilidad'] : null,
+                'matches_played' => 0,
+                'matches_completados' => 0,
+                'matches_last30' => 0,
+                'avg_rating' => null,
+                'rating_count' => 0,
+                'best_rating' => null,
+                'worst_rating' => null,
+                'last_rating' => null,
+                'last_rating_date' => null,
+                'trend_vs_avg' => null,
+                'consistency_range' => null,
+                'mvp_votes' => 0,
+                'category_votes' => 0,
+                'category_top' => null,
+                'score' => 0.0,
+            ];
+        }
+
+        if (empty($jugadores)) {
+            return [
+                'ranking' => [],
+                'stats' => [
+                    'jugadores_activos' => 0,
+                    'jugadores_con_calificacion' => 0,
+                    'rating_promedio_equipo' => null,
+                    'evaluaciones_registradas' => 0,
+                    'mvp_acumulados' => 0,
+                    'partidos_registrados' => 0,
+                    'partidos_completados' => 0,
+                    'ultima_actualizacion' => null,
+                ],
+            ];
+        }
+
+        $params = [':equipo' => $idEquipo];
+
+        $matchesRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT pj.id_jugador,\n                    COUNT(*) AS partidos_jugados,\n                    SUM(CASE WHEN p.estado = 'completado' THEN 1 ELSE 0 END) AS partidos_completados,\n                    SUM(CASE WHEN pj.fecha_inscripcion >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS partidos_ultimos_30\n             FROM partidos_jugadores pj\n             INNER JOIN partidos p ON p.id = pj.id_partido\n             WHERE p.id_equipo = :equipo\n             GROUP BY pj.id_jugador",
+            $params
+        );
+        foreach ($matchesRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $jugadores[$id]['matches_played'] = (int)$row['partidos_jugados'];
+            $jugadores[$id]['matches_completados'] = (int)$row['partidos_completados'];
+            $jugadores[$id]['matches_last30'] = (int)$row['partidos_ultimos_30'];
+        }
+
+        $ratingsRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT rh.id_evaluado AS id_jugador,\n                    COUNT(*) AS ratings_registrados,\n                    AVG(rh.rating) AS rating_promedio,\n                    MAX(rh.rating) AS rating_maximo,\n                    MIN(rh.rating) AS rating_minimo\n             FROM ratings_historial rh\n             INNER JOIN partidos p ON p.id = rh.id_partido\n             WHERE p.id_equipo = :equipo\n             GROUP BY rh.id_evaluado",
+            $params
+        );
+        foreach ($ratingsRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $jugadores[$id]['rating_count'] = (int)$row['ratings_registrados'];
+            $jugadores[$id]['avg_rating'] = $row['rating_promedio'] !== null ? round((float)$row['rating_promedio'], 2) : null;
+            $jugadores[$id]['best_rating'] = $row['rating_maximo'] !== null ? (float)$row['rating_maximo'] : null;
+            $jugadores[$id]['worst_rating'] = $row['rating_minimo'] !== null ? (float)$row['rating_minimo'] : null;
+            if ($jugadores[$id]['best_rating'] !== null && $jugadores[$id]['worst_rating'] !== null) {
+                $jugadores[$id]['consistency_range'] = round($jugadores[$id]['best_rating'] - $jugadores[$id]['worst_rating'], 2);
+            }
+        }
+
+        $lastRatingsRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT rh.id_evaluado AS id_jugador, rh.rating, rh.fecha_rating\n             FROM ratings_historial rh\n             INNER JOIN partidos p ON p.id = rh.id_partido\n             WHERE p.id_equipo = :equipo\n             ORDER BY rh.id_evaluado ASC, rh.fecha_rating DESC",
+            $params
+        );
+        $assignedLast = [];
+        foreach ($lastRatingsRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id]) || isset($assignedLast[$id])) {
+                continue;
+            }
+            $jugadores[$id]['last_rating'] = (float)$row['rating'];
+            $jugadores[$id]['last_rating_date'] = $row['fecha_rating'];
+            $assignedLast[$id] = true;
+        }
+
+        $mvpRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT vm.id_votado AS id_jugador, COUNT(*) AS votos_mvp\n             FROM votos_mvp vm\n             INNER JOIN partidos p ON p.id = vm.id_partido\n             WHERE p.id_equipo = :equipo\n             GROUP BY vm.id_votado",
+            $params
+        );
+        foreach ($mvpRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $jugadores[$id]['mvp_votes'] = (int)$row['votos_mvp'];
+        }
+
+        $categoriaRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT vc.id_votado AS id_jugador, vc.categoria, COUNT(*) AS votos\n             FROM votos_categorias vc\n             INNER JOIN partidos p ON p.id = vc.id_partido\n             WHERE p.id_equipo = :equipo\n             GROUP BY vc.id_votado, vc.categoria",
+            $params
+        );
+        foreach ($categoriaRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $votes = (int)$row['votos'];
+            $jugadores[$id]['category_votes'] += $votes;
+            $categoria = $row['categoria'];
+            $currentTop = $jugadores[$id]['category_top'];
+            if ($currentTop === null || $votes > $currentTop['votos']) {
+                $jugadores[$id]['category_top'] = [
+                    'categoria' => $categoria,
+                    'votos' => $votes,
+                ];
+            }
+        }
+
+        $totalRatings = 0;
+        $totalMvpVotes = 0;
+        $playersWithAverage = 0;
+        $sumAverages = 0.0;
+        $ultimaActualizacion = null;
+        $maxScore = 0.0;
+
+        foreach ($jugadores as &$jugador) {
+            if ($jugador['rating_count'] > 0 && $jugador['avg_rating'] !== null) {
+                $totalRatings += $jugador['rating_count'];
+                $playersWithAverage++;
+                $sumAverages += $jugador['avg_rating'];
+            }
+            $totalMvpVotes += $jugador['mvp_votes'];
+
+            if ($jugador['avg_rating'] !== null && $jugador['last_rating'] !== null) {
+                $jugador['trend_vs_avg'] = round($jugador['last_rating'] - $jugador['avg_rating'], 2);
+            }
+
+            if ($jugador['last_rating_date']) {
+                if (!$ultimaActualizacion || $jugador['last_rating_date'] > $ultimaActualizacion) {
+                    $ultimaActualizacion = $jugador['last_rating_date'];
+                }
+            }
+
+            $score = 0.0;
+            if ($jugador['avg_rating'] !== null) {
+                $score += $jugador['avg_rating'] * 600;
+            }
+            $score += min($jugador['matches_completados'], 40) * 8;
+            $score += min($jugador['matches_last30'], 10) * 12;
+            $score += $jugador['mvp_votes'] * 6;
+            $score += $jugador['category_votes'] * 2;
+            $jugador['score'] = round($score, 2);
+            if ($score > $maxScore) {
+                $maxScore = $score;
+            }
+        }
+        unset($jugador);
+
+        usort($jugadores, function (array $a, array $b): int {
+            if ($a['score'] === $b['score']) {
+                if ($a['matches_completados'] === $b['matches_completados']) {
+                    return strcasecmp($a['nombre'], $b['nombre']);
+                }
+                return $b['matches_completados'] <=> $a['matches_completados'];
+            }
+            return $b['score'] <=> $a['score'];
+        });
+
+        foreach ($jugadores as $index => &$jugador) {
+            $jugador['rank'] = $index + 1;
+            $jugador['score_relative'] = $maxScore > 0 ? round(($jugador['score'] / $maxScore) * 100, 2) : 0;
+            if ($jugador['category_top']) {
+                $jugador['category_top']['etiqueta'] = ucfirst(str_replace('_', ' ', $jugador['category_top']['categoria']));
+            }
+        }
+        unset($jugador);
+
+        $totalPartidos = (int)self::valorEscalar($conexion, 'SELECT COUNT(*) FROM partidos WHERE id_equipo = :equipo', $params);
+        $totalPartidosCompletados = (int)self::valorEscalar($conexion, "SELECT COUNT(*) FROM partidos WHERE id_equipo = :equipo AND estado = 'completado'", $params);
+
+        return [
+            'ranking' => $jugadores,
+            'stats' => [
+                'jugadores_activos' => count($jugadoresRows),
+                'jugadores_con_calificacion' => $playersWithAverage,
+                'rating_promedio_equipo' => $playersWithAverage > 0 ? round($sumAverages / $playersWithAverage, 2) : null,
+                'evaluaciones_registradas' => $totalRatings,
+                'mvp_acumulados' => $totalMvpVotes,
+                'partidos_registrados' => $totalPartidos,
+                'partidos_completados' => $totalPartidosCompletados,
+                'ultima_actualizacion' => $ultimaActualizacion ? (new DateTime($ultimaActualizacion))->format(DateTime::ATOM) : null,
+            ],
+        ];
+    }
+
     public static function listar(array $filters = []): array {
         $conexion = FutbolDB::connectDB();
         $where = [];

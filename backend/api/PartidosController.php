@@ -582,4 +582,32 @@ class PartidosController {
             echo json_encode(['success' => false, 'error' => 'No se pudieron guardar las calificaciones']);
         }
     }
+
+    public function rankingEquipo() {
+        $idEquipo = isset($_GET['id_equipo']) ? (int)$_GET['id_equipo'] : 0;
+        $idUsuario = isset($_GET['id_usuario']) ? (int)$_GET['id_usuario'] : 0;
+        $rolGlobal = $_GET['rol_global'] ?? 'usuario';
+        if ($idEquipo <= 0 || $idUsuario <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Parámetros inválidos para ranking']);
+            return;
+        }
+        try {
+            $esAdmin = $rolGlobal === 'admin';
+            $perteneceEquipo = Partido::jugadorPerteneceEquipo($idUsuario, $idEquipo);
+            $esManager = Equipo::esManager($idUsuario, $idEquipo);
+            if (!$esAdmin && !$perteneceEquipo && !$esManager) {
+                throw new InvalidArgumentException('No tienes permisos para ver el ranking de este club');
+            }
+            $ranking = Partido::rankingEquipo($idEquipo);
+            echo json_encode(['success' => true] + $ranking);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            error_log('Error ranking equipo: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'No se pudo generar el ranking']);
+        }
+    }
 }

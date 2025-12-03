@@ -176,6 +176,9 @@ switch ($action) {
     case "partido_calificar_jugadores":
         $partidosController->calificarJugadores();
         break;
+    case "partidos_ranking_equipo":
+        $partidosController->rankingEquipo();
+        break;
 
     default:
         echo json_encode(["error" => "Invalid action"]);
