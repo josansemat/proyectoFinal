@@ -257,7 +257,6 @@ function Ranking({ user, currentTeam }) {
     <div className="ranking-page">
       <header className="ranking-header">
         <div className="header-content">
-          <h1>{currentTeam.nombre}</h1>
           <div className="header-meta">
             <span>Actualizado: {lastUpdatedLabel}</span>
           </div>
