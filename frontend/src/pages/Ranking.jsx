@@ -30,6 +30,7 @@ const initialsFromName = (nombre, apodo) => {
 function Ranking({ user, currentTeam }) {
   const [ranking, setRanking] = useState([]);
   const [stats, setStats] = useState(null);
+  const [highlights, setHighlights] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,6 +58,7 @@ function Ranking({ user, currentTeam }) {
       }
       setRanking(Array.isArray(data.ranking) ? data.ranking : []);
       setStats(data.stats || null);
+      setHighlights(data.highlights || null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,6 +72,7 @@ function Ranking({ user, currentTeam }) {
     } else {
       setRanking([]);
       setStats(null);
+      setHighlights(null);
     }
   }, [user?.id, currentTeam?.id, fetchRanking]);
 
@@ -99,7 +102,108 @@ function Ranking({ user, currentTeam }) {
     ];
   }, [stats]);
 
+  const highlightCards = useMemo(() => {
+    if (!highlights) return [];
+    const cards = [];
+    if (highlights.top_scorer) {
+      cards.push({ type: "scorer", ...highlights.top_scorer });
+    }
+    if (highlights.top_assistant) {
+      cards.push({ type: "assistant", ...highlights.top_assistant });
+    }
+    if (highlights.player_of_month) {
+      cards.push({ type: "month", ...highlights.player_of_month });
+    }
+    return cards;
+  }, [highlights]);
+
+  const positionHighlights = useMemo(() => {
+    if (!highlights?.positions) return [];
+    const order = ["portero", "defensa", "centrocampista", "delantero"];
+    return order
+      .map((tag) => highlights.positions[tag])
+      .filter(Boolean);
+  }, [highlights]);
+
+  const skillSpecialists = useMemo(() => {
+    if (!highlights?.skills) return [];
+    const order = ["regateador", "atacante", "pasador"];
+    return order
+      .map((tag) => highlights.skills[tag])
+      .filter(Boolean);
+  }, [highlights]);
+
   const maxScoreRelative = ranking.length ? ranking[0].score_relative ?? 100 : 100;
+
+  const renderHighlightCard = (card) => {
+    const player = card.player;
+    const name = player?.apodo || player?.nombre || "—";
+    const initials = initialsFromName(player?.nombre, player?.apodo);
+    return (
+      <article key={card.type} className={`highlight-card highlight-card--${card.type}`}>
+        <div className="highlight-card__meta">
+          <span className="highlight-card__label">{card.label}</span>
+          <strong className="highlight-card__value">{card.metric_value ?? "—"}</strong>
+          <span className="highlight-card__metric">{card.metric_label}</span>
+          {card.extra?.evaluaciones && (
+            <small className="highlight-card__extra">
+              {card.extra.evaluaciones} evaluaciones
+            </small>
+          )}
+        </div>
+        <div className="highlight-card__player">
+          <div className="ranking-avatar ranking-avatar--highlight">{initials}</div>
+          <div>
+            <span className="highlight-player-name">{name}</span>
+            <small className="highlight-player-role">{player?.position_tag || player?.rol}</small>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  const renderPositionCard = (position) => {
+    const player = position.player;
+    const name = player?.apodo || player?.nombre || "—";
+    return (
+      <article key={position.tag} className="position-card">
+        <header>
+          <span className="position-card__label">{position.label}</span>
+          <span className="position-card__metric">Score {formatDecimal(position.metric_value, 0)}</span>
+        </header>
+        <div className="position-card__body">
+          <div className="ranking-avatar ranking-avatar--small">
+            {initialsFromName(player?.nombre, player?.apodo)}
+          </div>
+          <div className="position-card__info">
+            <span>{name}</span>
+            <small>{player?.matches_completados ?? 0} PJ • ★ {formatDecimal(player?.avg_rating, 1)}</small>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  const renderSkillCard = (skill) => {
+    const player = skill.player;
+    return (
+      <article key={skill.tag} className="skill-card">
+        <header>
+          <span className="skill-card__label">{skill.label}</span>
+          <span className="skill-card__metric">{skill.metric_value ?? "—"} {skill.metric_label}</span>
+        </header>
+        <div className="skill-card__body">
+          <div className="ranking-avatar ranking-avatar--tiny">
+            {initialsFromName(player?.nombre, player?.apodo)}
+          </div>
+          <div className="skill-card__info">
+            <span>{player?.apodo || player?.nombre || "—"}</span>
+            <small>{player?.position_tag || player?.rol || "Jugador"}</small>
+          </div>
+        </div>
+      </article>
+    );
+  };
 
   const renderPlayerCard = (player, isTop = false) => {
     const percent = maxScoreRelative > 0 ? Math.round(((player.score_relative ?? 0) / maxScoreRelative) * 100) : 0;
@@ -173,6 +277,30 @@ function Ranking({ user, currentTeam }) {
             </div>
         ))}
       </div>
+
+      {highlightCards.length > 0 && (
+        <section className="ranking-highlight-cards">
+          {highlightCards.map(renderHighlightCard)}
+        </section>
+      )}
+
+      {positionHighlights.length > 0 && (
+        <section className="ranking-positions">
+          <h2>Dominio por posición</h2>
+          <div className="positions-grid">
+            {positionHighlights.map(renderPositionCard)}
+          </div>
+        </section>
+      )}
+
+      {skillSpecialists.length > 0 && (
+        <section className="ranking-skills">
+          <h2>Especialistas del club</h2>
+          <div className="skills-grid">
+            {skillSpecialists.map(renderSkillCard)}
+          </div>
+        </section>
+      )}
 
       {loading && <div className="ranking-loading">Calculando estadísticas...</div>}
 

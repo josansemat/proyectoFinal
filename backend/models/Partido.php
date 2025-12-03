@@ -15,6 +15,17 @@ class Partido {
     private const VOTACION_CATEGORIAS = ['regateador','atacante','pasador','defensa','portero'];
     private const RIVAL_PLACEHOLDER_EMAIL = 'jugador.rival@furbo.local';
     private const RIVAL_PLACEHOLDER_NAME = 'Jugador rival';
+    private const POSITION_LABELS = [
+        'portero' => 'Mejor portero',
+        'defensa' => 'Mejor defensa',
+        'centrocampista' => 'Mejor centrocampista',
+        'delantero' => 'Mejor delantero',
+    ];
+    private const SKILL_LABELS = [
+        'regateador' => 'Mejor regateador',
+        'atacante' => 'Mejor atacante',
+        'pasador' => 'Mejor pasador',
+    ];
 
     private static function parseDateTime(?string $value): ?string {
         if (!$value) { return null; }
@@ -106,6 +117,25 @@ class Partido {
         }
     }
 
+    private static function buildHighlightPlayer(array $jugador, array $extra = []): array {
+        $base = [
+            'id' => $jugador['id'],
+            'nombre' => $jugador['nombre'],
+            'apodo' => $jugador['apodo'],
+            'rol' => $jugador['rol'],
+            'position_tag' => $jugador['position_tag'],
+            'avg_rating' => $jugador['avg_rating'],
+            'score' => $jugador['score'],
+            'matches_completados' => $jugador['matches_completados'],
+            'goals' => $jugador['goals'],
+            'assists' => $jugador['assists'],
+        ];
+        foreach ($extra as $key => $value) {
+            $base[$key] = $value;
+        }
+        return $base;
+    }
+
     public static function rankingEquipo(int $idEquipo): array {
         $idEquipo = self::normalizeEquipoId($idEquipo);
         $conexion = FutbolDB::connectDB();
@@ -139,6 +169,12 @@ class Partido {
                 'mvp_votes' => 0,
                 'category_votes' => 0,
                 'category_top' => null,
+                'category_breakdown' => [],
+                'position_tag' => null,
+                'goals' => 0,
+                'assists' => 0,
+                'recent_rating_avg' => null,
+                'recent_rating_count' => 0,
                 'score' => 0.0,
             ];
         }
@@ -237,6 +273,7 @@ class Partido {
             $votes = (int)$row['votos'];
             $jugadores[$id]['category_votes'] += $votes;
             $categoria = $row['categoria'];
+            $jugadores[$id]['category_breakdown'][$categoria] = $votes;
             $currentTop = $jugadores[$id]['category_top'];
             if ($currentTop === null || $votes > $currentTop['votos']) {
                 $jugadores[$id]['category_top'] = [
@@ -244,6 +281,75 @@ class Partido {
                     'votos' => $votes,
                 ];
             }
+        }
+
+        $formacionRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT pf.id_jugador, pf.fila, COUNT(*) AS apariciones\n             FROM partidos_formaciones pf\n             INNER JOIN partidos p ON p.id = pf.id_partido\n             WHERE p.id_equipo = :equipo AND pf.equipo = 'A'\n             GROUP BY pf.id_jugador, pf.fila",
+            $params
+        );
+        $posicionMapa = [
+            0 => 'portero',
+            1 => 'defensa',
+            2 => 'centrocampista',
+            3 => 'delantero',
+        ];
+        $posicionConteo = [];
+        foreach ($formacionRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $fila = (int)$row['fila'];
+            $tag = $posicionMapa[$fila] ?? null;
+            if ($tag === null) {
+                continue;
+            }
+            $posicionConteo[$id][$tag] = ($posicionConteo[$id][$tag] ?? 0) + (int)$row['apariciones'];
+        }
+        foreach ($posicionConteo as $id => $conteos) {
+            arsort($conteos);
+            $jugadores[$id]['position_tag'] = array_key_first($conteos) ?: null;
+        }
+
+        $golesRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT ev.id_jugador, COUNT(*) AS goles\n             FROM partidos_eventos ev\n             INNER JOIN partidos p ON p.id = ev.id_partido\n             WHERE p.id_equipo = :equipo AND ev.tipo = 'gol'\n             GROUP BY ev.id_jugador",
+            $params
+        );
+        foreach ($golesRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $jugadores[$id]['goals'] = (int)$row['goles'];
+        }
+
+        $asistRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT ev.id_asistente AS id_jugador, COUNT(*) AS asistencias\n             FROM partidos_eventos ev\n             INNER JOIN partidos p ON p.id = ev.id_partido\n             WHERE p.id_equipo = :equipo AND ev.id_asistente IS NOT NULL AND ev.tipo = 'gol'\n             GROUP BY ev.id_asistente",
+            $params
+        );
+        foreach ($asistRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $jugadores[$id]['assists'] = (int)$row['asistencias'];
+        }
+
+        $recentRows = self::fetchAllAssoc(
+            $conexion,
+            "SELECT rh.id_evaluado AS id_jugador, AVG(rh.rating) AS rating_promedio, COUNT(*) AS evaluaciones\n             FROM ratings_historial rh\n             INNER JOIN partidos p ON p.id = rh.id_partido\n             WHERE p.id_equipo = :equipo AND rh.fecha_rating >= DATE_SUB(NOW(), INTERVAL 30 DAY)\n             GROUP BY rh.id_evaluado",
+            $params
+        );
+        foreach ($recentRows as $row) {
+            $id = (int)$row['id_jugador'];
+            if (!isset($jugadores[$id])) {
+                continue;
+            }
+            $jugadores[$id]['recent_rating_avg'] = $row['rating_promedio'] !== null ? round((float)$row['rating_promedio'], 2) : null;
+            $jugadores[$id]['recent_rating_count'] = (int)$row['evaluaciones'];
         }
 
         $totalRatings = 0;
@@ -305,6 +411,102 @@ class Partido {
         }
         unset($jugador);
 
+        $bestPositions = [];
+        foreach (self::POSITION_LABELS as $tag => $label) {
+            $bestPositions[$tag] = null;
+        }
+        foreach ($jugadores as $jugador) {
+            $tag = $jugador['position_tag'];
+            if ($tag && array_key_exists($tag, self::POSITION_LABELS) && $bestPositions[$tag] === null) {
+                $bestPositions[$tag] = [
+                    'tag' => $tag,
+                    'label' => self::POSITION_LABELS[$tag],
+                    'player' => self::buildHighlightPlayer($jugador),
+                    'metric_label' => 'Score',
+                    'metric_value' => $jugador['score'],
+                ];
+            }
+        }
+
+        $skillHighlights = [];
+        foreach (self::SKILL_LABELS as $skillTag => $skillLabel) {
+            $skillHighlights[$skillTag] = null;
+        }
+        foreach ($jugadores as $jugador) {
+            foreach (self::SKILL_LABELS as $skillTag => $skillLabel) {
+                $votesSkill = $jugador['category_breakdown'][$skillTag] ?? 0;
+                if ($votesSkill <= 0) {
+                    continue;
+                }
+                $currentBest = $skillHighlights[$skillTag];
+                if ($currentBest === null || $votesSkill > $currentBest['metric_value'] || ($votesSkill === $currentBest['metric_value'] && $jugador['score'] > $currentBest['player']['score'])) {
+                    $skillHighlights[$skillTag] = [
+                        'tag' => $skillTag,
+                        'label' => $skillLabel,
+                        'metric_label' => 'Votos',
+                        'metric_value' => $votesSkill,
+                        'player' => self::buildHighlightPlayer($jugador),
+                    ];
+                }
+            }
+        }
+
+        $topScorer = null;
+        foreach ($jugadores as $jugador) {
+            $goles = (int)$jugador['goals'];
+            if ($goles <= 0) {
+                continue;
+            }
+            if ($topScorer === null || $goles > $topScorer['metric_value'] || ($goles === $topScorer['metric_value'] && $jugador['score'] > $topScorer['player']['score'])) {
+                $topScorer = [
+                    'label' => 'Máximo goleador',
+                    'metric_label' => 'Goles',
+                    'metric_value' => $goles,
+                    'player' => self::buildHighlightPlayer($jugador),
+                ];
+            }
+        }
+
+        $topAssistant = null;
+        foreach ($jugadores as $jugador) {
+            $asist = (int)$jugador['assists'];
+            if ($asist <= 0) {
+                continue;
+            }
+            if ($topAssistant === null || $asist > $topAssistant['metric_value'] || ($asist === $topAssistant['metric_value'] && $jugador['score'] > $topAssistant['player']['score'])) {
+                $topAssistant = [
+                    'label' => 'Máximo asistente',
+                    'metric_label' => 'Asistencias',
+                    'metric_value' => $asist,
+                    'player' => self::buildHighlightPlayer($jugador),
+                ];
+            }
+        }
+
+        $playerOfMonth = null;
+        foreach ($jugadores as $jugador) {
+            if ($jugador['recent_rating_avg'] === null || $jugador['recent_rating_count'] === 0) {
+                continue;
+            }
+            if ($playerOfMonth === null || $jugador['recent_rating_avg'] > $playerOfMonth['metric_value'] || ($jugador['recent_rating_avg'] === $playerOfMonth['metric_value'] && $jugador['recent_rating_count'] > $playerOfMonth['extra']['evaluaciones'])) {
+                $playerOfMonth = [
+                    'label' => 'Jugador del mes',
+                    'metric_label' => 'Rating 30d',
+                    'metric_value' => $jugador['recent_rating_avg'],
+                    'extra' => ['evaluaciones' => $jugador['recent_rating_count']],
+                    'player' => self::buildHighlightPlayer($jugador),
+                ];
+            }
+        }
+
+        $highlights = [
+            'positions' => array_filter($bestPositions),
+            'skills' => array_filter($skillHighlights),
+            'top_scorer' => $topScorer,
+            'top_assistant' => $topAssistant,
+            'player_of_month' => $playerOfMonth,
+        ];
+
         $totalPartidos = (int)self::valorEscalar($conexion, 'SELECT COUNT(*) FROM partidos WHERE id_equipo = :equipo', $params);
         $totalPartidosCompletados = (int)self::valorEscalar($conexion, "SELECT COUNT(*) FROM partidos WHERE id_equipo = :equipo AND estado = 'completado'", $params);
 
@@ -320,6 +522,7 @@ class Partido {
                 'partidos_completados' => $totalPartidosCompletados,
                 'ultima_actualizacion' => $ultimaActualizacion ? (new DateTime($ultimaActualizacion))->format(DateTime::ATOM) : null,
             ],
+            'highlights' => $highlights,
         ];
     }
 
