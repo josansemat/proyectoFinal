@@ -1,6 +1,16 @@
-// src/pages/BuscarEquipos.jsx
 import React, { useState, useEffect } from "react";
 import "./BuscarEquipos.css";
+
+// Iconos SVG simples para no depender de librerías externas
+const SearchIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+);
+const ChevronLeft = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+);
+const ChevronRight = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+);
 
 const BuscarEquipos = ({ user, userTeams }) => {
   const [allTeams, setAllTeams] = useState([]);
@@ -10,7 +20,7 @@ const BuscarEquipos = ({ user, userTeams }) => {
   const [feedback, setFeedback] = useState({ msg: "", type: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6; // Subido a 6 para mejor grid
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,16 +31,19 @@ const BuscarEquipos = ({ user, userTeams }) => {
           setAllTeams(teamsData.equipos);
           setFilteredTeams(teamsData.equipos);
         }
-        const requestsResponse = await fetch(`/api/index.php?action=mis_solicitudes_ids&id_jugador=${user.id}`);
-        const requestsData = await requestsResponse.json();
-        if (requestsData.success) setPendingRequestTeamIds(requestsData.ids);
+        // Validación segura de user
+        if (user?.id) {
+          const requestsResponse = await fetch(`/api/index.php?action=mis_solicitudes_ids&id_jugador=${user.id}`);
+          const requestsData = await requestsResponse.json();
+          if (requestsData.success) setPendingRequestTeamIds(requestsData.ids);
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    if (user) fetchData();
+    fetchData();
   }, [user]);
 
   useEffect(() => {
@@ -50,7 +63,8 @@ const BuscarEquipos = ({ user, userTeams }) => {
   const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
   const handleSendRequest = async (teamId) => {
-    setFeedback({ msg: "Enviando...", type: "info" });
+    if (!user) return;
+    setFeedback({ msg: "Enviando solicitud...", type: "info" });
     try {
       const response = await fetch("/api/index.php?action=solicitar_unirse", {
         method: "POST",
@@ -59,10 +73,10 @@ const BuscarEquipos = ({ user, userTeams }) => {
       });
       const data = await response.json();
       if (data.success) {
-        setFeedback({ msg: "Solicitud enviada", type: "success" });
+        setFeedback({ msg: "¡Solicitud enviada con éxito!", type: "success" });
         setPendingRequestTeamIds([...pendingRequestTeamIds, teamId]);
       } else {
-        setFeedback({ msg: data.error || "Error", type: "error" });
+        setFeedback({ msg: data.error || "Error al enviar", type: "error" });
       }
     } catch {
       setFeedback({ msg: "Error de conexión", type: "error" });
@@ -71,88 +85,101 @@ const BuscarEquipos = ({ user, userTeams }) => {
   };
 
   const getTeamButtonState = (teamId) => {
-    if (userTeams.some((ut) => ut.id === teamId))
-      return { text: "Ya eres miembro", disabled: true };
-    if (pendingRequestTeamIds.includes(teamId))
-      return { text: "Solicitud enviada", disabled: true };
-    return { text: "Solicitar Unirse", disabled: false, onClick: () => handleSendRequest(teamId) };
+    const isMember = userTeams?.some((ut) => String(ut.id) === String(teamId));
+    if (isMember) return { text: "Miembro", disabled: true, style: "member" };
+    
+    if (pendingRequestTeamIds.includes(teamId) || pendingRequestTeamIds.includes(String(teamId)))
+      return { text: "Pendiente", disabled: true, style: "pending" };
+      
+    return { text: "Solicitar Acceso", disabled: false, style: "action", onClick: () => handleSendRequest(teamId) };
   };
 
-  if (loading) return <div className="text-contrast">Cargando equipos...</div>;
+  if (loading) return <div className="loader-container"><div className="spinner"></div></div>;
 
   return (
-    <div className="buscar-equipos-container">
-      {/* Encabezado minimalista */}
-      <div className="buscar-equipos-header-card">
-        <h2>Mercado de Fichajes</h2>
-        <p>Explora clubes activos y encuentra tu próximo equipo.</p>
-      </div>
+    <div className="market-page">
+      <header className="market-header">
+        <h1>Mercado de Fichajes</h1>
+        <p>Encuentra tu próximo club y compite.</p>
+      </header>
 
-      {/* Feedback */}
-      {feedback.msg && (
-        <div className={`alert alert-${feedback.type}`}>{feedback.msg}</div>
-      )}
-
-      {/* Barra de búsqueda */}
-      <div className="search-bar-container">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Buscar equipo por nombre..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        {searchTerm && (
-          <button className="btn-clear" onClick={() => setSearchTerm("")}>×</button>
-        )}
-        <div className="muted small">
-          Mostrando {filteredTeams.length} {filteredTeams.length === 1 ? "equipo" : "equipos"}
-          {searchTerm && ` para "${searchTerm}"`}
+      <div className="market-controls">
+        <div className="search-wrapper">
+          <span className="search-icon"><SearchIcon /></span>
+          <input
+            type="text"
+            placeholder="Buscar equipo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className="btn-clear" onClick={() => setSearchTerm("")}>✕</button>
+          )}
         </div>
       </div>
 
-      {/* Grid de equipos */}
+      {feedback.msg && (
+        <div className={`toast-message toast-${feedback.type}`}>
+          {feedback.msg}
+        </div>
+      )}
+
       {currentTeams.length > 0 ? (
         <>
           <div className="teams-grid">
             {currentTeams.map((team) => {
               const btnState = getTeamButtonState(team.id);
+              // Usamos el color del equipo o un fallback elegante
+              const teamColor = team.color_principal || "#3b82f6"; 
+              
               return (
-                <div key={team.id} className="team-card">
-                  <div className="card-accent-bar" style={{ background: team.color_principal || "var(--contrast-text-color)" }}></div>
-                  <div className="card-body">
-                    <div className="team-shield">{team.nombre.charAt(0).toUpperCase()}</div>
-                    <h4>{team.nombre}</h4>
+                <article key={team.id} className="team-card">
+                  <div className="team-card__content">
+                    <div 
+                      className="team-shield" 
+                      style={{ 
+                        background: `linear-gradient(135deg, ${teamColor}, #1e293b)`,
+                        boxShadow: `0 8px 16px -4px ${teamColor}40`
+                      }}
+                    >
+                      {team.nombre.charAt(0).toUpperCase()}
+                    </div>
+                    <h3 className="team-name">{team.nombre}</h3>
+                    <div className="team-meta">Club Oficial</div>
+                  </div>
+
+                  <div className="team-card__footer">
                     <button
-                      className="btn-pro"
+                      className={`btn-action btn-${btnState.style}`}
                       disabled={btnState.disabled}
                       onClick={btnState.onClick}
-                      style={{ background: team.color_principal || "var(--contrast-text-color)" }}
+                      style={btnState.style === 'action' ? { '--btn-color': teamColor } : {}}
                     >
                       {btnState.text}
                     </button>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
 
-          {/* Paginación */}
           {totalPages > 1 && (
-            <div className="pagination-container">
-              <button className="btn-pagination" onClick={goToPrevPage} disabled={currentPage === 1}>
-                ‹
+            <div className="pagination">
+              <button className="btn-page" onClick={goToPrevPage} disabled={currentPage === 1}>
+                <ChevronLeft />
               </button>
-              <span className="text-contrast">Página {currentPage} de {totalPages}</span>
-              <button className="btn-pagination" onClick={goToNextPage} disabled={currentPage === totalPages}>
-                ›
+              <span className="page-info">
+                {currentPage} <span className="text-muted">/ {totalPages}</span>
+              </span>
+              <button className="btn-page" onClick={goToNextPage} disabled={currentPage === totalPages}>
+                <ChevronRight />
               </button>
             </div>
           )}
         </>
       ) : (
-        <div className="text-contrast text-center py-5">
-          <p>No se encontraron equipos que coincidan con tu búsqueda.</p>
+        <div className="empty-state">
+          <p>No se encontraron equipos para "{searchTerm}"</p>
         </div>
       )}
     </div>
