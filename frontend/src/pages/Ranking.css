@@ -13,7 +13,7 @@
 }
 
 .ranking-page {
-  background-color: #0f172a;
+  background-color: #0f172ada;
   color: var(--rk-text-main);
   min-height: 100vh;
   padding: 1.5rem;
@@ -331,7 +331,7 @@
 
 /* El Top 1 (Gold) */
 .ranking-card--gold {
-  background: linear-gradient(145deg, rgba(251, 191, 36, 0.05), var(--rk-surface));
+  background: linear-gradient(145deg, rgba(251, 190, 36, 0.459), var(--rk-surface));
   border: 1px solid var(--rk-gold-dim);
   position: relative;
   margin-bottom: 1rem; /* Separar un poco al primero */

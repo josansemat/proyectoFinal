@@ -195,8 +195,6 @@ export default function AdminJugadores() {
   return (
     <div className="admin-jugadores-page">
       <div className="perfil-bg" aria-hidden="true" />
-      <h1 className="page-title">Administración Global - Gestión de Jugadores</h1>
-
       <div className="panel">
         {/* Barra de Herramientas (Búsqueda y Filtros) */}
         <div className="toolbar">

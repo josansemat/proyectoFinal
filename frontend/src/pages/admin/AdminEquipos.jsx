@@ -231,7 +231,6 @@ export default function AdminEquipos() {
   return (
     <div className="admin-equipos-page">
       <div className="perfil-bg" aria-hidden="true" />
-      <h1 className="page-title">Administración - Gestión de Equipos</h1>
       
       <div className="panel">
         {/* Toolbar con botón de crear funcional */}

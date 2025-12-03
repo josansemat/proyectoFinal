@@ -11,7 +11,7 @@ import EditarClub from "./pages/EditarClub";
 import CreateJugador from "./pages/CreateJugador.jsx";
 import Plantilla from "./pages/Plantilla.jsx";
 import MiPerfil from "./pages/MiPerfil.jsx";
-import AdminJugadores from "./pages/AdminJugadores";
+import AdminJugadores from "./pages/admin/AdminJugadores.jsx";
 import AdminEquipos from "./pages/admin/AdminEquipos";
 import PartidosDashboard from "./pages/partido/PartidosDashboard";
 import Ranking from "./pages/Ranking";
