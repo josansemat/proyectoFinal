@@ -16,6 +16,16 @@ import AdminEquipos from "./pages/admin/AdminEquipos";
 import PartidosDashboard from "./pages/partido/PartidosDashboard";
 import Ranking from "./pages/Ranking";
 
+// Guard de rutas para admin
+function RequireAdmin({ user, children }) {
+  const role = user?.rol_global ?? user?.rol ?? "usuario";
+  const isAdmin = role === "admin";
+  if (!isAdmin) {
+    return <Navigate to="/inicio" replace />;
+  }
+  return children;
+}
+
 const hexToRgb = (hex) => {
   if (!hex) return '33, 37, 41';
   hex = hex.replace('#', '');
@@ -199,8 +209,8 @@ function App() {
             <Route path="/partidos" element={<PartidosDashboard user={user} currentTeam={currentTeam} />} />
             <Route path="/ranking" element={<Ranking user={user} currentTeam={currentTeam} />} />
             <Route path="/mi-perfil" element={<MiPerfil user={user} currentTeam={currentTeam} onTeamChange={handleTeamChange} onUserUpdate={(u) => setUser(u)} />} />
-            <Route path="/admin/jugadores" element={<AdminJugadores />} />
-            <Route path="/admin/equipos" element={<AdminEquipos />} />
+            <Route path="/admin/jugadores" element={<RequireAdmin user={user}><AdminJugadores user={user} currentTeam={currentTeam} /></RequireAdmin>} />
+            <Route path="/admin/equipos" element={<RequireAdmin user={user}><AdminEquipos user={user} currentTeam={currentTeam} /></RequireAdmin>} />
             <Route path="*" element={<Navigate to="/inicio" replace />} />
           </Routes>
         </div>

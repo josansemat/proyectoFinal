@@ -16,7 +16,7 @@ function formatDate(iso) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-export default function AdminJugadores() {
+export default function AdminJugadores({ user, currentTeam }) {
   // Estados para filtros, paginación y datos de la tabla
   const [search, setSearch] = useState("");
   const [rol, setRol] = useState("");
