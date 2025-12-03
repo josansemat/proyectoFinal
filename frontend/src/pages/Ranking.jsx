@@ -13,8 +13,8 @@ const trendLabel = (trend) => {
     return "—";
   }
   const numeric = Number(trend);
-  const prefix = numeric > 0 ? "+" : "";
-  return `${prefix}${numeric.toFixed(1)}`;
+  const prefix = numeric > 0 ? "▲" : numeric < 0 ? "▼" : ""; // Usamos flechas para mejor visual
+  return `${prefix} ${Math.abs(numeric).toFixed(1)}`;
 };
 
 const initialsFromName = (nombre, apodo) => {
@@ -75,13 +75,12 @@ function Ranking({ user, currentTeam }) {
 
   const lastUpdatedLabel = useMemo(() => {
     if (!stats?.ultima_actualizacion) {
-      return "Sin registros";
+      return "Sin datos";
     }
     try {
       const date = new Date(stats.ultima_actualizacion);
       return new Intl.DateTimeFormat(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
       }).format(date);
     } catch (error) {
       return stats.ultima_actualizacion;
@@ -91,195 +90,101 @@ function Ranking({ user, currentTeam }) {
   const metricCards = useMemo(() => {
     const ratingPromedio = stats?.rating_promedio_equipo;
     const ratingPromedioLabel = ratingPromedio !== null && ratingPromedio !== undefined ? ratingPromedio.toFixed(2) : "—";
-    const jugadoresActivos = stats?.jugadores_activos ?? 0;
-    const jugadoresConNota = stats?.jugadores_con_calificacion ?? 0;
-    const partidosRegistrados = stats?.partidos_registrados ?? 0;
-    const partidosCompletados = stats?.partidos_completados ?? 0;
-    const evaluaciones = stats?.evaluaciones_registradas ?? 0;
-    const mvpAcumulados = stats?.mvp_acumulados ?? 0;
-
+    
     return [
-      {
-        key: "avg",
-        label: "Rating medio del club",
-        value: ratingPromedioLabel,
-        helper: "Promedio de jugadores evaluados",
-      },
-      {
-        key: "players-rated",
-        label: "Jugadores con nota",
-        value: jugadoresConNota,
-        helper: `${jugadoresActivos} activos`,
-      },
-      {
-        key: "evaluaciones",
-        label: "Evaluaciones registradas",
-        value: evaluaciones,
-        helper: "Historial acumulado",
-      },
-      {
-        key: "mvp",
-        label: "MVP acumulados",
-        value: mvpAcumulados,
-        helper: "Votos oficiales",
-      },
-      {
-        key: "partidos",
-        label: "Partidos completados",
-        value: partidosCompletados,
-        helper: `${partidosRegistrados} registrados`,
-      },
-      {
-        key: "actualizacion",
-        label: "Última actualización",
-        value: lastUpdatedLabel,
-        helper: "Notas más recientes",
-      },
+      { key: "avg", label: "Rating Club", value: ratingPromedioLabel },
+      { key: "players", label: "Jugadores", value: stats?.jugadores_con_calificacion ?? 0 },
+      { key: "matches", label: "Partidos", value: stats?.partidos_completados ?? 0 },
+      { key: "mvp", label: "Total MVP", value: stats?.mvp_acumulados ?? 0 },
     ];
-  }, [stats, lastUpdatedLabel]);
+  }, [stats]);
 
   const maxScoreRelative = ranking.length ? ranking[0].score_relative ?? 100 : 100;
 
-  const renderPlayerCard = (player) => {
+  const renderPlayerCard = (player, isTop = false) => {
     const percent = maxScoreRelative > 0 ? Math.round(((player.score_relative ?? 0) / maxScoreRelative) * 100) : 0;
-    const trend = trendLabel(player.trend_vs_avg);
     const trendState = player.trend_vs_avg > 0 ? "positive" : player.trend_vs_avg < 0 ? "negative" : "neutral";
-    const topCategory = player.category_top?.etiqueta ?? "—";
-
+    
     return (
-      <article key={player.id} className="ranking-card">
-        <div className="ranking-card__position">#{player.rank}</div>
-        <div className="ranking-card__body">
-          <div className="ranking-card__identity">
+      <article key={player.id} className={`ranking-card ${isTop ? 'ranking-card--gold' : ''}`}>
+        <div className="ranking-card__left">
+            <span className="ranking-card__rank">#{player.rank}</span>
             <div className="ranking-avatar">
-              <span>{initialsFromName(player.nombre, player.apodo)}</span>
+              {initialsFromName(player.nombre, player.apodo)}
             </div>
-            <div>
-              <div className="fw-semibold text-truncate">
-                {player.apodo || player.nombre}
-              </div>
-              <div className="ranking-chip">
-                {player.rol === "manager" ? "Manager" : "Jugador"}
-              </div>
+        </div>
+        
+        <div className="ranking-card__center">
+            <div className="ranking-card__header">
+                <span className="ranking-name">{player.apodo || player.nombre}</span>
+                {player.rol === "manager" && <span className="badge-manager">M</span>}
             </div>
-            <div className="ranking-score fw-bold">{formatDecimal(player.avg_rating)}</div>
-          </div>
+            
+            <div className="ranking-bar-container">
+                 <div className="ranking-bar" style={{ width: `${percent}%` }} />
+            </div>
 
-          <div className="ranking-bar">
-            <div className="ranking-bar__fill" style={{ width: `${percent}%` }} />
-          </div>
+            <div className="ranking-mini-stats">
+                <span>★ {formatDecimal(player.avg_rating, 2)}</span>
+                <span className="separator">•</span>
+                <span>{player.matches_completados} PJ</span>
+                <span className="separator">•</span>
+                <span className={`trend-${trendState}`}>{trendLabel(player.trend_vs_avg)}</span>
+            </div>
+        </div>
 
-          <ul className="ranking-card__stats">
-            <li>
-              <span>Partidos</span>
-              <strong>{player.matches_completados ?? 0}</strong>
-            </li>
-            <li>
-              <span>Ult. 30 días</span>
-              <strong>{player.matches_last30 ?? 0}</strong>
-            </li>
-            <li>
-              <span>MVP</span>
-              <strong>{player.mvp_votes ?? 0}</strong>
-            </li>
-          </ul>
-
-          <div className="ranking-card__details">
-            <div>
-              <small>Tendencia</small>
-              <span className={`ranking-trend ranking-trend--${trendState}`}>{trend}</span>
-            </div>
-            <div>
-              <small>Última nota</small>
-              <span>{formatDecimal(player.last_rating)}</span>
-            </div>
-            <div>
-              <small>Destaca en</small>
-              <span>{topCategory}</span>
-            </div>
-          </div>
+        <div className="ranking-card__right">
+             <div className="ranking-score-box">
+                <small>SCORE</small>
+                <strong>{formatDecimal(player.score, 0)}</strong>
+             </div>
         </div>
       </article>
     );
   };
 
-  if (!user) {
-    return null;
-  }
-
-  if (!currentTeam) {
-    return (
-      <div className="ranking-page container py-4">
-        <div className="alert alert-info">Selecciona un club para ver su ranking.</div>
-      </div>
-    );
-  }
+  if (!user) return null;
+  if (!currentTeam) return <div className="ranking-empty">Selecciona un club</div>;
 
   const topPerformer = ranking[0];
   const restPlayers = ranking.slice(1);
 
   return (
-    <div className="ranking-page container py-4">
+    <div className="ranking-page">
       <header className="ranking-header">
-        <div>
-          <p className="text-uppercase small text-muted mb-1">Ranking del club</p>
-          <h1 className="h3 mb-2">{currentTeam.nombre}</h1>
-          <p className="text-muted mb-0">Ordenado por desempeño y consistencia dentro del club.</p>
+        <div className="header-content">
+          <h1>{currentTeam.nombre}</h1>
+          <div className="header-meta">
+            <span>Actualizado: {lastUpdatedLabel}</span>
+          </div>
         </div>
-        <button
-          type="button"
-          className="btn btn-outline-light ranking-refresh-btn"
-          onClick={fetchRanking}
-          disabled={loading}
-        >
-          {loading ? "Actualizando..." : "Refrescar"}
+        <button className="btn-icon-refresh" onClick={fetchRanking} disabled={loading}>
+            {loading ? "↻" : "⟳"}
         </button>
       </header>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <div className="ranking-alert error">{error}</div>}
 
-      <section className="ranking-metrics">
-        {metricCards.map((card) => (
-          <article key={card.key} className="ranking-metric-card">
-            <span className="ranking-metric-card__label">{card.label}</span>
-            <strong className="ranking-metric-card__value">{card.value}</strong>
-            <small className="text-muted">{card.helper}</small>
-          </article>
+      <div className="ranking-stats-grid">
+        {metricCards.map((c) => (
+            <div key={c.key} className="stat-item">
+                <span className="stat-value">{c.value}</span>
+                <span className="stat-label">{c.label}</span>
+            </div>
         ))}
-      </section>
+      </div>
 
-      {loading && (
-        <div className="text-muted small">Cargando ranking...</div>
-      )}
+      {loading && <div className="ranking-loading">Calculando estadísticas...</div>}
 
       {!loading && ranking.length === 0 && !error && (
-        <div className="alert alert-light border">Aún no hay calificaciones registradas para este club.</div>
+        <div className="ranking-empty">No hay datos suficientes aún.</div>
       )}
 
-      {topPerformer && (
-        <section className="ranking-top-card">
-          <div className="ranking-top-card__badge">Top performer</div>
-          <div className="ranking-top-card__content">
-            <div>
-              <h2 className="h4 mb-1">{topPerformer.apodo || topPerformer.nombre}</h2>
-              <p className="mb-1">Promedio {formatDecimal(topPerformer.avg_rating)} · {topPerformer.matches_completados ?? 0} partidos</p>
-              <small className="text-muted">Mejor nota {formatDecimal(topPerformer.best_rating)} · MVP {topPerformer.mvp_votes ?? 0}</small>
-            </div>
-            <div className="ranking-top-card__score">
-              <span>Score</span>
-              <strong>{formatDecimal(topPerformer.score, 0)}</strong>
-            </div>
-          </div>
-        </section>
-      )}
-
+      {/* Renderizamos la lista completa, pero el primero tiene estilo especial si quieres, 
+          o simplemente usamos la lista unificada para mayor elegancia y consistencia */}
       <section className="ranking-list">
-        {topPerformer && renderPlayerCard(topPerformer)}
-        {restPlayers.map((player) => renderPlayerCard(player))}
+        {topPerformer && renderPlayerCard(topPerformer, true)}
+        {restPlayers.map((player) => renderPlayerCard(player, false))}
       </section>
     </div>
   );
