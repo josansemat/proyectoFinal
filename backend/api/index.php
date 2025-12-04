@@ -120,6 +120,14 @@ switch ($action) {
     case "admin_toggle_eliminado":
         $controller->adminToggleEliminado();
         break;
+
+    case "forgot_password":
+        $controller->forgotPassword();
+        break;
+
+    case "reset_password":
+        $controller->resetPassword();
+        break;
     case "admin_crear_equipo":
         $equiposController->adminCrearEquipo();
         break;

@@ -318,4 +318,136 @@ class JugadoresController {
             echo json_encode(['success' => false, 'error' => 'No se pudo actualizar eliminado']);
         }
     }
+
+    // Forgot Password
+    public function forgotPassword() {
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (empty($data['email'])) {
+            echo json_encode(["success" => false, "error" => "Falta el email"]);
+            return;
+        }
+
+        $email = $data['email'];
+        $jugador = Jugador::getByEmail($email);
+
+        if (!$jugador) {
+            // Don't reveal if email exists
+            echo json_encode(["success" => true, "message" => "Si el email existe, se ha enviado un enlace de recuperación"]);
+            return;
+        }
+
+        // Generate token
+        $token = bin2hex(random_bytes(32));
+        $expires = gmdate('Y-m-d H:i:s', time() + 3600); // store expiration in UTC
+
+        try {
+            $jugador->setResetToken($token, $expires);
+        } catch (Exception $e) {
+            error_log('Error setting reset token: ' . $e->getMessage());
+            echo json_encode(["success" => false, "error" => "Error interno del servidor"]);
+            return;
+        }
+
+        // Send email and ensure it succeeds
+        $mailSent = $this->sendResetEmail($email, $token);
+        if (!$mailSent) {
+            echo json_encode(["success" => false, "error" => "No se pudo enviar el correo de recuperación. Revisa la configuración SMTP e inténtalo de nuevo."]);
+            return;
+        }
+
+        echo json_encode(["success" => true, "message" => "Si el email existe, se ha enviado un enlace de recuperación"]);
+    }
+
+    // Reset Password
+    public function resetPassword() {
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (empty($data['token']) || empty($data['password'])) {
+            echo json_encode(["success" => false, "error" => "Faltan parámetros"]);
+            return;
+        }
+
+        $token = $data['token'];
+        $newPassword = $data['password'];
+
+        $jugador = Jugador::getByResetToken($token);
+
+        if (!$jugador) {
+            echo json_encode(["success" => false, "error" => "Token inválido o expirado"]);
+            return;
+        }
+
+        try {
+            $jugador->resetPasswordAndClearToken($newPassword);
+        } catch (Exception $e) {
+            error_log('Error updating password: ' . $e->getMessage());
+            echo json_encode(["success" => false, "error" => "Error interno del servidor"]);
+            return;
+        }
+
+        echo json_encode(["success" => true, "message" => "Contraseña actualizada correctamente"]);
+    }
+
+    private function sendResetEmail($email, $token) {
+        require_once '../vendor/autoload.php';
+
+        $smtpHost   = $_ENV['SMTP_HOST']   ?? 'smtp.ionos.com';
+        $smtpPort   = (int)($_ENV['SMTP_PORT']   ?? 587);
+        $smtpUser   = $_ENV['SMTP_USER']   ?? 'info@laferiadepepe.es';
+        $smtpPass   = $_ENV['SMTP_PASS']   ?? '3Pf9R5FpStBn7r4zhJwLUMLGK8X6azFJ';
+        $smtpSecure = strtolower($_ENV['SMTP_SECURE'] ?? 'tls'); // tls | ssl | none
+        $smtpFrom   = $_ENV['SMTP_FROM']   ?? $smtpUser;
+        $smtpFromName = $_ENV['SMTP_FROM_NAME'] ?? 'Furbo App';
+        $smtpDebug  = (int)($_ENV['SMTP_DEBUG'] ?? 0);
+        $resetBaseUrl = $_ENV['RESET_URL'] ?? 'http://localhost:5173';
+
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+
+        try {
+            //Server settings
+            $mail->isSMTP();
+            $mail->Host       = $smtpHost;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $smtpUser;
+            $mail->Password   = $smtpPass;
+            $mail->CharSet    = 'UTF-8';
+            $mail->Port       = $smtpPort;
+
+            if ($smtpSecure === 'ssl' || $smtpSecure === 'smtps') {
+                $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } elseif ($smtpSecure === 'none') {
+                $mail->SMTPSecure = false;
+            } else {
+                $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            if ($smtpDebug > 0) {
+                $mail->SMTPDebug = $smtpDebug;
+                $mail->Debugoutput = function ($str, $level) {
+                    error_log("PHPMailer [{$level}]: {$str}");
+                };
+            }
+
+            //Recipients
+            $mail->setFrom($smtpFrom, $smtpFromName);
+            $mail->addAddress($email);
+
+            //Content
+            $mail->isHTML(true);
+            $mail->Subject = 'Recuperar contraseña - Furbo';
+            $resetLink = rtrim($resetBaseUrl, '/') . "?token=$token";
+            $mail->Body    = "Haz clic en el siguiente enlace para recuperar tu contraseña: <a href='$resetLink'>$resetLink</a>";
+            $mail->AltBody = "Haz clic en el siguiente enlace para recuperar tu contraseña: $resetLink";
+
+            $mail->send();
+            return true;
+        } catch (\PHPMailer\PHPMailer\Exception $e) {
+            error_log("Error sending email: {$mail->ErrorInfo}");
+        } catch (\Throwable $t) {
+            error_log('Unexpected mail error: '.$t->getMessage());
+        }
+
+        return false;
+    }
 }

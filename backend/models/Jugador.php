@@ -14,6 +14,8 @@ class Jugador {
     private $fecha_registro;
     private $eliminado;
     private $fecha_eliminacion;
+    private $reset_token;
+    private $reset_expires;
 
     function __construct(
         $id = 0,
@@ -27,7 +29,9 @@ class Jugador {
         $activo = 1,
         $fecha_registro = "",
         $eliminado = 0,
-        $fecha_eliminacion = null
+        $fecha_eliminacion = null,
+        $reset_token = null,
+        $reset_expires = null
     ) {
         $this->id = $id;
         $this->nombre = $nombre;
@@ -41,6 +45,8 @@ class Jugador {
         $this->fecha_registro = $fecha_registro;
         $this->eliminado = $eliminado;
         $this->fecha_eliminacion = $fecha_eliminacion;
+        $this->reset_token = $reset_token;
+        $this->reset_expires = $reset_expires;
     }
 
     // ----------------------------------------------------------
@@ -124,7 +130,8 @@ class Jugador {
             $row->id, $row->nombre, $row->apodo, $row->email, $row->telefono,
             $row->password, $row->rating_habilidad, $row->rol,
             $row->activo, $row->fecha_registro,
-            $row->eliminado, $row->fecha_eliminacion
+            $row->eliminado, $row->fecha_eliminacion,
+            $row->reset_token ?? null, $row->reset_expires ?? null
         );
     }
 
@@ -359,4 +366,50 @@ class Jugador {
     public function getRol(){ return $this->rol; }
     public function getActivo(){ return $this->activo; }
     public function getFechaRegistro(){ return $this->fecha_registro; }
+    public function getResetToken(){ return $this->reset_token; }
+    public function getResetExpires(){ return $this->reset_expires; }
+
+    // Set reset token
+    public function setResetToken($token, $expires) {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare("UPDATE jugadores SET reset_token = :token, reset_expires = :expires WHERE id = :id");
+        $stmt->bindParam(':token', $token);
+        $stmt->bindParam(':expires', $expires);
+        $stmt->bindParam(':id', $this->id);
+        $stmt->execute();
+        $this->reset_token = $token;
+        $this->reset_expires = $expires;
+    }
+
+    // Get by reset token
+    public static function getByResetToken($token) {
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare("SELECT * FROM jugadores WHERE reset_token = :token AND reset_expires > UTC_TIMESTAMP() LIMIT 1");
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+
+        if ($stmt->rowCount() == 0) return false;
+
+        $row = $stmt->fetch(PDO::FETCH_OBJ);
+        return new Jugador(
+            $row->id, $row->nombre, $row->apodo, $row->email, $row->telefono,
+            $row->password, $row->rating_habilidad, $row->rol,
+            $row->activo, $row->fecha_registro,
+            $row->eliminado, $row->fecha_eliminacion,
+            $row->reset_token ?? null, $row->reset_expires ?? null
+        );
+    }
+
+    // Update password via reset token (and clear token)
+    public function resetPasswordAndClearToken($newPassword) {
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare("UPDATE jugadores SET password = :password, reset_token = NULL, reset_expires = NULL WHERE id = :id");
+        $stmt->bindParam(':password', $hash);
+        $stmt->bindParam(':id', $this->id);
+        $stmt->execute();
+        $this->password = $hash;
+        $this->reset_token = null;
+        $this->reset_expires = null;
+    }
 }

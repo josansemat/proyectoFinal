@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
 import Sidebar from "./components/Sidebar.jsx";
 import Inicio from "./pages/Inicio";
 import BuscarEquipos from "./pages/BuscarEquipos";
@@ -52,6 +53,7 @@ function App() {
   const [currentTeam, setCurrentTeam] = useState(null);
   const [userTeams, setUserTeams] = useState([]);
   const [currentView, setCurrentView] = useState("login");
+  const [resetToken, setResetToken] = useState(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [isBgLight, setIsBgLight] = useState(false);
 
@@ -72,6 +74,13 @@ function App() {
 
   // --- CARGA INICIAL DE SESIÓN ---
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token) {
+      setResetToken(token);
+      setCurrentView("reset");
+    }
+
     const loadSession = async () => {
       const storedUserStr = localStorage.getItem("usuario_furbo");
       const storedTeamStr = localStorage.getItem("equipo_actual_furbo");
@@ -178,8 +187,12 @@ function App() {
       <div className="App auth-mode">
         {currentView === "login" ? (
           <Login onLoginSuccess={handleLoginSuccess} switchToRegister={() => setCurrentView("register")} />
-        ) : (
+        ) : currentView === "register" ? (
           <Register switchToLogin={() => setCurrentView("login")} />
+        ) : currentView === "reset" ? (
+          <ResetPassword token={resetToken} />
+        ) : (
+          <Login onLoginSuccess={handleLoginSuccess} switchToRegister={() => setCurrentView("register")} />
         )}
       </div>
     );

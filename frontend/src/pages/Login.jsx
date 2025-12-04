@@ -10,6 +10,9 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
         password: ""
     });
     const [error, setError] = useState("");
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState("");
+    const [forgotMessage, setForgotMessage] = useState("");
 
     const handleChange = (e) => {
         setForm({
@@ -41,6 +44,31 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
             }
         } catch (err) {
             setError("Error de conexión con el servidor");
+        }
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        setForgotMessage("");
+
+        try {
+            const response = await fetch("/api/index.php?action=forgot_password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email: forgotEmail })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setForgotMessage("Si el email existe, se ha enviado un enlace de recuperación");
+            } else {
+                setForgotMessage(data.error || "Error al enviar el email");
+            }
+        } catch (err) {
+            setForgotMessage("Error de conexión con el servidor");
         }
     };
 
@@ -93,6 +121,16 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
               />
             </div>
 
+            <div className="forgot-password">
+              <button
+                type="button"
+                className="btn-link"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+
             <div className="button-group">
               <button type="submit" className="btn-primary">
                 Entrar
@@ -117,6 +155,27 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
           </form>
         </div>
       </section>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="modal-overlay" onClick={() => setShowForgotPassword(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Recuperar contraseña</h3>
+            <form onSubmit={handleForgotPassword}>
+              <input
+                type="email"
+                placeholder="Ingresa tu email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                required
+              />
+              <button type="submit">Enviar enlace</button>
+            </form>
+            {forgotMessage && <p>{forgotMessage}</p>}
+            <button onClick={() => setShowForgotPassword(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
