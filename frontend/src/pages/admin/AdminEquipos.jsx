@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./AdminEquipos.css";
 
 function Badge({ active }) {
@@ -16,6 +16,7 @@ export default function AdminEquipos() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
 
   // Estados para el Modal
   const [editing, setEditing] = useState(null); // Objeto del equipo si se edita
@@ -23,6 +24,17 @@ export default function AdminEquipos() {
 
   const [fondos, setFondos] = useState([]);
   const [jugadores, setJugadores] = useState([]); // Lista de jugadores del equipo actual
+  const [roles, setRoles] = useState([]); // {id_jugador, rol}
+
+  const roleOptions = [
+    { value: '', label: 'Sin rol' },
+    { value: 'Portero', label: 'Portero' },
+    { value: 'Defensa', label: 'Defensa' },
+    { value: 'Mediocentro', label: 'Mediocentro' },
+    { value: 'Delantero', label: 'Delantero' },
+    { value: 'Suplente', label: 'Suplente' },
+    { value: 'Entrenador', label: 'Entrenador' },
+  ];
 
   // Formulario inicial vacío
   const initialFormState = {
@@ -116,6 +128,7 @@ export default function AdminEquipos() {
       setEditing(null);
       setJugadores([]); // Un equipo nuevo no tiene jugadores
       setDorsales([]);
+      setRoles([]);
       setForm(initialFormState); // Reseteamos formulario
       setIsCreating(true); // Modo creación activado
   };
@@ -143,6 +156,7 @@ export default function AdminEquipos() {
         id_lanzador_corner_der: j.equipo.id_lanzador_corner_der || '',
       });
       setDorsales((j.jugadores || []).map(row => ({ id_jugador: row.id, nuevo_dorsal: row.dorsal || '' })));
+      setRoles((j.jugadores || []).map(row => ({ id_jugador: row.id, rol: row.rol || row.rol_equipo || '' })));
     } catch { setError('Error de conexión al cargar detalle'); }
   };
 
@@ -151,6 +165,7 @@ export default function AdminEquipos() {
       setEditing(null);
       setIsCreating(false);
       setJugadores([]);
+      setRoles([]);
       setError("");
   };
 
@@ -162,6 +177,16 @@ export default function AdminEquipos() {
 
   const onDorsalChange = (idJugador, value) => {
     setDorsales(prev => prev.map(d => d.id_jugador === idJugador ? { ...d, nuevo_dorsal: value } : d));
+  };
+
+  const onRolChange = (idJugador, value) => {
+    setRoles(prev => {
+      const exists = prev.find(r => r.id_jugador === idJugador);
+      if (exists) {
+        return prev.map(r => r.id_jugador === idJugador ? { ...r, rol: value } : r);
+      }
+      return [...prev, { id_jugador: idJugador, rol: value }];
+    });
   };
 
   // 4. ENVIAR FORMULARIO (UNI-FICADO)
@@ -190,7 +215,7 @@ export default function AdminEquipos() {
       } else if (editing) {
           // MODO EDICIÓN
           url = '/api/index.php?action=admin_update_equipo_completo';
-          payload = { id: editing.id, ...form, dorsales };
+          payload = { id: editing.id, ...form, dorsales, roles };
       } else {
           return;
       }
@@ -266,35 +291,94 @@ export default function AdminEquipos() {
                 <tr><td colSpan={6} className="muted center-text">Sin resultados</td></tr>
               ) : (
                 data.map(eq => (
-                  <tr key={eq.id}>
-                    <td className="mono" data-label="ID">{eq.id}</td>
-                    <td data-label="Equipo">
-                      <div style={{display:'flex', alignItems:'center'}}>
-                        <span className="shield" style={{ background: eq.color_principal }} />
-                        <div className="data-equipo-name">{eq.nombre}</div>
-                      </div>
-                    </td>
-                    <td className="muted truncate-text" title={eq.descripcion} data-label="Descripción">{eq.descripcion || '-'}</td>
-                    <td data-label="Color">
-                      <div style={{display:'flex', alignItems:'center'}}>
-                        <span className="color-swatch" style={{ background: eq.color_principal }} />
-                        <span className="mono" style={{fontSize:'0.85rem'}}>{eq.color_principal}</span>
-                      </div>
-                    </td>
-                    <td data-label="Estado"><Badge active={eq.activo} /></td>
-                    <td>
-                      <div className="actions">
-                        <button className="icon-btn" title="Editar" onClick={()=>openEdit(eq)}>
-                          <i className="bi bi-pencil" />
-                        </button>
-                        <button 
-                            className={`toggle ${eq.activo == 1 ? 'on':''}`} 
-                            onClick={()=>handleToggleActivo(eq)} 
-                            title={eq.activo == 1 ? "Desactivar" : "Activar"} 
-                        />
-                      </div>
-                    </td>
-                  </tr>
+                  <React.Fragment key={eq.id}>
+                    <tr className={`data-row ${expandedId === eq.id ? 'expanded' : ''}`}>
+                      <td className="mono hide-mobile" data-label="ID">{eq.id}</td>
+                      <td data-label="Equipo">
+                        <div
+                          className="row-main"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                              setExpandedId(prev => prev === eq.id ? null : eq.id);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                                setExpandedId(prev => prev === eq.id ? null : eq.id);
+                              }
+                            }
+                          }}
+                          aria-expanded={expandedId === eq.id}
+                        >
+                          <span className="shield" style={{ background: eq.color_principal }} />
+                          <div className="data-equipo-name">{eq.nombre}</div>
+                          <span className="chevron" aria-hidden="true">{expandedId === eq.id ? '▾' : '▸'}</span>
+                        </div>
+                      </td>
+                      <td className="muted truncate-text hide-mobile" title={eq.descripcion} data-label="Descripción">{eq.descripcion || '-'}</td>
+                      <td className="hide-mobile" data-label="Color">
+                        <div style={{display:'flex', alignItems:'center'}}>
+                          <span className="color-swatch" style={{ background: eq.color_principal }} />
+                          <span className="mono" style={{fontSize:'0.85rem'}}>{eq.color_principal}</span>
+                        </div>
+                      </td>
+                      <td className="hide-mobile" data-label="Estado"><Badge active={eq.activo} /></td>
+                      <td className="hide-mobile">
+                        <div className="actions">
+                          <button className="icon-btn" title="Editar" onClick={()=>openEdit(eq)}>
+                            <i className="bi bi-pencil" />
+                          </button>
+                          <button 
+                              className={`toggle ${eq.activo == 1 ? 'on':''}`} 
+                              onClick={()=>handleToggleActivo(eq)} 
+                              title={eq.activo == 1 ? "Desactivar" : "Activar"} 
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className={`expanded-row ${expandedId === eq.id ? 'open' : ''}`}>
+                      <td colSpan={6}>
+                        <div className={`expanded-inner ${expandedId === eq.id ? 'open' : ''}`}>
+                          <div className="expanded-grid">
+                            <div className="expanded-item">
+                              <span className="expanded-label">ID</span>
+                              <span className="expanded-value mono">{eq.id}</span>
+                            </div>
+                            <div className="expanded-item">
+                              <span className="expanded-label">Descripción</span>
+                              <span className="expanded-value">{eq.descripcion || 'Sin descripción'}</span>
+                            </div>
+                            <div className="expanded-item">
+                              <span className="expanded-label">Color</span>
+                              <span className="expanded-value" style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                                <span className="color-swatch" style={{ background: eq.color_principal }} />
+                                <span className="mono">{eq.color_principal}</span>
+                              </span>
+                            </div>
+                            <div className="expanded-item">
+                              <span className="expanded-label">Estado</span>
+                              <span className="expanded-value"><Badge active={eq.activo} /></span>
+                            </div>
+                            <div className="expanded-item">
+                              <span className="expanded-label">Acciones</span>
+                              <div className="expanded-actions">
+                                <button className="btn btn-sm" type="button" onClick={()=>openEdit(eq)}>
+                                  <i className="bi bi-pencil me-1" /> Editar
+                                </button>
+                                <button className="btn btn-sm" type="button" onClick={()=>handleToggleActivo(eq)}>
+                                  {eq.activo == 1 ? 'Desactivar' : 'Activar'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 ))
               )}
             </tbody>
@@ -396,10 +480,25 @@ export default function AdminEquipos() {
                                 {j.nombre}{j.apodo?` (${j.apodo})`:''}
                               </div>
                             </div>
-                            <div className="roster-dorsal">
-                              <input className="input dorsal-input" type="number" min={1} max={99} placeholder="#"
-                                value={(dorsales.find(d=>d.id_jugador===j.id)?.nuevo_dorsal) ?? ''}
-                                onChange={e=>onDorsalChange(j.id, e.target.value)} />
+                            <div className="roster-right">
+                              <div className="roster-dorsal">
+                                <label className="roster-label">Dorsal</label>
+                                <input className="input dorsal-input" type="number" min={1} max={99} placeholder="#"
+                                  value={(dorsales.find(d=>d.id_jugador===j.id)?.nuevo_dorsal) ?? ''}
+                                  onChange={e=>onDorsalChange(j.id, e.target.value)} />
+                              </div>
+                              <div className="roster-role">
+                                <label className="roster-label">Rol</label>
+                                <select
+                                  className="input select-input"
+                                  value={(roles.find(r=>r.id_jugador===j.id)?.rol) ?? (j.rol || j.rol_equipo || '')}
+                                  onChange={e=>onRolChange(j.id, e.target.value)}
+                                >
+                                  {roleOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                  ))}
+                                </select>
+                              </div>
                             </div>
                           </div>
                         ))}
