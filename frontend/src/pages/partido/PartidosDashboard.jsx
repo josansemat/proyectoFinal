@@ -125,6 +125,7 @@ function PartidosDashboard({ user, currentTeam }) {
   const [votacionSending, setVotacionSending] = useState(false);
   const [managerRatings, setManagerRatings] = useState({});
   const [managerRatingsSending, setManagerRatingsSending] = useState(false);
+  const [activeTab, setActiveTab] = useState("formacion");
 
   const canManagePartidos = useMemo(() => Boolean(isAdmin || currentTeam?.mi_rol === "manager"), [isAdmin, currentTeam]);
   const pageLimit = 10;
@@ -296,9 +297,11 @@ function PartidosDashboard({ user, currentTeam }) {
       setChatMessages([]);
       setChatMeta({ open: false, close: null });
       setChatInput("");
+      setActiveTab("formacion");
       return;
     }
     fetchChat(detalleSeleccionado);
+    setActiveTab("formacion");
   }, [detalleSeleccionado, fetchChat]);
 
   useEffect(() => {
@@ -695,6 +698,12 @@ function PartidosDashboard({ user, currentTeam }) {
   };
 
   const proximo = stats?.proximoPartido;
+  const matchTabs = [
+    { id: "info", label: "Información" },
+    { id: "inscripcion", label: "Inscripción" },
+    { id: "formacion", label: "Formación", icon: "pitch" },
+    { id: "votaciones", label: "Votaciones" },
+  ];
 
   const matchCounts = useMemo(() => {
     const fallback = partidos.reduce((acc, partido) => {
@@ -1230,108 +1239,150 @@ function PartidosDashboard({ user, currentTeam }) {
                 {detalleLoading && <span className="match-detail__meta">Cargando detalle…</span>}
               </div>
               <div className="match-detail__content-scroll">
+                <div className="match-tabs" role="tablist">
+                  {matchTabs.map((tab) => {
+                    const classes = ["match-tab"];
+                    if (tab.id === "formacion") classes.push("match-tab--formacion");
+                    if (activeTab === tab.id) classes.push("match-tab--active");
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={classes.join(" ")}
+                        aria-pressed={activeTab === tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                      >
+                        {tab.icon === "pitch" && (
+                          <svg className="match-tab__icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="2" y="4" width="20" height="16" rx="3" ry="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                            <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1.2" />
+                            <circle cx="12" cy="12" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+                          </svg>
+                        )}
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
                 {detalle && detalle.partido?.id === detalleSeleccionado ? (
-                  <>
-                  <div className="match-detail__grid match-detail__grid--primary">
-                    <div className="match-detail__stack">
-                      <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
-                      {canManagePartidos && detalle.partido?.estado === "completado" && !detalle.partido?.votacion_habilitada && (
-                        <button type="button" className="button button--warning" onClick={handleActivarVotacion}>
-                          Habilitar votaciones
-                        </button>
-                      )}
-                      <InscripcionesPanel
-                        jugadores={detalle.jugadores}
-                        roster={teamRoster}
-                        costoJugador={detalle.costo_jugador}
-                        maxJugadores={detalle.partido?.max_jugadores}
-                        tipoPartido={detalle.partido?.tipo_partido}
-                        loading={inscripcionLoading}
-                        rosterLoading={rosterLoading}
-                        onAdd={handleInscribirJugador}
-                        onRemove={handleDesinscribirJugador}
-                        canManage={canManagePartidos}
-                        currentUserId={userId}
-                      />
-                      <ListaEsperaPanel espera={detalle.espera} />
-                    </div>
-                    <div className="match-detail__panel">
-                      <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
-                    </div>
-                  </div>
+                  <div className="tab-panels">
+                    {activeTab === "info" && (
+                      <div className="tab-panel">
+                        <div className="match-detail__panel">
+                          <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
+                        </div>
+                        <div className="match-detail__panel">
+                          <SimpleListCard
+                            title="Comentarios"
+                            items={detalle.comentarios}
+                            emptyText="Sin comentarios"
+                            getKey={(item) => `coment-${item.id}`}
+                            renderItem={(c) => (
+                              <div>
+                                <div className="fw-semibold">{c.nombre}</div>
+                                <small className="text-muted">{c.comentario}</small>
+                              </div>
+                            )}
+                          />
+                        </div>
+                        <div className="match-detail__panel">
+                          <PartidoChatPanel
+                            messages={chatMessages}
+                            loading={chatLoading}
+                            chatOpen={chatMeta.open}
+                            chatClose={chatMeta.close}
+                            input={chatInput}
+                            sending={chatSending}
+                            onInputChange={setChatInput}
+                            onSend={handleSendChat}
+                            canSend={puedeParticiparChat}
+                          />
+                        </div>
+                      </div>
+                    )}
 
-                  <div className="match-detail__grid match-detail__grid--triple">
-                    <div className="match-detail__panel">
-                      <EventosPanel
-                        eventos={detalle.eventos}
-                        jugadores={detalle.jugadores}
-                        onAdd={handleRegistrarEvento}
-                        onDelete={handleEliminarEvento}
-                        canManage={canManagePartidos}
-                        estado={detalle.partido?.estado}
-                      />
-                    </div>
-                    <div className="match-detail__panel">
-                      <SimpleListCard
-                        title="Comentarios"
-                        items={detalle.comentarios}
-                        emptyText="Sin comentarios"
-                        getKey={(item) => `coment-${item.id}`}
-                        renderItem={(c) => (
-                          <div>
-                            <div className="fw-semibold">{c.nombre}</div>
-                            <small className="text-muted">{c.comentario}</small>
+                    {activeTab === "inscripcion" && (
+                      <div className="tab-panel">
+                        <div className="match-detail__panel">
+                          <InscripcionesPanel
+                            jugadores={detalle.jugadores}
+                            roster={teamRoster}
+                            costoJugador={detalle.costo_jugador}
+                            maxJugadores={detalle.partido?.max_jugadores}
+                            tipoPartido={detalle.partido?.tipo_partido}
+                            loading={inscripcionLoading}
+                            rosterLoading={rosterLoading}
+                            onAdd={handleInscribirJugador}
+                            onRemove={handleDesinscribirJugador}
+                            canManage={canManagePartidos}
+                            currentUserId={userId}
+                          />
+                        </div>
+                        <div className="match-detail__panel">
+                          <ListaEsperaPanel espera={detalle.espera} />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "formacion" && (
+                      <div className="tab-panel">
+                        <div className="match-detail__panel">
+                          <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
+                        </div>
+                        <div className="match-detail__panel">
+                          <EventosPanel
+                            eventos={detalle.eventos}
+                            jugadores={detalle.jugadores}
+                            onAdd={handleRegistrarEvento}
+                            onDelete={handleEliminarEvento}
+                            canManage={canManagePartidos}
+                            estado={detalle.partido?.estado}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "votaciones" && (
+                      <div className="tab-panel">
+                        <div className="match-detail__panel match-detail__panel--stacked">
+                          <VotacionPanel
+                            jugadores={detalle.jugadores}
+                            enabled={Boolean(detalle.partido?.votacion_habilitada)}
+                            modo={votacionModo}
+                            puedeVotar={puedeVotar}
+                            selections={categoriaSelections}
+                            onSelectionChange={setCategoriaSelections}
+                            mvpSelection={mvpSelection}
+                            onMvpSelectionChange={setMvpSelection}
+                            onEnviarVotos={handleEnviarVotos}
+                            votacionSending={votacionSending}
+                            votosCategorias={detalle.votos_categorias}
+                            votosMvp={detalle.votos_mvp}
+                          />
+                          {canManagePartidos && detalle.partido?.estado === "completado" && !detalle.partido?.votacion_habilitada && (
+                            <button type="button" className="button button--warning" onClick={handleActivarVotacion}>
+                              Habilitar votaciones
+                            </button>
+                          )}
+                        </div>
+                        {puedeCalificarJugadores && (
+                          <div className="match-detail__panel">
+                            <ManagerRatingsPanel
+                              jugadores={detalle.jugadores}
+                              ratings={managerRatings}
+                              onRatingChange={handleManagerRatingChange}
+                              onGuardar={handleGuardarRatings}
+                              submitting={managerRatingsSending}
+                              pendientes={managerRatingIssues}
+                            />
                           </div>
                         )}
-                      />
-                    </div>
-                    <div className="match-detail__panel">
-                      <RatingsOverview ratings={detalle.ratings} votosCategorias={detalle.votos_categorias} votosMvp={detalle.votos_mvp} />
-                    </div>
+                        <div className="match-detail__panel">
+                          <RatingsOverview ratings={detalle.ratings} votosCategorias={detalle.votos_categorias} votosMvp={detalle.votos_mvp} />
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  <div className="match-detail__grid match-detail__grid--secondary">
-                    <div className="match-detail__panel">
-                      <PartidoChatPanel
-                        messages={chatMessages}
-                        loading={chatLoading}
-                        chatOpen={chatMeta.open}
-                        chatClose={chatMeta.close}
-                        input={chatInput}
-                        sending={chatSending}
-                        onInputChange={setChatInput}
-                        onSend={handleSendChat}
-                        canSend={puedeParticiparChat}
-                      />
-                    </div>
-                    <div className="match-detail__panel match-detail__panel--stacked">
-                      <VotacionPanel
-                        jugadores={detalle.jugadores}
-                        enabled={Boolean(detalle.partido?.votacion_habilitada)}
-                        modo={votacionModo}
-                        puedeVotar={puedeVotar}
-                        selections={categoriaSelections}
-                        onSelectionChange={setCategoriaSelections}
-                        mvpSelection={mvpSelection}
-                        onMvpSelectionChange={setMvpSelection}
-                        onEnviarVotos={handleEnviarVotos}
-                        votacionSending={votacionSending}
-                        votosCategorias={detalle.votos_categorias}
-                        votosMvp={detalle.votos_mvp}
-                      />
-                      {puedeCalificarJugadores && (
-                        <ManagerRatingsPanel
-                          jugadores={detalle.jugadores}
-                          ratings={managerRatings}
-                          onRatingChange={handleManagerRatingChange}
-                          onGuardar={handleGuardarRatings}
-                          submitting={managerRatingsSending}
-                          pendientes={managerRatingIssues}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </>
                 ) : (
                   !detalleLoading && <div className="match-empty">No hay detalle para mostrar.</div>
                 )}
