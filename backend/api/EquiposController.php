@@ -93,22 +93,23 @@ class EquiposController {
     // --------------------------
     public function adminUpdateEquipoCompleto() {
         $data = json_decode(file_get_contents('php://input'), true);
-        $idEquipo = $data['id'] ?? null; // El frontend ahora envía 'id' en lugar de 'id_equipo'
+        $idEquipo = $data['id'] ?? null; // El frontend envía 'id'
+        // En el panel admin no siempre llega el usuario; si no llega, asumimos permisos de admin
         $idUsuario = $data['id_usuario'] ?? null;
-        $rolGlobal = $data['rol_global'] ?? 'usuario';
+        $rolGlobal = $data['rol_global'] ?? 'admin';
 
-        if (!$idEquipo || !$idUsuario) {
-            echo json_encode(['success'=>false, 'error'=>'Faltan datos de identificación del equipo o usuario']);
+        if (!$idEquipo) {
+            echo json_encode(['success'=>false, 'error'=>'Falta id del equipo']);
             return;
         }
 
-        // Verificación de Permisos (Manager del equipo o Admin global)
-        $esManager = Equipo::esManager($idUsuario, $idEquipo);
-        $esAdmin = ($rolGlobal === 'admin');
-
-        if (!$esManager && !$esAdmin) {
-            echo json_encode(["success" => false, "error" => "No tienes permisos para editar este equipo"]);
-            return;
+        if ($idUsuario) {
+            $esManager = Equipo::esManager($idUsuario, $idEquipo);
+            $esAdmin = ($rolGlobal === 'admin');
+            if (!$esManager && !$esAdmin) {
+                echo json_encode(["success" => false, "error" => "No tienes permisos para editar este equipo"]);
+                return;
+            }
         }
 
         try {

@@ -24,17 +24,7 @@ export default function AdminEquipos() {
 
   const [fondos, setFondos] = useState([]);
   const [jugadores, setJugadores] = useState([]); // Lista de jugadores del equipo actual
-  const [roles, setRoles] = useState([]); // {id_jugador, rol}
-
-  const roleOptions = [
-    { value: '', label: 'Sin rol' },
-    { value: 'Portero', label: 'Portero' },
-    { value: 'Defensa', label: 'Defensa' },
-    { value: 'Mediocentro', label: 'Mediocentro' },
-    { value: 'Delantero', label: 'Delantero' },
-    { value: 'Suplente', label: 'Suplente' },
-    { value: 'Entrenador', label: 'Entrenador' },
-  ];
+  const [managers, setManagers] = useState({}); // {id_jugador: boolean}
 
   // Formulario inicial vacío
   const initialFormState = {
@@ -128,7 +118,7 @@ export default function AdminEquipos() {
       setEditing(null);
       setJugadores([]); // Un equipo nuevo no tiene jugadores
       setDorsales([]);
-      setRoles([]);
+      setManagers({});
       setForm(initialFormState); // Reseteamos formulario
       setIsCreating(true); // Modo creación activado
   };
@@ -156,7 +146,11 @@ export default function AdminEquipos() {
         id_lanzador_corner_der: j.equipo.id_lanzador_corner_der || '',
       });
       setDorsales((j.jugadores || []).map(row => ({ id_jugador: row.id, nuevo_dorsal: row.dorsal || '' })));
-      setRoles((j.jugadores || []).map(row => ({ id_jugador: row.id, rol: row.rol || row.rol_equipo || '' })));
+      const initialManagers = {};
+      (j.jugadores || []).forEach(row => {
+        initialManagers[row.id] = (row.rol_en_equipo || row.rol) === 'manager';
+      });
+      setManagers(initialManagers);
     } catch { setError('Error de conexión al cargar detalle'); }
   };
 
@@ -165,7 +159,7 @@ export default function AdminEquipos() {
       setEditing(null);
       setIsCreating(false);
       setJugadores([]);
-      setRoles([]);
+      setManagers({});
       setError("");
   };
 
@@ -179,14 +173,11 @@ export default function AdminEquipos() {
     setDorsales(prev => prev.map(d => d.id_jugador === idJugador ? { ...d, nuevo_dorsal: value } : d));
   };
 
-  const onRolChange = (idJugador, value) => {
-    setRoles(prev => {
-      const exists = prev.find(r => r.id_jugador === idJugador);
-      if (exists) {
-        return prev.map(r => r.id_jugador === idJugador ? { ...r, rol: value } : r);
-      }
-      return [...prev, { id_jugador: idJugador, rol: value }];
-    });
+  const handleManagerChange = (idJugador, isManager) => {
+    setManagers(prev => ({
+      ...prev,
+      [idJugador]: isManager
+    }));
   };
 
   // 4. ENVIAR FORMULARIO (UNI-FICADO)
@@ -201,6 +192,10 @@ export default function AdminEquipos() {
     try {
       let url = '';
       let payload = {};
+      const rolesPayload = (jugadores || []).map(j => ({
+      id_jugador: j.id,
+      rol: (managers[j.id] ? 'manager' : 'jugador')
+      }));
 
       if (isCreating) {
           // MODO CREACIÓN
@@ -215,7 +210,7 @@ export default function AdminEquipos() {
       } else if (editing) {
           // MODO EDICIÓN
           url = '/api/index.php?action=admin_update_equipo_completo';
-          payload = { id: editing.id, ...form, dorsales, roles };
+        payload = { id: editing.id, ...form, dorsales, roles: rolesPayload };
       } else {
           return;
       }
@@ -481,23 +476,24 @@ export default function AdminEquipos() {
                               </div>
                             </div>
                             <div className="roster-right">
+                              <div className="roster-manager">
+                                <span className="roster-label d-md-none text-muted text-uppercase small">Manager</span>
+                                <div className="form-check form-switch mb-0 d-flex justify-content-center">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    role="switch"
+                                    checked={managers[j.id] || false}
+                                    onChange={(e) => handleManagerChange(j.id, e.target.checked)}
+                                    style={{cursor:'pointer'}}
+                                  />
+                                </div>
+                              </div>
                               <div className="roster-dorsal">
                                 <label className="roster-label">Dorsal</label>
                                 <input className="input dorsal-input" type="number" min={1} max={99} placeholder="#"
                                   value={(dorsales.find(d=>d.id_jugador===j.id)?.nuevo_dorsal) ?? ''}
                                   onChange={e=>onDorsalChange(j.id, e.target.value)} />
-                              </div>
-                              <div className="roster-role">
-                                <label className="roster-label">Rol</label>
-                                <select
-                                  className="input select-input"
-                                  value={(roles.find(r=>r.id_jugador===j.id)?.rol) ?? (j.rol || j.rol_equipo || '')}
-                                  onChange={e=>onRolChange(j.id, e.target.value)}
-                                >
-                                  {roleOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                  ))}
-                                </select>
                               </div>
                             </div>
                           </div>

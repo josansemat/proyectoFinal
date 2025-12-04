@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./AdminJugadores.css";
 
 // Componente para los badges de estado y rol
@@ -27,6 +27,8 @@ export default function AdminJugadores({ user, currentTeam }) {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 768 : false));
   
   // Estados para el Modal de Edición
   const [editing, setEditing] = useState(null); 
@@ -74,6 +76,19 @@ export default function AdminJugadores({ user, currentTeam }) {
     load();
     return () => { ignore = true; };
   }, [query]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setExpandedId(null);
+    }
+  }, [isMobile]);
 
   // Funciones de paginación
   const nextPage = () => setPage(p => Math.min(p + 1, totalPages));
@@ -192,6 +207,11 @@ export default function AdminJugadores({ user, currentTeam }) {
     }
   };
 
+  const toggleExpanded = (id) => {
+    if (!isMobile) return;
+    setExpandedId(prev => prev === id ? null : id);
+  };
+
   return (
     <div className="admin-jugadores-page">
       <div className="perfil-bg" aria-hidden="true" />
@@ -222,54 +242,190 @@ export default function AdminJugadores({ user, currentTeam }) {
 
         {/* Tabla de Datos */}
         <div className="table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>JUGADOR</th>
-                <th>EMAIL</th>
-                <th>ROL</th>
-                <th>RATING</th>
-                <th>REGISTRO</th>
-                <th>ESTADO</th>
-                <th>ACCIONES</th>
-              </tr>
-            </thead>
-            <tbody>
+          {isMobile ? (
+            <div className="player-cards">
               {loading ? (
-                <tr><td colSpan={8} className="muted">Cargando...</td></tr>
+                <div className="card-state muted">Cargando...</div>
               ) : error ? (
-                <tr><td colSpan={8} className="error">{error}</td></tr>
+                <div className="card-state error">{error}</div>
               ) : data.length === 0 ? (
-                <tr><td colSpan={8} className="muted">Sin resultados</td></tr>
+                <div className="card-state muted">Sin resultados</div>
               ) : (
                 data.map((j) => (
-                  <tr key={j.id}>
-                    <td className="mono">{j.id}</td>
-                    <td className="player-cell">{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</td>
-                    <td className="mono">{j.email}</td>
-                    <td>{rolBadge(j.rol)}</td>
-                    <td>{Number(j.rating_habilidad || 0).toFixed(2)}</td>
-                    <td className="mono">{formatDate(j.fecha_registro)}</td>
-                    <td>{estadoBadge(j.activo, j.eliminado)}</td>
-                    <td>
-                      <div className="actions">
-                        <button className="icon-btn" title="Editar" onClick={() => openEdit(j)}>
-                          <i className="bi bi-pencil"></i>
+                  <div className={`player-card ${expandedId === j.id ? 'open' : ''}`} key={j.id}>
+                    <button
+                      className="player-card__summary"
+                      type="button"
+                      onClick={() => toggleExpanded(j.id)}
+                      aria-expanded={expandedId === j.id}
+                    >
+                      <div className="player-card__summary-text">
+                        <span className="player-card__name">{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</span>
+                        <span className="player-card__email mono">{j.email}</span>
+                      </div>
+                      <div className="player-card__summary-meta">
+                        {rolBadge(j.rol)}
+                        {estadoBadge(j.activo, j.eliminado)}
+                        <span className="player-card__chevron" aria-hidden="true">{expandedId === j.id ? '▾' : '▸'}</span>
+                      </div>
+                    </button>
+                    <div className={`player-card__details ${expandedId === j.id ? 'open' : ''}`}>
+                      <div className="player-card__grid">
+                        <div>
+                          <span className="player-card__label">ID</span>
+                          <span className="player-card__value mono">{j.id}</span>
+                        </div>
+                        <div>
+                          <span className="player-card__label">Rol</span>
+                          <span className="player-card__value">{rolBadge(j.rol)}</span>
+                        </div>
+                        <div>
+                          <span className="player-card__label">Rating</span>
+                          <span className="player-card__value">{Number(j.rating_habilidad || 0).toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="player-card__label">Registro</span>
+                          <span className="player-card__value mono">{formatDate(j.fecha_registro)}</span>
+                        </div>
+                        <div>
+                          <span className="player-card__label">Estado</span>
+                          <span className="player-card__value">{estadoBadge(j.activo, j.eliminado)}</span>
+                        </div>
+                        {j.telefono && (
+                          <div>
+                            <span className="player-card__label">Teléfono</span>
+                            <span className="player-card__value mono">{j.telefono}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="player-card__actions">
+                        <button className="btn btn-sm" type="button" onClick={() => openEdit(j)}>
+                          <i className="bi bi-pencil me-1"></i> Editar
                         </button>
-                        <button className="icon-btn danger" title="Banear/Desbanear" onClick={() => handleToggleActivo(j)}>
-                          <i className="bi bi-slash-circle"></i>
+                        <button className="btn btn-sm" type="button" onClick={() => handleToggleActivo(j)}>
+                          {j.activo === 1 ? 'Banear' : 'Desbanear'}
                         </button>
-                        <button className="icon-btn danger" title="Eliminar/Restaurar" onClick={() => handleToggleEliminado(j)}>
-                          <i className="bi bi-trash"></i>
+                        <button className="btn btn-sm" type="button" onClick={() => handleToggleEliminado(j)}>
+                          {j.eliminado === 1 ? 'Restaurar' : 'Eliminar'}
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))
               )}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>JUGADOR</th>
+                  <th>EMAIL</th>
+                  <th>ROL</th>
+                  <th>RATING</th>
+                  <th>REGISTRO</th>
+                  <th>ESTADO</th>
+                  <th>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={8} className="muted">Cargando...</td></tr>
+                ) : error ? (
+                  <tr><td colSpan={8} className="error">{error}</td></tr>
+                ) : data.length === 0 ? (
+                  <tr><td colSpan={8} className="muted">Sin resultados</td></tr>
+                ) : (
+                  data.map((j) => (
+                    <React.Fragment key={j.id}>
+                      <tr className={`data-row ${expandedId === j.id ? 'expanded' : ''}`}>
+                        <td className="mono hide-mobile" data-label="ID">{j.id}</td>
+                        <td data-label="Jugador">
+                          <div
+                            className="row-main"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleExpanded(j.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpanded(j.id); }
+                            }}
+                            aria-expanded={expandedId === j.id}
+                          >
+                            <div className="player-cell">{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</div>
+                            <span className="chevron" aria-hidden="true">{expandedId === j.id ? '▾' : '▸'}</span>
+                          </div>
+                        </td>
+                        <td className="mono hide-mobile" data-label="Email">{j.email}</td>
+                        <td className="hide-mobile" data-label="Rol">{rolBadge(j.rol)}</td>
+                        <td className="hide-mobile" data-label="Rating">{Number(j.rating_habilidad || 0).toFixed(2)}</td>
+                        <td className="mono hide-mobile" data-label="Registro">{formatDate(j.fecha_registro)}</td>
+                        <td className="hide-mobile" data-label="Estado">{estadoBadge(j.activo, j.eliminado)}</td>
+                        <td className="hide-mobile">
+                          <div className="actions">
+                            <button className="icon-btn" title="Editar" onClick={() => openEdit(j)}>
+                              <i className="bi bi-pencil"></i>
+                            </button>
+                            <button className="icon-btn danger" title="Banear/Desbanear" onClick={() => handleToggleActivo(j)}>
+                              <i className="bi bi-slash-circle"></i>
+                            </button>
+                            <button className="icon-btn danger" title="Eliminar/Restaurar" onClick={() => handleToggleEliminado(j)}>
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr className={`expanded-row ${expandedId === j.id ? 'open' : ''}`}>
+                        <td colSpan={8}>
+                          <div className={`expanded-inner ${expandedId === j.id ? 'open' : ''}`}>
+                            <div className="expanded-grid">
+                              <div className="expanded-item">
+                                <span className="expanded-label">ID</span>
+                                <span className="expanded-value mono">{j.id}</span>
+                              </div>
+                              <div className="expanded-item">
+                                <span className="expanded-label">Email</span>
+                                <span className="expanded-value mono">{j.email}</span>
+                              </div>
+                              <div className="expanded-item">
+                                <span className="expanded-label">Rol</span>
+                                <span className="expanded-value">{rolBadge(j.rol)}</span>
+                              </div>
+                              <div className="expanded-item">
+                                <span className="expanded-label">Rating</span>
+                                <span className="expanded-value">{Number(j.rating_habilidad || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="expanded-item">
+                                <span className="expanded-label">Registro</span>
+                                <span className="expanded-value mono">{formatDate(j.fecha_registro)}</span>
+                              </div>
+                              <div className="expanded-item">
+                                <span className="expanded-label">Estado</span>
+                                <span className="expanded-value">{estadoBadge(j.activo, j.eliminado)}</span>
+                              </div>
+                              <div className="expanded-item">
+                                <span className="expanded-label">Acciones</span>
+                                <div className="expanded-actions">
+                                  <button className="btn btn-sm" type="button" onClick={() => openEdit(j)}>
+                                    <i className="bi bi-pencil me-1"></i> Editar
+                                  </button>
+                                  <button className="btn btn-sm" type="button" onClick={() => handleToggleActivo(j)}>
+                                    {j.activo === 1 ? 'Banear' : 'Desbanear'}
+                                  </button>
+                                  <button className="btn btn-sm" type="button" onClick={() => handleToggleEliminado(j)}>
+                                    {j.eliminado === 1 ? 'Restaurar' : 'Eliminar'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Paginación */}
