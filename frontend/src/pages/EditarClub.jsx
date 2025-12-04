@@ -186,7 +186,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
       )}
 
       <form onSubmit={handleSubmit} className="card club-form-card p-4 shadow-lg border-0">
-        <div className="row g-4">
+        <div className="row g-4 editar-club-grid">
             
             {/* --- COLUMNA IZQUIERDA: Datos y Lanzadores --- */}
             <div className="col-lg-6 d-flex flex-column gap-4">
@@ -288,21 +288,21 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                   ) : (
                     <>
                       {/* Cabecera de la tabla */}
-                      <div className="d-flex px-2 mb-2 fw-bold text-muted small text-uppercase">
+                      <div className="roster-header d-flex px-2 mb-2 fw-bold text-muted small text-uppercase">
                           <div style={{flex: '1'}}>Jugador</div>
                           <div className="text-center" style={{width: '80px'}}>Manager</div>
                           <div className="text-center" style={{width: '80px'}}>Dorsal</div>
                       </div>
                       
-                      <div className="flex-grow-1 overflow-auto custom-scrollbar pe-2" style={{maxHeight: '400px'}}>
+                      <div className="player-list flex-grow-1 overflow-auto custom-scrollbar pe-2" style={{maxHeight: '400px'}}>
                         {jugadores.map(j => {
                           const dorsalValue = dorsales.find(d => d.id_jugador === j.id)?.nuevo_dorsal || '';
                           const isManager = managers[j.id] || false;
                           
                           return (
-                            <div key={j.id} className="d-flex align-items-center justify-content-between p-2 mb-2 bg-white border rounded">
+                            <div key={j.id} className="player-row d-flex align-items-center justify-content-between p-2 mb-2 bg-white border rounded">
                               {/* Columna Jugador */}
-                              <div className="d-flex align-items-center text-truncate" style={{flex: '1'}}>
+                              <div className="player-row__info d-flex align-items-center text-truncate" style={{flex: '1'}}>
                                 {/* Escudo pequeño con el color del equipo */}
                                 <div className="rounded-circle me-2 d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0" 
                                      style={{width:'32px', height:'32px', backgroundColor: currentTeam.color_principal, fontSize:'0.8rem', border:'2px solid white', boxShadow:'0 2px 4px rgba(0,0,0,0.1)'}}>
@@ -315,8 +315,9 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                               </div>
                               
                               {/* Columna Manager (Checkbox) */}
-                              <div className="text-center d-flex justify-content-center" style={{width: '80px'}}>
-                                <div className="form-check form-switch">
+                              <div className="player-row__manager text-center d-flex flex-column align-items-center justify-content-center" style={{width: '80px'}}>
+                                <span className="player-row__label d-md-none text-muted text-uppercase small mb-1">Manager</span>
+                                <div className="form-check form-switch mb-0">
                                     <input 
                                         className="form-check-input" 
                                         type="checkbox" 
@@ -331,7 +332,8 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                               </div>
 
                               {/* Columna Dorsal (Input) */}
-                              <div style={{width: '80px'}}>
+                                <div className="player-row__number" style={{width: '80px'}}>
+                                  <span className="player-row__label d-md-none text-muted text-uppercase small mb-1">Dorsal</span>
                                   <input 
                                     type="number" 
                                     className="form-control text-center fw-bold" 

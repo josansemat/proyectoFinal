@@ -41,6 +41,7 @@
     /* Forzamos fondo blanco y texto oscuro para legibilidad */
     background-color: #ffffff !important;
     color: #212529 !important;
+    gap: 1.5rem;
 }
 
 /* Etiquetas de formulario más grandes y marcadas */
@@ -80,6 +81,19 @@
     transform: translateY(-2px);
 }
 
+.player-list {
+    scrollbar-gutter: stable both-edges;
+}
+
+.player-row__label {
+    display: none;
+}
+
+.player-row__manager .form-check,
+.player-row__number input {
+    max-width: 110px;
+}
+
 /* RESPONSIVE: Ajustes para móviles */
 @media (max-width: 991.98px) {
     /* En tablets y móviles, la altura de la preview puede ser menor */
@@ -90,5 +104,69 @@
     /* El textarea no necesita ser tan alto en móvil */
     textarea[name="descripcion"] {
         height: 120px !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .editar-club-wrapper {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .club-title-banner {
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .club-form-card {
+        padding: 1.5rem 1rem;
+        gap: 1rem;
+    }
+
+    .preview-container {
+        max-width: 100%;
+        height: 170px;
+    }
+
+    .roster-header {
+        display: none !important;
+    }
+
+    .player-list {
+        max-height: none !important;
+    }
+
+    .player-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+    }
+
+    .player-row__info {
+        order: 1;
+    }
+
+    .player-row__manager,
+    .player-row__number {
+        width: 100% !important;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .player-row__manager .form-check {
+        margin-left: 0;
+    }
+
+    .player-row__number input {
+        max-width: 100%;
+    }
+
+    .player-row__label {
+        display: block;
+    }
+
+    .btn-guardar {
+        font-size: 1rem;
     }
 }
