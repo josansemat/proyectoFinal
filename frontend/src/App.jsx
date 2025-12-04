@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
@@ -16,6 +16,7 @@ import AdminJugadores from "./pages/admin/AdminJugadores.jsx";
 import AdminEquipos from "./pages/admin/AdminEquipos";
 import PartidosDashboard from "./pages/partido/PartidosDashboard";
 import Ranking from "./pages/Ranking";
+import { registerPushToken, deregisterPushToken, listenForegroundNotifications } from "./services/pushNotifications";
 
 // Guard de rutas para admin
 function RequireAdmin({ user, children }) {
@@ -56,6 +57,8 @@ function App() {
   const [resetToken, setResetToken] = useState(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [isBgLight, setIsBgLight] = useState(false);
+  const [incomingNotification, setIncomingNotification] = useState(null);
+  const notificationSubRef = useRef(null);
 
   // --- EFFECT: aplicar colores dinámicos ---
   useEffect(() => {
@@ -71,6 +74,54 @@ function App() {
     root.style.setProperty('--contrast-text-color', isLight ? '#212529' : '#ffffff');
     root.style.setProperty('--bg-light', isLight ? '#ffffff' : '#343a40');
   }, [currentTeam]);
+
+  useEffect(() => {
+    if (!user) {
+      setIncomingNotification(null);
+      if (notificationSubRef.current) {
+        notificationSubRef.current();
+        notificationSubRef.current = null;
+      }
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      try {
+        await registerPushToken(user);
+        const unsub = await listenForegroundNotifications((payload) => {
+          if (!mounted) return;
+          const notification = payload?.notification || {};
+          setIncomingNotification({
+            title: notification.title || "Furbo",
+            body: notification.body || "Tienes una nueva notificación",
+            data: payload?.data || {},
+            receivedAt: Date.now(),
+          });
+        });
+        if (notificationSubRef.current) {
+          notificationSubRef.current();
+        }
+        notificationSubRef.current = unsub;
+      } catch (err) {
+        console.warn("Notificaciones push no disponibles", err);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      if (notificationSubRef.current) {
+        notificationSubRef.current();
+        notificationSubRef.current = null;
+      }
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!incomingNotification) return;
+    const timeout = setTimeout(() => setIncomingNotification(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [incomingNotification]);
 
   // --- CARGA INICIAL DE SESIÓN ---
   useEffect(() => {
@@ -164,6 +215,7 @@ function App() {
   };
 
   const handleLogout = () => {
+    deregisterPushToken();
     setUser(null); setCurrentTeam(null); setUserTeams([]);
     localStorage.removeItem("usuario_furbo"); localStorage.removeItem("equipo_actual_furbo");
     setCurrentView("login");
@@ -201,6 +253,13 @@ function App() {
   return (
     <Router>
       <div className="app-container d-flex">
+        {incomingNotification && (
+          <div style={toastStyles}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{incomingNotification.title}</div>
+            <div style={{ fontSize: 14 }}>{incomingNotification.body}</div>
+            <button style={toastButtonStyles} onClick={() => setIncomingNotification(null)}>Entendido</button>
+          </div>
+        )}
         <Sidebar user={user} currentTeam={currentTeam} userTeams={userTeams} isBgLight={isBgLight} onTeamChange={handleTeamChange} onLogout={handleLogout} />
         
         {/* Fondo aplicado SOLO al área de contenido */}
@@ -231,5 +290,29 @@ function App() {
     </Router>
   );
 }
+
+const toastStyles = {
+  position: "fixed",
+  bottom: "24px",
+  right: "24px",
+  maxWidth: "300px",
+  padding: "16px",
+  background: "rgba(0,0,0,0.85)",
+  color: "#fff",
+  borderRadius: "14px",
+  boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+  zIndex: 9999,
+  backdropFilter: "blur(8px)",
+};
+
+const toastButtonStyles = {
+  marginTop: 12,
+  padding: "6px 14px",
+  background: "rgba(255,255,255,0.2)",
+  color: "#fff",
+  border: "1px solid rgba(255,255,255,0.4)",
+  borderRadius: "999px",
+  cursor: "pointer",
+};
 
 export default App;

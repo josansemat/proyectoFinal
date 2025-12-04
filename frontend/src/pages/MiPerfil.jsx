@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { registerPushToken, deregisterPushToken } from "../services/pushNotifications";
 import "./MiPerfil.css";
 
 // Iconos simples SVG
@@ -25,6 +26,10 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
   const [confirmAbandonId, setConfirmAbandonId] = useState(null);
   const [abandonLoading, setAbandonLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState({ type: null, text: "" });
+  const [notifStatus, setNotifStatus] = useState({ type: null, text: "" });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [greetingLoading, setGreetingLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: user?.nombre || "",
     apodo: user?.apodo || "",
@@ -40,6 +45,13 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
       telefono: user?.telefono || "",
     });
   }, [user]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !user?.id) return;
+    const token = localStorage.getItem("furbo_fcm_token");
+    const owner = localStorage.getItem("furbo_fcm_token_owner");
+    setNotificationsEnabled(Boolean(token && owner === String(user.id)));
+  }, [user?.id]);
 
   const relacionEquipoActual = useMemo(() => {
     if (!currentTeam || !misEquipos?.length) return null;
@@ -168,6 +180,68 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
       } else setPwdMsg({ type: 'error', text: data.error || 'Error al cambiar contraseña.' });
     } catch (e) {
       setPwdMsg({ type: 'error', text: 'Error de conexión.' });
+    }
+  };
+
+  const toggleNotifications = async () => {
+    if (notifLoading || !user?.id) return;
+    setNotifStatus({ type: null, text: "" });
+    setNotifLoading(true);
+    try {
+      if (!notificationsEnabled) {
+        const token = await registerPushToken(user);
+        if (token) {
+          setNotificationsEnabled(true);
+          setNotifStatus({ type: "success", text: "Notificaciones activadas" });
+        } else {
+          setNotifStatus({ type: "error", text: "No se pudo activar. Revisa los permisos del navegador." });
+        }
+      } else {
+        await deregisterPushToken();
+        setNotificationsEnabled(false);
+        setNotifStatus({ type: "success", text: "Notificaciones desactivadas" });
+      }
+    } catch (err) {
+      console.error(err);
+      setNotifStatus({ type: "error", text: "Error al actualizar tus notificaciones" });
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const sendGreeting = async () => {
+    if (!currentTeam?.id) {
+      setNotifStatus({ type: "error", text: "Selecciona un equipo activo para enviar el mensaje" });
+      return;
+    }
+    setGreetingLoading(true);
+    setNotifStatus({ type: null, text: "" });
+    try {
+      const rolGlobal = user?.rol_global ?? user?.rol ?? "usuario";
+      const body = {
+        id_equipo: currentTeam.id,
+        id_usuario: user.id,
+        rol_global: rolGlobal,
+        titulo: "Saludo del equipo",
+        mensaje: `Hola equipo me llamo ${user?.nombre || "un compañero"}`,
+        click_action: "/plantilla",
+      };
+      const resp = await fetch(`/api/index.php?action=notificar_equipo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setNotifStatus({ type: "success", text: "Notificación enviada al equipo" });
+      } else {
+        setNotifStatus({ type: "error", text: data.error || "No se pudo enviar la notificación" });
+      }
+    } catch (err) {
+      console.error(err);
+      setNotifStatus({ type: "error", text: "Error de conexión al enviar" });
+    } finally {
+      setGreetingLoading(false);
     }
   };
 
@@ -373,9 +447,44 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
             )}
 
             {activeTab === "notificaciones" && (
-              <div className="empty-state">
-                <div className="empty-icon">🔕</div>
-                <p>Las preferencias de notificaciones estarán disponibles en la próxima versión.</p>
+              <div className="notifications-panel">
+                <div className="notif-card">
+                  <div className="notif-card__header">
+                    <div>
+                      <h3>Alertas push</h3>
+                      <p className="text-muted small">Activa las notificaciones para enterarte de nuevos partidos o avisos del manager.</p>
+                    </div>
+                    <span className={`status-dot ${notificationsEnabled ? "on" : "off"}`}></span>
+                  </div>
+                  <button
+                    className={`toggle-button ${notificationsEnabled ? "active" : ""}`}
+                    onClick={toggleNotifications}
+                    disabled={notifLoading}
+                  >
+                    {notificationsEnabled ? "Desactivar" : "Activar"} alertas
+                  </button>
+                </div>
+
+                <div className="notif-card">
+                  <h3>Saludar al equipo</h3>
+                  <p className="text-muted small mb-3">Enviará una notificación instantánea a todos los miembros del equipo seleccionado.</p>
+                  <button
+                    className="btn-primary"
+                    onClick={sendGreeting}
+                    disabled={greetingLoading || !currentTeam?.id}
+                  >
+                    {greetingLoading ? "Enviando..." : `Hola equipo me llamo ${user?.nombre || "Jugador"}`}
+                  </button>
+                  {!currentTeam?.id && (
+                    <p className="text-muted tiny mt-2">Necesitas tener un equipo seleccionado.</p>
+                  )}
+                </div>
+
+                {notifStatus.text && (
+                  <div className={`alert-msg ${notifStatus.type}`}>
+                    {notifStatus.text}
+                  </div>
+                )}
               </div>
             )}
           </div>

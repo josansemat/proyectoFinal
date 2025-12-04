@@ -1,16 +1,49 @@
-# React + Vite
+# Frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación React que consume el backend PHP de Furbo. Incluye autenticación, dashboard para equipos y ahora notificaciones push vía Firebase Cloud Messaging.
 
-Currently, two official plugins are available:
+## Requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 20+
+- npm 10+
+- Cuenta de Firebase con un proyecto configurado para Web
+- Clave pública VAPID para FCM Web Push (en consola de Firebase → Project settings → Cloud Messaging)
 
-## React Compiler
+## Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install   # instala dependencias
+npm run dev   # modo desarrollo
+npm run build # build producción
+npm run preview
+```
 
-## Expanding the ESLint configuration
+## Configuración de entorno
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Copia `backend/.env` y rellena `FIREBASE_SERVER_KEY` con la Server Key (Cloud Messaging) del proyecto.
+2. En el frontend, crea un fichero `frontend/.env` con:
+
+```
+VITE_FIREBASE_VAPID_KEY=TU_CLAVE_PUBLICA_VAPID
+```
+
+Sin esta clave el navegador no podrá generar tokens FCM.
+
+## Flujo de notificaciones push
+
+1. Al iniciar sesión se solicita permiso de notificaciones.
+2. Si el usuario acepta, se registra el token en `/api/index.php?action=registrar_fcm_token` junto con el dispositivo.
+3. Managers y administradores pueden llamar al endpoint `notificar_equipo` para disparar un push. El backend usa la Server Key para enviar a los tokens activos del equipo.
+4. El navegador muestra un toast en primer plano y, si está cerrado, el service worker despliega la notificación nativa.
+
+## Archivos clave
+
+- `src/lib/firebase.js`: inicialización y helpers de Firebase (messaging + analytics).
+- `src/services/pushNotifications.js`: registro/desregistro de tokens y listeners en el frontend.
+- `public/firebase-messaging-sw.js`: service worker que recibe mensajes en background.
+
+## Resolución de problemas
+
+- **`Falta VITE_FIREBASE_VAPID_KEY`**: revisa tu `.env` del frontend.
+- **`Falta FIREBASE_SERVER_KEY`**: añade la server key al `.env` del backend.
+- **Sin notificaciones en background**: asegúrate de servir sobre HTTPS (excepto `localhost`).

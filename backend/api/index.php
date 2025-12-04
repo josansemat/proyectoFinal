@@ -7,11 +7,13 @@ require_once "SolicitudesController.php";
 require_once "../models/Equipo.php";
 require_once "EquiposController.php";
 require_once "PartidosController.php";
+require_once "NotificacionesController.php";
 
 $solicitudesController = new SolicitudesController(); 
 $controller = new JugadoresController();
 $equiposController = new EquiposController(); 
 $partidosController = new PartidosController();
+$notificacionesController = new NotificacionesController();
 
 $action = $_GET["action"] ?? "";
 
@@ -186,6 +188,20 @@ switch ($action) {
         break;
     case "partidos_ranking_equipo":
         $partidosController->rankingEquipo();
+        break;
+
+    // --- NOTIFICACIONES / FCM ---
+    case "registrar_fcm_token":
+        $notificacionesController->registrarToken();
+        break;
+    case "desactivar_fcm_token":
+        $notificacionesController->desactivarToken();
+        break;
+    case "notificar_equipo":
+        $notificacionesController->notificarEquipo();
+        break;
+    case "notificar_jugadores":
+        $notificacionesController->notificarUsuarios();
         break;
 
     default:
