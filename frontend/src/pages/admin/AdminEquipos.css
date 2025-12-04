@@ -55,7 +55,7 @@
 
 .toolbar .search {
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
   background: var(--bg-input);
   border: 1px solid var(--border-input);
   border-radius: 10px;
@@ -287,3 +287,61 @@
 .truncate-text { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .alert { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid transparent; }
 .alert-info { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); color: #93c5fd; }
+
+/* Responsive: stack table rows into cards on small screens */
+@media (max-width: 767.98px) {
+  .data-table thead { display: none; }
+  .table-wrap { border: none; }
+  .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+  .data-table tr { margin-bottom: 12px; border-radius: 10px; background: #121318; padding: 12px; border: 1px solid #222633; }
+  .data-table tbody td { padding: 6px 0; border: none; display: flex; justify-content: space-between; align-items: center; }
+  .data-table tbody td[data-label]::before {
+    content: attr(data-label) "";
+    display: inline-block;
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.6rem;
+    flex: 0 0 auto;
+    width: 36%;
+  }
+  .data-table tbody td .shield, .data-table tbody td .color-swatch { margin-right: 0.5rem; }
+  .data-table tbody td .data-equipo-name { font-weight: 700; }
+  .actions { justify-content: flex-end; }
+  .icon-btn { width: 36px; height: 36px; }
+  .toggle { width: 38px; height: 20px; }
+}
+
+/* Toolbar: stack controls on small screens to avoid overflow */
+@media (max-width: 767.98px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .toolbar .search {
+    width: 100%;
+    min-width: 0;
+  }
+  .select {
+    width: 100%;
+  }
+  .btn-create {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+  .toolbar > * { flex: none; }
+
+  /* Compact actions area inside row-cards */
+  .actions { gap: 0.35rem; }
+  .icon-btn { width: 32px; height: 32px; }
+  .toggle { width: 36px; height: 20px; }
+}
+
+/* Slightly compress table on small desktops */
+@media (max-width: 991.98px) and (min-width: 768px) {
+  .data-table thead th { font-size: 0.75rem; }
+  .data-table tbody td { padding: 0.6rem 0.8rem; }
+}

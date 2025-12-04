@@ -267,21 +267,21 @@ export default function AdminEquipos() {
               ) : (
                 data.map(eq => (
                   <tr key={eq.id}>
-                    <td className="mono">{eq.id}</td>
-                    <td>
+                    <td className="mono" data-label="ID">{eq.id}</td>
+                    <td data-label="Equipo">
                       <div style={{display:'flex', alignItems:'center'}}>
                         <span className="shield" style={{ background: eq.color_principal }} />
-                        {eq.nombre}
+                        <div className="data-equipo-name">{eq.nombre}</div>
                       </div>
                     </td>
-                    <td className="muted truncate-text" title={eq.descripcion}>{eq.descripcion || '-'}</td>
-                    <td>
+                    <td className="muted truncate-text" title={eq.descripcion} data-label="Descripción">{eq.descripcion || '-'}</td>
+                    <td data-label="Color">
                       <div style={{display:'flex', alignItems:'center'}}>
                         <span className="color-swatch" style={{ background: eq.color_principal }} />
                         <span className="mono" style={{fontSize:'0.85rem'}}>{eq.color_principal}</span>
                       </div>
                     </td>
-                    <td><Badge active={eq.activo} /></td>
+                    <td data-label="Estado"><Badge active={eq.activo} /></td>
                     <td>
                       <div className="actions">
                         <button className="icon-btn" title="Editar" onClick={()=>openEdit(eq)}>
