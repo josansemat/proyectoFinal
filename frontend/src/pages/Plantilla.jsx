@@ -5,9 +5,7 @@ const FORMATIONS = {
   "11": [
     { value: "4-3-3", lines: [4, 3, 3] },
     { value: "4-4-2", lines: [4, 4, 2] },
-    { value: "3-5-2", lines: [3, 5, 2] },
-    { value: "4-2-3-1", lines: [4, 2, 3, 1] },
-    { value: "5-3-2", lines: [5, 3, 2] },
+    // { value: "5-3-2", lines: [5, 3, 2] },
   ],
   "7": [
     { value: "2-3-1", lines: [2, 3, 1] },
@@ -356,6 +354,7 @@ function Plantilla({ user, currentTeam }) {
                 playersMap={assignedPlayersOrdered}
                 onDropSlot={handleDropOnSlot}
                 onAllowDrop={allowDrop}
+                mode={mode}
               />
             </div>
           </div>
@@ -422,7 +421,7 @@ function Plantilla({ user, currentTeam }) {
   );
 }
 
-function Pitch({ lines, slots, assignments, playersMap, onDropSlot, onAllowDrop }) {
+function Pitch({ lines, slots, assignments, playersMap, onDropSlot, onAllowDrop, mode }) {
   // gridRows = 1 (portero) + número de líneas
   const rows = 1 + lines.length;
   const templateRows = `repeat(${rows}, 1fr)`;
@@ -460,7 +459,7 @@ function Pitch({ lines, slots, assignments, playersMap, onDropSlot, onAllowDrop 
   });
 
   return (
-    <div className="pitch" style={{ gridTemplateRows: templateRows }}>
+    <div className={`pitch pitch-${mode}`} style={{ gridTemplateRows: templateRows }}>
       {rowsRender}
     </div>
   );

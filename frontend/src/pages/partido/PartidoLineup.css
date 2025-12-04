@@ -17,6 +17,8 @@
   border-radius: 1.25rem;
   padding: 16px;
   min-height: 420px;
+  width: min(100%, 660px);
+  margin: 0 auto;
 }
 
 .match-lineup .pitch-row {
@@ -141,10 +143,32 @@
 }
 
 @media (max-width: 768px) {
+  .match-lineup .card .card-body {
+    padding: 1rem 0.5rem;
+  }
+  .match-lineup .pitch {
+    max-width: calc(100vw - 28px);
+    padding: 12px;
+    gap: 10px;
+  }
   .match-lineup .slot {
     width: 90px;
   }
   .match-lineup .bench-zone {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .match-lineup .pitch.pitch-7 {
+    gap: 9px;
+  }
+  .match-lineup .pitch.pitch-7 .slot {
+    width: 78px;
+    max-width: 18vw;
+  }
+  .match-lineup .pitch.pitch-11 {
+    gap: 8px;
+  }
+  .match-lineup .pitch.pitch-11 .slot {
+    width: 68px;
+    max-width: 16vw;
   }
 }
