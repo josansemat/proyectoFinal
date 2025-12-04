@@ -190,7 +190,7 @@ function App() {
         ) : currentView === "register" ? (
           <Register switchToLogin={() => setCurrentView("login")} />
         ) : currentView === "reset" ? (
-          <ResetPassword token={resetToken} />
+          <ResetPassword token={resetToken} switchToLogin={() => setCurrentView("login")} />
         ) : (
           <Login onLoginSuccess={handleLoginSuccess} switchToRegister={() => setCurrentView("register")} />
         )}

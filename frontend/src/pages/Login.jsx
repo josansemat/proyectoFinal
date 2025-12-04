@@ -12,7 +12,9 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
     const [error, setError] = useState("");
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [forgotEmail, setForgotEmail] = useState("");
-    const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
 
     const handleChange = (e) => {
         setForm({
@@ -48,28 +50,33 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
     };
 
     const handleForgotPassword = async (e) => {
-        e.preventDefault();
-        setForgotMessage("");
+      e.preventDefault();
+      setForgotMessage("");
+      setForgotError("");
+      setForgotLoading(true);
 
-        try {
-            const response = await fetch("/api/index.php?action=forgot_password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email: forgotEmail })
-            });
+      try {
+        const response = await fetch("/api/index.php?action=forgot_password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: forgotEmail })
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (data.success) {
-                setForgotMessage("Si el email existe, se ha enviado un enlace de recuperación");
-            } else {
-                setForgotMessage(data.error || "Error al enviar el email");
-            }
-        } catch (err) {
-            setForgotMessage("Error de conexión con el servidor");
+        if (data.success) {
+          setForgotMessage("Si el email existe, te acabamos de enviar un enlace de recuperación.");
+          setForgotEmail("");
+        } else {
+          setForgotError(data.error || "No se pudo enviar el correo. Inténtalo más tarde.");
         }
+      } catch (err) {
+        setForgotError("Error de conexión con el servidor");
+      } finally {
+        setForgotLoading(false);
+      }
     };
 
    return (
@@ -159,20 +166,43 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
       {/* Forgot Password Modal */}
       {showForgotPassword && (
         <div className="modal-overlay" onClick={() => setShowForgotPassword(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Recuperar contraseña</h3>
-            <form onSubmit={handleForgotPassword}>
-              <input
-                type="email"
-                placeholder="Ingresa tu email"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                required
-              />
-              <button type="submit">Enviar enlace</button>
-            </form>
-            {forgotMessage && <p>{forgotMessage}</p>}
-            <button onClick={() => setShowForgotPassword(false)}>Cerrar</button>
+          <div className="modal-card forgot-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>¿Olvidaste tu contraseña?</h3>
+              <button className="icon-btn" type="button" onClick={() => setShowForgotPassword(false)}>
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-text">
+                Te enviaremos un enlace temporal al correo asociado a tu cuenta.
+              </p>
+              <form className="modal-form" onSubmit={handleForgotPassword}>
+                <label className="modal-label" htmlFor="forgot-email">Correo electrónico</label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                />
+                {forgotError && <div className="error-message small">{forgotError}</div>}
+                {forgotMessage && <div className="success-message small">{forgotMessage}</div>}
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowForgotPassword(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" disabled={forgotLoading}>
+                    {forgotLoading ? "Enviando..." : "Enviar enlace"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

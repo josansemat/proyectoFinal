@@ -282,57 +282,95 @@
 /* Modal */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-}
-
-.modal-content {
-  background: white;
   padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-  color: black;
 }
 
-.modal-content h3 {
-  margin-bottom: 20px;
+.modal-card {
+  width: 100%;
+  max-width: 460px;
+  background: #0b2a5b;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  color: #fff;
 }
 
-.modal-content form {
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-text {
+  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.modal-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.modal-content input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.modal-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.modal-content button {
-  padding: 10px;
-  background: #0d47a1;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.modal-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
 }
 
-.modal-content button:hover {
-  background: #1565c0;
+.modal-form input:focus {
+  outline: none;
+  border-color: #4fc3f7;
+  box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.35);
 }
 
-.modal-content p {
+.modal-actions {
+  display: flex;
+  gap: 12px;
   margin-top: 10px;
-  color: green;
+}
+
+.modal-actions .btn-primary,
+.modal-actions .btn-secondary {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 12px;
+}
+
+.forgot-card .error-message.small,
+.forgot-card .success-message.small {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.mt-3 {
+  margin-top: 12px;
 }

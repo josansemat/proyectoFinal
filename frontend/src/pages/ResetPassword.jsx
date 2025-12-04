@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import './Register.css';
 
-export default function ResetPassword({ token }) {
+export default function ResetPassword({ token, switchToLogin }) {
     const [form, setForm] = useState({
         password: "",
         confirmPassword: ""
@@ -52,6 +52,14 @@ export default function ResetPassword({ token }) {
         }
     };
 
+    const goToLogin = () => {
+        if (typeof switchToLogin === "function") {
+            switchToLogin();
+        } else {
+            window.location.href = "/";
+        }
+    };
+
     return (
         <div className="register-page">
             <section className="illustration-section">
@@ -71,7 +79,14 @@ export default function ResetPassword({ token }) {
                     <div className="form-title-underline"></div>
 
                     {error && <div className="error-message">{error}</div>}
-                    {message && <div className="success-message">{message}</div>}
+                    {message && (
+                        <div className="success-message">
+                            {message}
+                            <button type="button" className="btn-secondary mt-3" onClick={goToLogin}>
+                                Volver a iniciar sesión
+                            </button>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="input-group">
@@ -84,6 +99,7 @@ export default function ResetPassword({ token }) {
                                 placeholder="Nueva contraseña"
                                 value={form.password}
                                 onChange={handleChange}
+                                minLength={6}
                                 required
                             />
                         </div>
@@ -98,6 +114,7 @@ export default function ResetPassword({ token }) {
                                 placeholder="Confirmar contraseña"
                                 value={form.confirmPassword}
                                 onChange={handleChange}
+                                minLength={6}
                                 required
                             />
                         </div>
