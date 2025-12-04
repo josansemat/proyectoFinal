@@ -245,6 +245,10 @@ class FirebaseNotifier
 
         $path = $_ENV['FIREBASE_CREDENTIALS_PATH'] ?? self::DEFAULT_CREDENTIALS;
         $path = trim($path);
+        if ($path === '') {
+            $path = self::DEFAULT_CREDENTIALS;
+        }
+        $path = self::resolveCredentialsPath($path);
         if (!is_file($path)) {
             throw new RuntimeException('No se encontró el archivo de credenciales de Firebase en ' . $path);
         }
@@ -278,6 +282,32 @@ class FirebaseNotifier
     private static function base64UrlEncode(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private static function resolveCredentialsPath(string $path): string
+    {
+        if (self::isAbsolutePath($path)) {
+            return $path;
+        }
+
+        $baseDir = dirname(__DIR__);
+        $trimmed = ltrim($path, '/\\');
+        if ($trimmed === '') {
+            return $baseDir;
+        }
+
+        return rtrim($baseDir, '/\\') . DIRECTORY_SEPARATOR . $trimmed;
+    }
+
+    private static function isAbsolutePath(string $path): bool
+    {
+        if ($path === '') {
+            return false;
+        }
+        if ($path[0] === '/' || $path[0] === '\\') {
+            return true;
+        }
+        return (bool)preg_match('/^[A-Za-z]:[\\\\\/]/', $path);
     }
 
     private static function shouldDeactivateToken(?string $status, string $message): bool
