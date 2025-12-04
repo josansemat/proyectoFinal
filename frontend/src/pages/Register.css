@@ -374,3 +374,27 @@
 .mt-3 {
   margin-top: 12px;
 }
+
+.success-message {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+}
+
+.success-message p {
+  margin: 0;
+}
+
+.success-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.success-actions .btn-secondary {
+  width: 100%;
+  max-width: 260px;
+  margin-bottom: 1rem;
+}

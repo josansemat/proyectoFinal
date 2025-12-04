@@ -81,10 +81,12 @@ export default function ResetPassword({ token, switchToLogin }) {
                     {error && <div className="error-message">{error}</div>}
                     {message && (
                         <div className="success-message">
-                            {message}
-                            <button type="button" className="btn-secondary mt-3" onClick={goToLogin}>
-                                Volver a iniciar sesión
-                            </button>
+                            <p>{message}</p>
+                            <div className="success-actions">
+                                <button type="button" className="btn-secondary" onClick={goToLogin}>
+                                    Volver a iniciar sesión
+                                </button>
+                            </div>
                         </div>
                     )}
 
