@@ -231,11 +231,27 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await resp.json();
-      if (data.success) {
+
+      const raw = await resp.text();
+      let data = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch (parseErr) {
+          console.warn("Respuesta no JSON del backend al enviar notificación", raw);
+        }
+      }
+
+      if (!resp.ok) {
+        const errorMessage = data?.error || raw || `Error HTTP ${resp.status}`;
+        setNotifStatus({ type: "error", text: errorMessage });
+        return;
+      }
+
+      if (data?.success !== false) {
         setNotifStatus({ type: "success", text: "Notificación enviada al equipo" });
       } else {
-        setNotifStatus({ type: "error", text: data.error || "No se pudo enviar la notificación" });
+        setNotifStatus({ type: "error", text: data?.error || "No se pudo enviar la notificación" });
       }
     } catch (err) {
       console.error(err);
