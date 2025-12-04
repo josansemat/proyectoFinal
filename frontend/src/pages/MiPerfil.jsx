@@ -174,7 +174,6 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
   return (
     <div className="perfil-page">
       <header className="perfil-header">
-        <h1>Mi Perfil</h1>
       </header>
 
       <div className="perfil-grid">
