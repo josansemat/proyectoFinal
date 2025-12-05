@@ -2,6 +2,8 @@
 require_once 'cors.php';
 require_once '../models/Partido.php';
 require_once '../models/Equipo.php';
+require_once '../models/FcmToken.php';
+require_once '../services/FirebaseNotifier.php';
 
 class PartidosController {
     private function assertManagerPermissions(array $data): void {
@@ -23,6 +25,81 @@ class PartidosController {
         if (!Equipo::esManager($idUsuario, $idEquipo)) {
             throw new InvalidArgumentException('Solo los managers del equipo o administradores pueden gestionar partidos');
         }
+    }
+
+    private function assertManagerForPartido(array $partido, int $idUsuario, string $rolGlobal, string $errorMessage = 'Solo un manager o administrador puede realizar esta acción'): void {
+        if ($rolGlobal === 'admin') {
+            return;
+        }
+
+        $idEquipo = isset($partido['id_equipo']) ? (int)$partido['id_equipo'] : 0;
+        if (!$idEquipo || !Equipo::esManager($idUsuario, $idEquipo)) {
+            throw new InvalidArgumentException($errorMessage);
+        }
+    }
+
+    private function formatearFechaHumana(?string $fecha): string {
+        if (!$fecha) {
+            return '';
+        }
+        try {
+            $dt = new DateTimeImmutable($fecha);
+            return $dt->format('d/m H:i');
+        } catch (Exception $e) {
+            return $fecha;
+        }
+    }
+
+    private function enviarNotificacionPartido(array $partido, string $titulo, string $mensaje, array $extraData = []): void {
+        $idEquipo = isset($partido['id_equipo']) ? (int)$partido['id_equipo'] : 0;
+        $idPartido = isset($partido['id']) ? (int)$partido['id'] : 0;
+        if ($idEquipo <= 0 || $idPartido <= 0) {
+            return;
+        }
+
+        $tokens = FcmToken::listActiveTokensByEquipo($idEquipo);
+        if (empty($tokens)) {
+            return;
+        }
+
+        $data = array_merge([
+            'type' => 'partido',
+            'id_partido' => (string)$idPartido,
+            'id_equipo' => (string)$idEquipo,
+            'click_action' => '/partidos',
+        ], $extraData);
+
+        $notification = [
+            'title' => $titulo,
+            'body' => $mensaje,
+        ];
+
+        try {
+            FirebaseNotifier::sendMulticast($tokens, $notification, $data);
+        } catch (Throwable $e) {
+            error_log('No se pudo enviar la notificación de partido: ' . $e->getMessage());
+        }
+    }
+
+    private function notificarPartidoCreado(int $idPartido): void {
+        $partido = Partido::getById($idPartido);
+        if (!$partido) {
+            return;
+        }
+        $fecha = $this->formatearFechaHumana($partido['fecha_hora'] ?? null);
+        $lugar = trim((string)($partido['lugar_nombre'] ?? '')); 
+        $mensajeBase = $fecha ? sprintf('%s · %s', $fecha, $lugar) : $lugar;
+        $mensaje = trim($mensajeBase) ?: 'Revisa los detalles del próximo partido';
+        $this->enviarNotificacionPartido($partido, 'Nuevo partido programado', $mensaje, [
+            'event' => 'partido_creado',
+        ]);
+    }
+
+    private function notificarVotacionHabilitada(array $partido): void {
+        $fecha = $this->formatearFechaHumana($partido['fecha_hora'] ?? null);
+        $this->enviarNotificacionPartido($partido, 'Votaciones disponibles', sprintf('Ya puedes votar el partido de %s', $fecha ?: 'tu equipo'), [
+            'event' => 'partido_votaciones',
+        ]);
     }
 
     public function listar() {
@@ -65,6 +142,9 @@ class PartidosController {
         try {
             $this->assertManagerPermissions($data);
             $id = Partido::create($data);
+            if ($id) {
+                $this->notificarPartidoCreado((int)$id);
+            }
             echo json_encode(['success' => (bool)$id, 'id' => $id]);
         } catch (InvalidArgumentException $ex) {
             http_response_code(400);
@@ -360,6 +440,9 @@ class PartidosController {
                 throw new InvalidArgumentException('Solo un manager puede habilitar las votaciones');
             }
             $ok = Partido::activarVotacion($idPartido);
+            if ($ok) {
+                $this->notificarVotacionHabilitada($partido);
+            }
             echo json_encode(['success' => (bool)$ok]);
         } catch (InvalidArgumentException $e) {
             http_response_code(400);
@@ -368,6 +451,144 @@ class PartidosController {
             error_log('Error activar votación: ' . $e->getMessage());
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'No se pudo activar la votación']);
+        }
+    }
+
+    public function recordarPago() {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $idPartido = (int)($data['id_partido'] ?? 0);
+        $idUsuario = (int)($data['id_usuario'] ?? 0);
+        $rolGlobal = $data['rol_global'] ?? 'usuario';
+
+        if ($idPartido <= 0 || $idUsuario <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Datos inválidos para el recordatorio']);
+            return;
+        }
+
+        try {
+            $metricas = Partido::metricasEconomicas($idPartido);
+            $partido = $metricas['partido'];
+            $this->assertManagerForPartido($partido, $idUsuario, $rolGlobal, 'Solo un manager o administrador puede enviar recordatorios de pago');
+
+            $costo = $metricas['costo_jugador'];
+            if ($costo === null) {
+                throw new InvalidArgumentException('Configura el precio del partido antes de enviar recordatorios de pago');
+            }
+
+            $inscritos = (int)$metricas['total_inscritos'];
+            $pagos = (int)$metricas['pagos_confirmados'];
+            $body = sprintf('Pago pendiente: €%0.2f por jugador · Pagados %d/%d', $costo, $pagos, max($inscritos, 1));
+
+            $this->enviarNotificacionPartido($partido, 'Recordatorio de pago', $body, [
+                'event' => 'partido_recordatorio_pago',
+                'costo_jugador' => (string)$costo,
+                'total_inscritos' => (string)$inscritos,
+                'pagos_confirmados' => (string)$pagos,
+            ]);
+
+            echo json_encode(['success' => true, 'message' => 'Recordatorio de pago enviado']);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            error_log('Error enviando recordatorio de pago: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'No se pudo enviar el recordatorio']);
+        }
+    }
+
+    public function recordarInicio() {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $idPartido = (int)($data['id_partido'] ?? 0);
+        $idUsuario = (int)($data['id_usuario'] ?? 0);
+        $rolGlobal = $data['rol_global'] ?? 'usuario';
+
+        if ($idPartido <= 0 || $idUsuario <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Datos inválidos para el recordatorio']);
+            return;
+        }
+
+        try {
+            $partido = Partido::getById($idPartido);
+            if (!$partido) {
+                throw new InvalidArgumentException('Partido no encontrado');
+            }
+            $this->assertManagerForPartido($partido, $idUsuario, $rolGlobal, 'Solo un manager o administrador puede enviar recordatorios');
+            if (($partido['estado'] ?? '') !== 'programado') {
+                throw new InvalidArgumentException('Solo puede recordarse partidos programados');
+            }
+
+            $fecha = $partido['fecha_hora'] ?? null;
+            if (!$fecha) {
+                throw new InvalidArgumentException('La fecha del partido no está configurada');
+            }
+
+            try {
+                $fechaPartido = new DateTimeImmutable($fecha);
+            } catch (Exception $e) {
+                throw new InvalidArgumentException('Fecha del partido inválida');
+            }
+            $ahora = new DateTimeImmutable('now');
+            $diffSegundos = $fechaPartido->getTimestamp() - $ahora->getTimestamp();
+            if ($diffSegundos <= 0) {
+                throw new InvalidArgumentException('El partido ya comenzó o finalizó');
+            }
+
+            $horas = $diffSegundos / 3600;
+            if ($horas > 24) {
+                throw new InvalidArgumentException('El recordatorio de 24h solo puede enviarse en el día previo');
+            }
+
+            $horasRestantes = max(1, (int)ceil($horas));
+            $body = sprintf('Faltan %d h para el partido en %s. Revisa la convocatoria.', $horasRestantes, $partido['lugar_nombre'] ?? 'la pista');
+
+            $this->enviarNotificacionPartido($partido, 'El partido es mañana', $body, [
+                'event' => 'partido_recordatorio_24h',
+                'hours_remaining' => (string)$horasRestantes,
+            ]);
+
+            echo json_encode(['success' => true, 'message' => 'Recordatorio enviado']);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            error_log('Error enviando recordatorio de partido: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'No se pudo enviar el recordatorio']);
+        }
+    }
+
+    public function actualizarPagoJugador() {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $idPartido = (int)($data['id_partido'] ?? 0);
+        $idJugador = (int)($data['id_jugador'] ?? 0);
+        $idUsuario = (int)($data['id_usuario'] ?? 0);
+        $rolGlobal = $data['rol_global'] ?? 'usuario';
+        $pagado = !empty($data['pagado']);
+
+        if ($idPartido <= 0 || $idJugador <= 0 || $idUsuario <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Datos inválidos para actualizar el pago']);
+            return;
+        }
+
+        try {
+            $partido = Partido::getById($idPartido);
+            if (!$partido) {
+                throw new InvalidArgumentException('Partido no encontrado');
+            }
+            $this->assertManagerForPartido($partido, $idUsuario, $rolGlobal, 'Solo un manager o administrador puede actualizar pagos');
+            Partido::actualizarPagoJugador($idPartido, $idJugador, $pagado);
+            echo json_encode(['success' => true, 'pagado' => $pagado]);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            error_log('Error actualizando pago de jugador: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'No se pudo actualizar el pago']);
         }
     }
 

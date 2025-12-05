@@ -54,6 +54,13 @@ const percent = (value, total) => {
   return Math.min(100, Math.round(((Number(value) || 0) / Number(total)) * 100));
 };
 
+const hoursUntil = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return (date.getTime() - Date.now()) / (1000 * 60 * 60);
+};
+
 const jugadorId = (jugador) => Number(jugador?.jugador_id ?? jugador?.id_jugador ?? jugador?.id ?? 0);
 
 const RIVAL_OPTION_VALUE = "__rival__";
@@ -95,7 +102,7 @@ function PartidosDashboard({ user, currentTeam }) {
   const userId = user?.id ?? null;
   const globalRole = user?.rol_global ?? user?.rol ?? "usuario";
   const currentTeamId = currentTeam?.id ?? null;
-  const responsableDefault = currentTeam?.id_responsable_alquiler ?? "";
+  const responsableDefault = currentTeam?.id_responsable_alquiler ? String(currentTeam.id_responsable_alquiler) : "";
   const isAdmin = globalRole === "admin";
 
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -126,6 +133,8 @@ function PartidosDashboard({ user, currentTeam }) {
   const [managerRatings, setManagerRatings] = useState({});
   const [managerRatingsSending, setManagerRatingsSending] = useState(false);
   const [activeTab, setActiveTab] = useState("formacion");
+  const [reminderSending, setReminderSending] = useState({ pago: false, inicio: false });
+  const [pagoUpdatingId, setPagoUpdatingId] = useState(null);
 
   const canManagePartidos = useMemo(() => Boolean(isAdmin || currentTeam?.mi_rol === "manager"), [isAdmin, currentTeam]);
   const pageLimit = 10;
@@ -134,7 +143,7 @@ function PartidosDashboard({ user, currentTeam }) {
     setEditingId(null);
     setFormValues({
       ...emptyForm,
-      id_responsable_alquiler: responsableDefault || "",
+      id_responsable_alquiler: responsableDefault ? String(responsableDefault) : "",
     });
   }, [responsableDefault]);
 
@@ -147,7 +156,10 @@ function PartidosDashboard({ user, currentTeam }) {
   useEffect(() => {
     setFormValues((prev) => ({
       ...prev,
-      id_responsable_alquiler: prev.id_responsable_alquiler || responsableDefault || "",
+      id_responsable_alquiler:
+        prev.id_responsable_alquiler && prev.id_responsable_alquiler !== ""
+          ? String(prev.id_responsable_alquiler)
+          : (responsableDefault ? String(responsableDefault) : ""),
     }));
   }, [responsableDefault]);
 
@@ -384,7 +396,7 @@ function PartidosDashboard({ user, currentTeam }) {
       max_jugadores: partido.max_jugadores || 10,
       precio_total_pista: partido.precio_total_pista ?? "",
       estado: partido.estado,
-      id_responsable_alquiler: partido.id_responsable_alquiler || responsableDefault || "",
+      id_responsable_alquiler: partido.id_responsable_alquiler ? String(partido.id_responsable_alquiler) : (responsableDefault || ""),
       equipos_generados: Boolean(partido.equipos_generados),
       votacion_habilitada: Boolean(partido.votacion_habilitada),
       comprobante_pdf: partido.comprobante_pdf || "",
@@ -560,6 +572,73 @@ function PartidosDashboard({ user, currentTeam }) {
       setMessage({ type: "error", text: error.message });
     }
   };
+
+  const triggerReminder = useCallback(
+    async ({ action, flag, successText }) => {
+      if (!detalleSeleccionado || !userId) {
+        setMessage({ type: "error", text: "Selecciona un partido antes de enviar recordatorios" });
+        return;
+      }
+      setReminderSending((prev) => ({ ...prev, [flag]: true }));
+      try {
+        const response = await fetch(`/api/index.php?action=${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_partido: detalleSeleccionado, id_usuario: userId, rol_global: globalRole }),
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || "No se pudo enviar el recordatorio");
+        setMessage({ type: "success", text: data.message || successText });
+      } catch (error) {
+        setMessage({ type: "error", text: error.message });
+      } finally {
+        setReminderSending((prev) => ({ ...prev, [flag]: false }));
+      }
+    },
+    [detalleSeleccionado, userId, globalRole]
+  );
+
+  const handleRecordarPago = useCallback(() => {
+    triggerReminder({ action: "partido_recordar_pago", flag: "pago", successText: "Recordatorio de pago enviado" });
+  }, [triggerReminder]);
+
+  const handleRecordarInicio = useCallback(() => {
+    triggerReminder({ action: "partido_recordar_inicio", flag: "inicio", successText: "Recordatorio enviado" });
+  }, [triggerReminder]);
+
+  const handleTogglePago = useCallback(
+    async (jugadorId, siguienteEstado) => {
+      if (!detalleSeleccionado || !userId) {
+        setMessage({ type: "error", text: "Selecciona un partido antes de actualizar pagos" });
+        return;
+      }
+      setPagoUpdatingId(jugadorId);
+      try {
+        const response = await fetch(`/api/index.php?action=partido_actualizar_pago`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_partido: detalleSeleccionado,
+            id_jugador: jugadorId,
+            id_usuario: userId,
+            rol_global: globalRole,
+            pagado: Boolean(siguienteEstado),
+          }),
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || "No se pudo actualizar el pago");
+        }
+        await refreshDetalle();
+        setMessage({ type: "success", text: data.pagado ? "Pago confirmado" : "Pago marcado como pendiente" });
+      } catch (error) {
+        setMessage({ type: "error", text: error.message });
+      } finally {
+        setPagoUpdatingId(null);
+      }
+    },
+    [detalleSeleccionado, userId, globalRole, refreshDetalle]
+  );
 
   const handleRegistrarEvento = async (payload) => {
     if (!detalleSeleccionado) throw new Error("Selecciona un partido antes de añadir eventos");
@@ -1067,15 +1146,23 @@ function PartidosDashboard({ user, currentTeam }) {
                   </select>
                 </div>
                 <div className="match-field">
-                  <label htmlFor="id_responsable_alquiler">ID responsable</label>
-                  <input
+                  <label htmlFor="id_responsable_alquiler">Responsable del alquiler</label>
+                  <select
                     id="id_responsable_alquiler"
-                    type="number"
                     name="id_responsable_alquiler"
                     className="match-input"
                     value={formValues.id_responsable_alquiler || responsableDefault || ""}
                     onChange={handleChange}
-                  />
+                    disabled={rosterLoading}
+                  >
+                    <option value="">Sin asignar</option>
+                    {teamRoster.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {player.apodo || player.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="text-muted">Muestra los jugadores del equipo para asignar quién gestiona el pago de la pista.</small>
                 </div>
                 <div className="match-field">
                   <label htmlFor="comprobante_pdf">Comprobante (PDF)</label>
@@ -1271,6 +1358,19 @@ function PartidosDashboard({ user, currentTeam }) {
                         <div className="match-detail__panel">
                           <PartidoResumenCard partido={detalle.partido} costo={detalle.costo_jugador} inscritos={detalle.jugadores.length} />
                         </div>
+                        {canManagePartidos && detalle.partido && (
+                          <div className="match-detail__panel">
+                            <RecordatoriosRapidos
+                              partido={detalle.partido}
+                              costo={detalle.costo_jugador}
+                              inscritos={detalle.jugadores.length}
+                              onRecordarPago={handleRecordarPago}
+                              onRecordarInicio={handleRecordarInicio}
+                              sendingPago={reminderSending.pago}
+                              sendingInicio={reminderSending.inicio}
+                            />
+                          </div>
+                        )}
                         <div className="match-detail__panel">
                           <SimpleListCard
                             title="Comentarios"
@@ -1316,6 +1416,8 @@ function PartidosDashboard({ user, currentTeam }) {
                             onRemove={handleDesinscribirJugador}
                             canManage={canManagePartidos}
                             currentUserId={userId}
+                            onTogglePago={canManagePartidos ? handleTogglePago : null}
+                            pagoLoadingId={pagoUpdatingId}
                           />
                         </div>
                         <div className="match-detail__panel">
@@ -1446,7 +1548,72 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
   );
 }
 
-function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loading, rosterLoading, onAdd, onRemove, canManage, currentUserId, tipoPartido = "interno" }) {
+function RecordatoriosRapidos({ partido, costo, inscritos, onRecordarPago, onRecordarInicio, sendingPago, sendingInicio }) {
+  if (!partido) return null;
+  const costoDisponible = costo !== null && costo !== undefined && Number(partido.precio_total_pista ?? 0) > 0;
+  const horasRestantes = hoursUntil(partido.fecha_hora);
+  const esProgramado = partido.estado === "programado";
+  const puedeRecordar24h = esProgramado && horasRestantes !== null && horasRestantes > 0;
+  const habilitado24h = puedeRecordar24h && horasRestantes <= 24;
+  const horasTexto = horasRestantes !== null ? Math.max(0, Math.round(horasRestantes)) : null;
+
+  return (
+    <div className="card panel-soft">
+      <div className="card-header">
+        <div className="fw-semibold">Recordatorios rápidos</div>
+        <small className="text-muted">Envía un push inmediato a todos los jugadores del equipo.</small>
+      </div>
+      <div className="card-body d-flex flex-column gap-3">
+        <div>
+          <div className="fw-semibold mb-1">Pagos pendientes</div>
+          {costoDisponible ? (
+            <button type="button" className="btn btn-outline-primary w-100" onClick={onRecordarPago} disabled={sendingPago}>
+              {sendingPago ? "Enviando…" : `Recordar pago (€${Number(costo).toFixed(2)} · ${inscritos} inscritos)`}
+            </button>
+          ) : (
+            <small className="text-muted">Configura un precio total para habilitar este recordatorio.</small>
+          )}
+        </div>
+        <div>
+          <div className="fw-semibold mb-1">Queda menos de un día</div>
+          {puedeRecordar24h ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline-secondary w-100"
+                onClick={onRecordarInicio}
+                disabled={sendingInicio || !habilitado24h}
+              >
+                {sendingInicio ? "Enviando…" : habilitado24h ? "Recordar que falta 1 día" : "Disponible en las últimas 24h"}
+              </button>
+              <small className="text-muted d-block mt-1">
+                {horasTexto !== null ? `Faltan aproximadamente ${horasTexto}h para el inicio.` : ""}
+              </small>
+            </>
+          ) : (
+            <small className="text-muted">Este recordatorio solo aplica a partidos programados y futuros.</small>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InscripcionesPanel({
+  jugadores,
+  roster,
+  costoJugador,
+  maxJugadores,
+  loading,
+  rosterLoading,
+  onAdd,
+  onRemove,
+  canManage,
+  currentUserId,
+  tipoPartido = "interno",
+  onTogglePago,
+  pagoLoadingId,
+}) {
   const [selected, setSelected] = useState("");
   const disponibles = useMemo(
     () => roster.filter((p) => !jugadores.some((j) => jugadorId(j) === Number(p.id))),
@@ -1522,26 +1689,51 @@ function InscripcionesPanel({ jugadores, roster, costoJugador, maxJugadores, loa
         )}
         <div className="inscritos-table">
           {jugadores.length ? (
-            jugadores.map((j) => (
-              <div key={j.id} className="inscrito-row">
-                <div>
-                  <div className="fw-semibold">{j.nombre}</div>
-                  <small className="text-muted">
-                    Equipo {j.equipo || "-"} · Rating {Number(j.rating_habilidad ?? 0).toFixed(1)}
-                  </small>
+            jugadores.map((j) => {
+              const id = jugadorId(j);
+              const pagoConfirmado = Boolean(Number(j.pago_confirmado ?? 0));
+              const esPropio = id === Number(currentUserId);
+              const puedeGestionarPago = canManage && typeof onTogglePago === "function";
+              const pagoBtnLabel = pagoConfirmado ? "Marcar pendiente" : "Marcar pagado";
+              const pagoBadge = pagoConfirmado ? "badge text-bg-success" : "badge text-bg-warning text-dark";
+              const isPagoLoading = pagoLoadingId === id;
+
+              return (
+                <div key={id} className="inscrito-row">
+                  <div>
+                    <div className="fw-semibold d-flex align-items-center gap-2">
+                      {j.nombre}
+                      <span className={pagoBadge}>{pagoConfirmado ? "Pagado" : "Pendiente"}</span>
+                    </div>
+                    <small className="text-muted">
+                      Equipo {j.equipo || "-"} · Rating {Number(j.rating_habilidad ?? 0).toFixed(1)}
+                    </small>
+                  </div>
+                  <div className="d-flex gap-2 flex-wrap justify-content-end">
+                    {puedeGestionarPago && (
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        type="button"
+                        onClick={() => onTogglePago(id, !pagoConfirmado)}
+                        disabled={loading || isPagoLoading}
+                      >
+                        {isPagoLoading ? "Actualizando..." : pagoBtnLabel}
+                      </button>
+                    )}
+                    {(canManage || esPropio) && (
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        type="button"
+                        onClick={() => onRemove(id)}
+                        disabled={loading}
+                      >
+                        {esPropio ? "Salir" : "Quitar"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {(canManage || jugadorId(j) === Number(currentUserId)) && (
-                  <button
-                    className="btn btn-sm btn-outline-danger"
-                    type="button"
-                    onClick={() => onRemove(jugadorId(j))}
-                    disabled={loading}
-                  >
-                    {jugadorId(j) === Number(currentUserId) ? "Salir" : "Quitar"}
-                  </button>
-                )}
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-muted small">Aún no hay jugadores registrados.</div>
           )}

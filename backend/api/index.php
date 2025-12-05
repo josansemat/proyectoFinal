@@ -165,9 +165,18 @@ switch ($action) {
     case "partido_chat_listar":
         $partidosController->listarChat();
         break;
+        case "partido_recordar_pago":
+            $partidosController->recordarPago();
+            break;
+        case "partido_recordar_inicio":
+            $partidosController->recordarInicio();
+            break;
     case "partido_chat_publicar":
         $partidosController->publicarChat();
         break;
+        case "partido_actualizar_pago":
+            $partidosController->actualizarPagoJugador();
+            break;
     case "partido_activar_votacion":
         $partidosController->activarVotacion();
         break;

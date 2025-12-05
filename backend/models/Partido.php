@@ -600,6 +600,52 @@ class Partido {
         return $row ?: null;
     }
 
+    public static function metricasEconomicas(int $idPartido): array {
+        $partido = self::getById($idPartido);
+        if (!$partido) {
+            throw new InvalidArgumentException('Partido no encontrado');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        $stmt = $conexion->prepare('SELECT COUNT(*) FROM partidos_jugadores WHERE id_partido = :id');
+        $stmt->bindValue(':id', $idPartido, PDO::PARAM_INT);
+        $stmt->execute();
+        $totalInscritos = (int)$stmt->fetchColumn();
+
+        $stmtPagos = $conexion->prepare('SELECT COUNT(*) FROM partidos_jugadores WHERE id_partido = :id AND pago_confirmado = 1');
+        $stmtPagos->bindValue(':id', $idPartido, PDO::PARAM_INT);
+        $stmtPagos->execute();
+        $pagosConfirmados = (int)$stmtPagos->fetchColumn();
+
+        return [
+            'partido' => $partido,
+            'total_inscritos' => $totalInscritos,
+            'pagos_confirmados' => $pagosConfirmados,
+            'costo_jugador' => self::calcularCostoPorJugador($partido, $totalInscritos),
+        ];
+    }
+
+    public static function actualizarPagoJugador(int $idPartido, int $idJugador, bool $pagado): bool {
+        if ($idPartido <= 0 || $idJugador <= 0) {
+            throw new InvalidArgumentException('Datos de pago inválidos');
+        }
+
+        $conexion = FutbolDB::connectDB();
+        $relacion = self::obtenerRelacionJugadorPartido($idPartido, $idJugador, $conexion);
+        if (!$relacion) {
+            throw new InvalidArgumentException('El jugador no está inscrito en este partido');
+        }
+
+        $stmt = $conexion->prepare('UPDATE partidos_jugadores SET pago_confirmado = :pagado WHERE id_partido = :partido AND id_jugador = :jugador');
+        $stmt->execute([
+            ':pagado' => $pagado ? 1 : 0,
+            ':partido' => $idPartido,
+            ':jugador' => $idJugador,
+        ]);
+
+        return true;
+    }
+
     public static function create(array $data) {
         $fecha = self::parseDateTime($data['fecha_hora'] ?? null);
         $lugar = trim($data['lugar_nombre'] ?? '');
