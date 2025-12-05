@@ -3,7 +3,8 @@
   --bg-surface: #1e293b;       /* Tarjetas */
   --bg-input: #020617;         /* Inputs */
   --text-main: #f8fafc;        /* Texto blanco */
-  --text-muted: #94a3b8;       /* Texto secundario */
+  --text-muted: #cbd5ff;       /* Texto secundario con mayor contraste */
+  --text-muted-strong: #e2e8ff;/* Texto suave pero legible */
   --border: rgba(255, 255, 255, 0.08);
   --accent: #3b82f6;           /* Azul eléctrico */
   --accent-hover: #2563eb;
@@ -121,7 +122,7 @@ html, body {
 }
 
 .profile-nickname {
-  color: var(--text-muted);
+  color: var(--text-muted-strong);
   font-size: 0.95rem;
   margin: 0 0 1.5rem 0;
 }
@@ -141,7 +142,7 @@ html, body {
   flex: 1;
 }
 
-.stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem; }
+.stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted-strong); margin-bottom: 0.25rem; }
 .stat-value { font-size: 1.25rem; font-weight: 800; color: var(--text-main); line-height: 1.2; }
 .stat-sub { font-size: 0.7rem; color: var(--text-muted); }
 .text-accent { color: var(--accent); }
@@ -161,7 +162,7 @@ html, body {
   font-size: 0.9rem;
 }
 
-.detail-row span:first-child { color: var(--text-muted); }
+.detail-row span:first-child { color: var(--text-muted-strong); }
 
 .badge {
   padding: 0.25rem 0.75rem;
@@ -229,7 +230,7 @@ html, body {
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--text-muted-strong);
   font-weight: 500;
 }
 
@@ -296,7 +297,7 @@ html, body {
 .btn-text {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-muted-strong);
   cursor: pointer;
 }
 .btn-text:hover { color: var(--text-main); }
@@ -325,6 +326,7 @@ html, body {
   font-size: 1.1rem;
   margin: 0 0 1rem 0;
   font-weight: 600;
+  color: var(--text-main);
 }
 .text-danger { color: var(--danger); }
 
@@ -351,7 +353,7 @@ html, body {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: var(--text-muted);
+  color: var(--text-muted-strong);
 }
 .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
 
@@ -375,6 +377,9 @@ html, body {
   align-items: flex-start;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+.pp{
+  color: white;
 }
 
 .status-dot {
@@ -460,4 +465,8 @@ html, body {
     width: 100%;
     min-width: 0; /* Truco flexbox para evitar desbordes */
   }
+}
+
+.notifications-panel{
+  color: white;
 }

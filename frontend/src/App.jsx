@@ -200,13 +200,15 @@ function App() {
   // --- CORREGIDO: refrescar equipo al instante ---
   const handleTeamChange = async (team) => {
     if (!team) return;
-    // Busca el mi_rol correcto en userTeams si no está en el objeto
-    const getRole = (base) => {
-      if (base.mi_rol) return base.mi_rol;
-      const found = userTeams.find(t => t.id === base.id);
+    const resolveRoleFromList = (teamId) => {
+      const found = userTeams.find((t) => t.id === teamId);
       return found?.mi_rol ?? null;
     };
-    const withRole = (base) => ({ ...base, mi_rol: getRole(base) });
+    const cachedRole = team.mi_rol ?? resolveRoleFromList(team.id);
+    const withRole = (base) => {
+      const role = base.mi_rol ?? cachedRole ?? resolveRoleFromList(base.id);
+      return { ...base, mi_rol: role };
+    };
     try {
       const resp = await fetch(`/api/index.php?action=get_equipo&id=${team.id}`);
       const raw = await resp.json();
