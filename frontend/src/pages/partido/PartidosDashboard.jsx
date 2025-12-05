@@ -7,6 +7,13 @@ const CloseIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 );
 
+const tabIconMap = {
+  info: "icono-info",
+  inscripcion: "icono-inscripcion",
+  formacion: "icono-cancha",
+  votaciones: "icono-trofeo",
+};
+
 const estados = [
   { value: "todos", label: "Todos" },
   { value: "programado", label: "Programados" },
@@ -811,10 +818,10 @@ function PartidosDashboard({ user, currentTeam }) {
 
   const proximo = stats?.proximoPartido;
   const matchTabs = [
-    { id: "info", label: "Información" },
-    { id: "inscripcion", label: "Inscripción" },
-    { id: "formacion", label: "Formación", icon: "pitch" },
-    { id: "votaciones", label: "Votaciones" },
+    { id: "info", label: "", icon: "info" },
+    { id: "inscripcion", label: "", icon: "inscripcion" },
+    { id: "formacion", label: "", icon: "formacion" },
+    { id: "votaciones", label: "", icon: "votaciones" },
   ];
 
   const matchCounts = useMemo(() => {
@@ -1411,6 +1418,7 @@ function PartidosDashboard({ user, currentTeam }) {
                     const classes = ["match-tab"];
                     if (tab.id === "formacion") classes.push("match-tab--formacion");
                     if (activeTab === tab.id) classes.push("match-tab--active");
+                    const symbolId = tabIconMap[tab.icon];
                     return (
                       <button
                         key={tab.id}
@@ -1419,14 +1427,12 @@ function PartidosDashboard({ user, currentTeam }) {
                         aria-pressed={activeTab === tab.id}
                         onClick={() => setActiveTab(tab.id)}
                       >
-                        {tab.icon === "pitch" && (
-                          <svg className="match-tab__icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="2" y="4" width="20" height="16" rx="3" ry="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                            <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1.2" />
-                            <circle cx="12" cy="12" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+                        {symbolId && (
+                          <svg className="match-tab__icon" aria-hidden="true">
+                            <use xlinkHref={`/mis-iconos.svg#${symbolId}`} href={`/mis-iconos.svg#${symbolId}`} />
                           </svg>
                         )}
-                        <span>{tab.label}</span>
+                        <span className="match-tab__label">{tab.label}</span>
                       </button>
                     );
                   })}
