@@ -83,7 +83,7 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
       </div>
 
       {solicitudes.length === 0 ? (
-        <div className="alert alert-info text-center">
+        <div className="alert text-center">
           No hay solicitudes pendientes.
         </div>
       ) : (
