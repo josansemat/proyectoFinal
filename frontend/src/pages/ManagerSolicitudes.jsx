@@ -88,7 +88,7 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
         </div>
       ) : (
         <>
-          <div className="table-responsive shadow-sm desktop-only">
+          <div className="table-responsive shadow-sm desktop-only manager-solicitudes-table">
             <table className="table table-hover align-middle">
               <thead>
                 <tr>
@@ -128,18 +128,18 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
             </table>
           </div>
 
-          <div className="mobile-card-list">
+          <div className="mobile-card-list manager-solicitudes-card-list">
             {solicitudes.map((sol, index) => (
-              <article key={sol.id} className="solicitud-card">
-                <header className="card-head">
+              <article key={sol.id} className="solicitud-card manager-solicitudes-card">
+                <header className="card-head manager-solicitudes-card-head">
                   <span className="card-index">#{index + 1}</span>
                   <span className="card-date">{new Date(sol.fecha_solicitud).toLocaleDateString()}</span>
                 </header>
-                <div className="card-body">
-                  <p className="card-name">{sol.nombre_jugador}</p>
-                  <p className="card-apodo">{sol.apodo || "Sin apodo"}</p>
+                <div className="card-body manager-solicitudes-card-body">
+                  <p className="card-name manager-solicitudes-card-name">{sol.nombre_jugador}</p>
+                  <p className="card-apodo manager-solicitudes-card-apodo">{sol.apodo || "Sin apodo"}</p>
                 </div>
-                <div className="card-actions">
+                <div className="card-actions manager-solicitudes-card-actions">
                   <button
                     className="btn btn-success btn-sm"
                     onClick={() => handleResponse(sol.id, "aceptada")}

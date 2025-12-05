@@ -124,3 +124,99 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   color: #000;
 }
+
+/* --- Responsive: Manager Solicitudes --- */
+.manager-solicitudes-table {
+  border-radius: 16px;
+}
+
+.manager-solicitudes-card-list {
+  display: none;
+}
+
+.manager-solicitudes-card {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f3f5;
+}
+
+.manager-solicitudes-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+}
+
+.manager-solicitudes-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.manager-solicitudes-card-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.manager-solicitudes-card-apodo {
+  font-size: 0.95rem;
+  color: #868e96;
+}
+
+.manager-solicitudes-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.manager-solicitudes-card-actions .btn-sm {
+  justify-content: center;
+}
+
+@media (max-width: 992px) {
+  .manager-solicitudes-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .manager-solicitudes-container .desktop-only {
+    display: none;
+  }
+
+  .manager-solicitudes-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .section-header-banner {
+    padding: 1.25rem;
+  }
+
+  .section-title {
+    font-size: 1.35rem;
+  }
+
+  .manager-solicitudes-card {
+    padding: 1rem;
+  }
+
+  .manager-solicitudes-card-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .manager-solicitudes-card-actions {
+    grid-template-columns: 1fr;
+  }
+}
