@@ -73,11 +73,9 @@ export default function Inicio({ user, team: currentTeam }) {
     loadData();
   }, [user, currentTeam]);
 
-  if (!currentTeam) return <div className="empty-msg">Sin equipo seleccionado</div>;
-
-  // Lógica Calendario simplificada
+  // Lógica Calendario simplificada (debe ejecutarse siempre para mantener el orden de hooks)
   const calendarPayload = useMemo(
-    () => (nextMatch ? buildCalendarPayload(nextMatch, currentTeam?.nombre) : null),
+    () => (nextMatch && currentTeam ? buildCalendarPayload(nextMatch, currentTeam.nombre) : null),
     [nextMatch, currentTeam]
   );
 
@@ -89,6 +87,8 @@ export default function Inicio({ user, team: currentTeam }) {
     }
     return null;
   }, [nextMatch]);
+
+  if (!currentTeam) return <div className="empty-msg">Sin equipo seleccionado</div>;
 
   const handleGoogleCalendar = () => {
     if (!calendarPayload?.googleUrl) return;

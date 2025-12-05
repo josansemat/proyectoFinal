@@ -87,45 +87,78 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
           No hay solicitudes pendientes.
         </div>
       ) : (
-        <div className="table-responsive shadow-sm">
-          <table className="table table-hover align-middle">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Jugador</th>
-                <th>Apodo</th>
-                <th>Fecha Solicitud</th>
-                <th className="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {solicitudes.map((sol, index) => (
-                <tr key={sol.id}>
-                  <td>{index + 1}</td>
-                  <td>{sol.nombre_jugador}</td>
-                  <td>{sol.apodo || "-"}</td>
-                  <td>{new Date(sol.fecha_solicitud).toLocaleDateString()}</td>
-                  <td className="text-center">
-                    <button
-                      className="btn btn-success btn-sm me-2"
-                      onClick={() => handleResponse(sol.id, "aceptada")}
-                      disabled={processingId === sol.id}
-                    >
-                      {processingId === sol.id ? "..." : "✅ Aceptar"}
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleResponse(sol.id, "rechazada")}
-                      disabled={processingId === sol.id}
-                    >
-                      {processingId === sol.id ? "..." : "❌ Rechazar"}
-                    </button>
-                  </td>
+        <>
+          <div className="table-responsive shadow-sm desktop-only">
+            <table className="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Jugador</th>
+                  <th>Apodo</th>
+                  <th>Fecha Solicitud</th>
+                  <th className="text-center">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {solicitudes.map((sol, index) => (
+                  <tr key={sol.id}>
+                    <td>{index + 1}</td>
+                    <td>{sol.nombre_jugador}</td>
+                    <td>{sol.apodo || "-"}</td>
+                    <td>{new Date(sol.fecha_solicitud).toLocaleDateString()}</td>
+                    <td className="text-center">
+                      <button
+                        className="btn btn-success btn-sm me-2"
+                        onClick={() => handleResponse(sol.id, "aceptada")}
+                        disabled={processingId === sol.id}
+                      >
+                        {processingId === sol.id ? "..." : "✅ Aceptar"}
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleResponse(sol.id, "rechazada")}
+                        disabled={processingId === sol.id}
+                      >
+                        {processingId === sol.id ? "..." : "❌ Rechazar"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mobile-card-list">
+            {solicitudes.map((sol, index) => (
+              <article key={sol.id} className="solicitud-card">
+                <header className="card-head">
+                  <span className="card-index">#{index + 1}</span>
+                  <span className="card-date">{new Date(sol.fecha_solicitud).toLocaleDateString()}</span>
+                </header>
+                <div className="card-body">
+                  <p className="card-name">{sol.nombre_jugador}</p>
+                  <p className="card-apodo">{sol.apodo || "Sin apodo"}</p>
+                </div>
+                <div className="card-actions">
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => handleResponse(sol.id, "aceptada")}
+                    disabled={processingId === sol.id}
+                  >
+                    {processingId === sol.id ? "..." : "Aceptar"}
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleResponse(sol.id, "rechazada")}
+                    disabled={processingId === sol.id}
+                  >
+                    {processingId === sol.id ? "..." : "Rechazar"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

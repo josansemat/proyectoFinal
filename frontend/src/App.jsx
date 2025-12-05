@@ -147,8 +147,9 @@ function App() {
             const resp = await fetch(`/api/index.php?action=get_equipo&id=${storedTeam.id}`);
             const raw = await resp.json();
             if (raw.success) {
-              setCurrentTeam(raw.equipo);
-              localStorage.setItem("equipo_actual_furbo", JSON.stringify(raw.equipo));
+              const enriched = { ...raw.equipo, mi_rol: storedTeam.mi_rol ?? raw.equipo?.mi_rol ?? null };
+              setCurrentTeam(enriched);
+              localStorage.setItem("equipo_actual_furbo", JSON.stringify(enriched));
             } else {
               setCurrentTeam(storedTeam);
             }
@@ -174,10 +175,14 @@ function App() {
         if (storedTeamStr) {
           const storedTeam = JSON.parse(storedTeamStr);
           const found = data.equipos.find(t => t.id === storedTeam.id);
-          if (found) teamToSelect = found;
+          if (found) teamToSelect = { ...found, mi_rol: storedTeam.mi_rol ?? found.mi_rol ?? null };
         }
         if (!currentTeam || currentTeam.id !== teamToSelect.id) {
           handleTeamChange(teamToSelect);
+        } else if (!currentTeam.mi_rol && teamToSelect.mi_rol) {
+          const enrichedCurrent = { ...currentTeam, mi_rol: teamToSelect.mi_rol };
+          setCurrentTeam(enrichedCurrent);
+          localStorage.setItem("equipo_actual_furbo", JSON.stringify(enrichedCurrent));
         }
       } else {
         setUserTeams([]); setCurrentTeam(null); localStorage.removeItem("equipo_actual_furbo");
@@ -195,7 +200,13 @@ function App() {
   // --- CORREGIDO: refrescar equipo al instante ---
   const handleTeamChange = async (team) => {
     if (!team) return;
-    const withRole = (base) => ({ ...base, mi_rol: team.mi_rol ?? base.mi_rol ?? null });
+    // Busca el mi_rol correcto en userTeams si no está en el objeto
+    const getRole = (base) => {
+      if (base.mi_rol) return base.mi_rol;
+      const found = userTeams.find(t => t.id === base.id);
+      return found?.mi_rol ?? null;
+    };
+    const withRole = (base) => ({ ...base, mi_rol: getRole(base) });
     try {
       const resp = await fetch(`/api/index.php?action=get_equipo&id=${team.id}`);
       const raw = await resp.json();

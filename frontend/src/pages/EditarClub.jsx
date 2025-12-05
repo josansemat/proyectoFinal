@@ -166,7 +166,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
         console.error(error);
     }
   };
-
+  
   if (!currentTeam) return <div className="p-4 text-white">Selecciona un equipo primero.</div>;
   if (loading) return <div className="p-4 text-white">Cargando datos...</div>;
 
