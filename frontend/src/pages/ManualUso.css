@@ -1,0 +1,123 @@
+.manual-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  color: #0f172a;
+}
+
+.manual-hero {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 255, 0.96));
+  border-radius: 24px;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.15);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.manual-hero h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  margin-bottom: 1rem;
+}
+
+.manual-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  color: #0ea5e9;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.manual-steps {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.manual-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.manual-card h2 {
+  font-size: 1.2rem;
+  color: #0f172a;
+}
+
+.manual-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.manual-glossary {
+  margin-top: 2.5rem;
+  padding: 1.75rem;
+  background:rgba(15, 23, 42, 0.93);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: 22px;
+}
+.manual-glossary > p,h2 {
+    color: white;
+}
+
+.manual-glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.manual-mini-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.manual-mini-card h3 {
+  margin-bottom: 0.4rem;
+  color: #0369a1;
+  font-size: 1rem;
+}
+
+.manual-help {
+  margin-top: 2.5rem;
+  padding: 1.75rem;
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.93);
+  color: #f8fafc;
+}
+
+.manual-help ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  line-height: 1.6;
+}
+
+.manual-help a {
+  color: #38bdf8;
+}
+
+.manual-closing {
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .manual-card {
+    padding: 1.1rem;
+  }
+
+  .manual-help, .manual-glossary {
+    padding: 1.2rem;
+  }
+}

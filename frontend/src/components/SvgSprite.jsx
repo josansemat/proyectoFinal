@@ -52,6 +52,25 @@ const SvgSprite = () => (
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
         <circle cx="12" cy="7" r="4" />
       </symbol>
+
+      {/* --- Privacidad (Documento + Escudo) --- */}
+      <symbol id="icon-privacy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M10 11h2" />
+        <path d="M10 15h1" />
+        <path d="M17 11.5L14.5 13v3a5.5 5.5 0 0 0 3.5 5 5.5 5.5 0 0 0 3.5-5v-3Z" />
+      </symbol>
+
+      {/* --- Manual (Libro abierto) --- */}
+      <symbol id="icon-guide" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 21V7a2 2 0 0 0-2-2H4v12a2 2 0 0 0 2 2Z" />
+        <path d="M12 21V7a2 2 0 0 1 2-2h6v12a2 2 0 0 1-2 2Z" />
+        <path d="M8 9h2" />
+        <path d="M8 12h2" />
+        <path d="M16 9h2" />
+        <path d="M16 12h2" />
+      </symbol>
       
       {/* --- Cerrar Sesión (Estilo Línea - El que pediste) --- */}
       <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

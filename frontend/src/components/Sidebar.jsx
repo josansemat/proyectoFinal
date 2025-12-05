@@ -323,6 +323,44 @@ const Sidebar = ({
                 </li>
               </>
             )}
+
+            <li
+              className="nav-item mt-4 mb-2 px-2 text-uppercase small fw-bold"
+              style={sectionHeaderStyle}
+            >
+              Ayuda & recursos
+            </li>
+            <li className="nav-item">
+              <button
+                type="button"
+                className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                onClick={() => handleNav("/manual-uso")}
+              >
+                <svg className="sidebar-nav-icon">
+                  <use href="#icon-guide" />
+                </svg>
+                <span>Manual de uso</span>
+              </button>
+            </li>
+
+            <li
+              className="nav-item mt-4 mb-2 px-2 text-uppercase small fw-bold"
+              style={sectionHeaderStyle}
+            >
+              Legal & cumplimiento
+            </li>
+            <li className="nav-item">
+              <button
+                type="button"
+                className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                onClick={() => handleNav("/politica-privacidad")}
+              >
+                <svg className="sidebar-nav-icon">
+                  <use href="#icon-privacy" />
+                </svg>
+                <span>Política de privacidad</span>
+              </button>
+            </li>
           </ul>
 
           {/* —— Sección Mi Perfil (ESTA SE MANTIENE) —— */}

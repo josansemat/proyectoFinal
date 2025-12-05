@@ -1,0 +1,74 @@
+.privacy-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  color: #0f172a;
+}
+
+.privacy-hero {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.privacy-hero h1 {
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  margin-bottom: 1rem;
+}
+
+.privacy-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.8rem;
+  color: #2563eb;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.privacy-meta {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.privacy-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+}
+
+.privacy-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #111827;
+}
+
+.privacy-section p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.privacy-section ul {
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.privacy-section li {
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+}
+
+.privacy-section a {
+  color: #2563eb;
+}
+
+@media (max-width: 640px) {
+  .privacy-section {
+    padding: 1.1rem;
+  }
+}

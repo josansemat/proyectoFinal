@@ -16,6 +16,8 @@ import AdminJugadores from "./pages/admin/AdminJugadores.jsx";
 import AdminEquipos from "./pages/admin/AdminEquipos";
 import PartidosDashboard from "./pages/partido/PartidosDashboard";
 import Ranking from "./pages/Ranking";
+import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
+import ManualUso from "./pages/ManualUso";
 import { registerPushToken, deregisterPushToken, listenForegroundNotifications } from "./services/pushNotifications";
 
 // Guard de rutas para admin
@@ -280,6 +282,8 @@ function App() {
             <Route path="/plantilla" element={<Plantilla user={user} currentTeam={currentTeam} />} />
             <Route path="/partidos" element={<PartidosDashboard user={user} currentTeam={currentTeam} />} />
             <Route path="/ranking" element={<Ranking user={user} currentTeam={currentTeam} />} />
+            <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+            <Route path="/manual-uso" element={<ManualUso />} />
             <Route path="/mi-perfil" element={<MiPerfil user={user} currentTeam={currentTeam} onTeamChange={handleTeamChange} onUserUpdate={(u) => setUser(u)} />} />
             <Route path="/admin/jugadores" element={<RequireAdmin user={user}><AdminJugadores user={user} currentTeam={currentTeam} /></RequireAdmin>} />
             <Route path="/admin/equipos" element={<RequireAdmin user={user}><AdminEquipos user={user} currentTeam={currentTeam} /></RequireAdmin>} />
