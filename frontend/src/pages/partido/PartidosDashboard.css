@@ -215,6 +215,26 @@
   margin-top: 1.25rem;
 }
 
+.match-form__feedback {
+  margin-top: 1rem;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.match-form__feedback--error {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #7f1d1d;
+}
+
+.match-form__feedback--success {
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.35);
+  color: #14532d;
+}
+
 .match-field {
   display: flex;
   flex-direction: column;
@@ -418,6 +438,30 @@
 }
 
 .match-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.match-card__confirm {
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.match-card__confirm p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7f1d1d;
+  font-weight: 600;
+}
+
+.match-card__confirm-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;

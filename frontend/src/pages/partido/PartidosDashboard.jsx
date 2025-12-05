@@ -61,6 +61,12 @@ const hoursUntil = (value) => {
   return (date.getTime() - Date.now()) / (1000 * 60 * 60);
 };
 
+const parseDateValue = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 const jugadorId = (jugador) => Number(jugador?.jugador_id ?? jugador?.id_jugador ?? jugador?.id ?? 0);
 
 const RIVAL_OPTION_VALUE = "__rival__";
@@ -135,6 +141,9 @@ function PartidosDashboard({ user, currentTeam }) {
   const [activeTab, setActiveTab] = useState("formacion");
   const [reminderSending, setReminderSending] = useState({ pago: false, inicio: false });
   const [pagoUpdatingId, setPagoUpdatingId] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+  const [formFeedback, setFormFeedback] = useState({ type: "", text: "" });
 
   const canManagePartidos = useMemo(() => Boolean(isAdmin || currentTeam?.mi_rol === "manager"), [isAdmin, currentTeam]);
   const pageLimit = 10;
@@ -145,6 +154,7 @@ function PartidosDashboard({ user, currentTeam }) {
       ...emptyForm,
       id_responsable_alquiler: responsableDefault ? String(responsableDefault) : "",
     });
+    setFormFeedback({ type: "", text: "" });
   }, [responsableDefault]);
 
   useEffect(() => {
@@ -169,6 +179,7 @@ function PartidosDashboard({ user, currentTeam }) {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    setFormFeedback((prev) => (prev.text ? { type: "", text: "" } : prev));
   };
 
   const handleFilterChange = (e) => {
@@ -346,9 +357,15 @@ function PartidosDashboard({ user, currentTeam }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentTeamId || !userId) {
-      setMessage({ type: "error", text: "Selecciona un equipo antes de gestionar partidos" });
+      setFormFeedback({ type: "error", text: "Selecciona un equipo antes de gestionar partidos" });
       return;
     }
+    const validationError = validatePartidoDates();
+    if (validationError) {
+      setFormFeedback({ type: "error", text: validationError });
+      return;
+    }
+    setFormFeedback({ type: "", text: "" });
     setSubmitting(true);
     try {
       const payload = {
@@ -375,12 +392,19 @@ function PartidosDashboard({ user, currentTeam }) {
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || "No se pudo guardar el partido");
+      const newId = !editingId ? Number(data.id) : null;
       setMessage({ type: "success", text: editingId ? "Partido actualizado" : "Partido creado" });
       resetForm();
       setIsFormOpen(false);
       await loadPartidos();
+      if (newId) {
+        setDetalleSeleccionado(newId);
+        setActiveTab("info");
+        setDetalle(null);
+        await fetchDetalle(newId);
+      }
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setFormFeedback({ type: "error", text: error.message });
     } finally {
       setSubmitting(false);
     }
@@ -406,12 +430,18 @@ function PartidosDashboard({ user, currentTeam }) {
       modalidad_juego: partido.modalidad_juego || "f7",
       metodo_generacion: partido.metodo_generacion || "aleatorio",
     });
+    setFormFeedback({ type: "", text: "" });
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const toggleDeletePrompt = (id) => {
+    setPendingDeleteId((current) => (current === id ? null : id));
+  };
+
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Seguro que quieres eliminar este partido?")) return;
+    if (!id) return;
+    setDeleteLoadingId(id);
     try {
       const response = await fetch(`/api/index.php?action=partido_eliminar`, {
         method: "POST",
@@ -421,6 +451,7 @@ function PartidosDashboard({ user, currentTeam }) {
       const data = await response.json();
       if (!data.success) throw new Error(data.error || "No se pudo eliminar");
       setMessage({ type: "success", text: "Partido eliminado" });
+      setPendingDeleteId(null);
       if (detalleSeleccionado === id) {
         setDetalleSeleccionado(null);
         setDetalle(null);
@@ -434,6 +465,8 @@ function PartidosDashboard({ user, currentTeam }) {
       await loadPartidos();
     } catch (error) {
       setMessage({ type: "error", text: error.message });
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -850,6 +883,8 @@ function PartidosDashboard({ user, currentTeam }) {
     const cupo = partido.max_jugadores || 0;
     const progress = percent(inscritos, cupo);
     const isActive = detalleSeleccionado === partido.id;
+    const isPendingDelete = pendingDeleteId === partido.id;
+    const isDeleting = deleteLoadingId === partido.id;
 
     return (
       <article key={partido.id} className={`match-card ${isActive ? "match-card--active" : ""}`}>
@@ -902,11 +937,24 @@ function PartidosDashboard({ user, currentTeam }) {
             {isActive ? "Ocultar" : "Detalle"}
           </button>
           {canManagePartidos && (
-            <button type="button" className="button button--danger" onClick={() => handleDelete(partido.id)}>
-              Eliminar
+            <button type="button" className="button button--danger" onClick={() => toggleDeletePrompt(partido.id)}>
+              {isPendingDelete ? "Cancelar" : "Eliminar"}
             </button>
           )}
         </div>
+        {canManagePartidos && isPendingDelete && (
+          <div className="match-card__confirm">
+            <p>Confirma que quieres eliminar este partido. Esta acción no se puede deshacer.</p>
+            <div className="match-card__confirm-actions">
+              <button type="button" className="button button--ghost" onClick={() => setPendingDeleteId(null)} disabled={isDeleting}>
+                Mantener
+              </button>
+              <button type="button" className="button button--danger" onClick={() => handleDelete(partido.id)} disabled={isDeleting}>
+                {isDeleting ? "Eliminando..." : "Eliminar partido"}
+              </button>
+            </div>
+          </div>
+        )}
       </article>
     );
   };
@@ -943,6 +991,32 @@ function PartidosDashboard({ user, currentTeam }) {
       return acc;
     }, 0);
   }, [jugadoresDetalle, puedeCalificarJugadores, managerRatings]);
+
+  const validatePartidoDates = () => {
+    const matchDate = parseDateValue(formValues.fecha_hora);
+    if (!matchDate) {
+      return 'Introduce una fecha y hora válidas para el partido';
+    }
+    const now = new Date();
+    if (matchDate.getTime() <= now.getTime()) {
+      return 'No puedes crear partidos en fechas anteriores a la actual';
+    }
+
+    if (formValues.fecha_limite_inscripcion) {
+      const deadline = parseDateValue(formValues.fecha_limite_inscripcion);
+      if (!deadline) {
+        return 'La fecha límite de inscripción no es válida';
+      }
+      if (deadline.getTime() <= now.getTime()) {
+        return 'La fecha límite de inscripción no puede estar en el pasado';
+      }
+      if (deadline.getTime() >= matchDate.getTime()) {
+        return 'La fecha límite de inscripción debe ser anterior al inicio del partido';
+      }
+    }
+
+    return null;
+  };
 
   if (!currentTeamId) {
     return (
@@ -1025,6 +1099,12 @@ function PartidosDashboard({ user, currentTeam }) {
                   Limpiar formulario
                 </button>
               </header>
+
+              {formFeedback.text && (
+                <div className={`match-form__feedback match-form__feedback--${formFeedback.type === "error" ? "error" : "success"}`}>
+                  {formFeedback.text}
+                </div>
+              )}
 
               <form className="match-form__grid" onSubmit={handleSubmit}>
                 <div className="match-field">

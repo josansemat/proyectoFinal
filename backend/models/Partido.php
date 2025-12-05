@@ -37,6 +37,39 @@ class Partido {
         }
     }
 
+    private static function assertFechasValidas(?string $fecha, ?string $fechaLimite = null): void {
+        if (!$fecha) {
+            throw new InvalidArgumentException('La fecha del partido es obligatoria');
+        }
+
+        try {
+            $fechaPartido = new DateTimeImmutable($fecha);
+        } catch (Exception $e) {
+            throw new InvalidArgumentException('Fecha del partido inválida');
+        }
+
+        $now = new DateTimeImmutable('now');
+        if ($fechaPartido < $now) {
+            throw new InvalidArgumentException('No puedes programar partidos en fechas anteriores a la actual');
+        }
+
+        if ($fechaLimite) {
+            try {
+                $limite = new DateTimeImmutable($fechaLimite);
+            } catch (Exception $e) {
+                throw new InvalidArgumentException('La fecha límite de inscripción es inválida');
+            }
+
+            if ($limite >= $fechaPartido) {
+                throw new InvalidArgumentException('La fecha límite de inscripción debe ser anterior al inicio del partido');
+            }
+
+            if ($limite < $now) {
+                throw new InvalidArgumentException('La fecha límite de inscripción no puede estar en el pasado');
+            }
+        }
+    }
+
     private static function sanitizeEstado(?string $estado): string {
         if (!$estado) { return 'programado'; }
         return in_array($estado, self::ESTADOS_VALIDOS, true) ? $estado : 'programado';
@@ -655,6 +688,7 @@ class Partido {
         }
 
         $fechaLimite = self::parseDateTime($data['fecha_limite_inscripcion'] ?? null);
+        self::assertFechasValidas($fecha, $fechaLimite);
 
         $payload = [
             'id_equipo' => $idEquipo,
@@ -692,6 +726,11 @@ class Partido {
     }
 
     public static function update(int $id, array $data): bool {
+        $partidoActual = self::getById($id);
+        if (!$partidoActual) {
+            throw new InvalidArgumentException('Partido no encontrado');
+        }
+
         $campos = [];
         $params = [':id' => $id];
         $map = [
@@ -709,16 +748,17 @@ class Partido {
             'tipo_partido' => fn($v) => self::sanitizeTipo($v),
             'modalidad_juego' => fn($v) => self::sanitizeModalidad($v),
             'metodo_generacion' => fn($v) => self::sanitizeMetodo($v),
-            'fecha_limite_inscripcion' => fn($v) => self::parseDateTime($v),
         ];
 
-        if (isset($data['fecha_hora'])) {
+        if (array_key_exists('fecha_hora', $data)) {
             $fecha = self::parseDateTime($data['fecha_hora']);
             if (!$fecha) {
                 throw new InvalidArgumentException('Fecha inválida');
             }
             $campos[] = 'fecha_hora = :fecha_hora';
             $params[':fecha_hora'] = $fecha;
+        } else {
+            $fecha = $partidoActual['fecha_hora'] ?? null;
         }
 
         if (isset($data['estado'])) {
@@ -731,6 +771,22 @@ class Partido {
                 $campos[] = "$field = :$field";
                 $params[':' . $field] = $transform($data[$field]);
             }
+        }
+
+        $fechaLimiteResult = $partidoActual['fecha_limite_inscripcion'] ?? null;
+        if (array_key_exists('fecha_limite_inscripcion', $data)) {
+            $limite = self::parseDateTime($data['fecha_limite_inscripcion']);
+            if ($data['fecha_limite_inscripcion'] !== null && $data['fecha_limite_inscripcion'] !== '' && !$limite) {
+                throw new InvalidArgumentException('La fecha límite de inscripción es inválida');
+            }
+            $campos[] = 'fecha_limite_inscripcion = :fecha_limite_inscripcion';
+            $params[':fecha_limite_inscripcion'] = $limite;
+            $fechaLimiteResult = $limite;
+        }
+
+        $fechaResult = $fecha ?? $partidoActual['fecha_hora'] ?? null;
+        if ($fechaResult) {
+            self::assertFechasValidas($fechaResult, $fechaLimiteResult);
         }
 
         if (empty($campos)) {
