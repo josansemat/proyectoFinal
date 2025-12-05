@@ -18,6 +18,7 @@ import PartidosDashboard from "./pages/partido/PartidosDashboard";
 import Ranking from "./pages/Ranking";
 import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
 import ManualUso from "./pages/ManualUso";
+import Bus from "./pages/Bus";
 import { registerPushToken, deregisterPushToken, listenForegroundNotifications } from "./services/pushNotifications";
 
 // Guard de rutas para admin
@@ -295,6 +296,7 @@ function App() {
             <Route path="/plantilla" element={<Plantilla user={user} currentTeam={currentTeam} />} />
             <Route path="/partidos" element={<PartidosDashboard user={user} currentTeam={currentTeam} />} />
             <Route path="/ranking" element={<Ranking user={user} currentTeam={currentTeam} />} />
+            <Route path="/bus" element={<Bus />} />
             <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
             <Route path="/manual-uso" element={<ManualUso />} />
             <Route path="/mi-perfil" element={<MiPerfil user={user} currentTeam={currentTeam} onTeamChange={handleTeamChange} onUserUpdate={(u) => setUser(u)} />} />

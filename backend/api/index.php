@@ -8,12 +8,14 @@ require_once "../models/Equipo.php";
 require_once "EquiposController.php";
 require_once "PartidosController.php";
 require_once "NotificacionesController.php";
+require_once "BusController.php";
 
 $solicitudesController = new SolicitudesController(); 
 $controller = new JugadoresController();
 $equiposController = new EquiposController(); 
 $partidosController = new PartidosController();
 $notificacionesController = new NotificacionesController();
+$busController = new BusController();
 
 $action = $_GET["action"] ?? "";
 
@@ -197,6 +199,17 @@ switch ($action) {
         break;
     case "partidos_ranking_equipo":
         $partidosController->rankingEquipo();
+        break;
+
+    // --- BUS ---
+    case "bus_lineas":
+        $busController->lineas();
+        break;
+    case "bus_paradas":
+        $busController->paradas();
+        break;
+    case "bus_horarios":
+        $busController->horarios();
         break;
 
     // --- NOTIFICACIONES / FCM ---

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Inicio.css";
 import { buildCalendarPayload, downloadIcsFile } from "../utils/calendar";
 
@@ -47,6 +48,7 @@ export default function Inicio({ user, team: currentTeam }) {
   const [nextMatch, setNextMatch] = useState(null);
   const [myStats, setMyStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user || !currentTeam?.id) return;
@@ -79,15 +81,6 @@ export default function Inicio({ user, team: currentTeam }) {
     [nextMatch, currentTeam]
   );
 
-  const busLink = useMemo(() => {
-    if (!nextMatch) return null;
-    if (nextMatch.lugar_enlace_maps) return nextMatch.lugar_enlace_maps;
-    if (nextMatch.lugar_nombre) {
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nextMatch.lugar_nombre)}`;
-    }
-    return null;
-  }, [nextMatch]);
-
   if (!currentTeam) return <div className="empty-msg">Sin equipo seleccionado</div>;
 
   const handleGoogleCalendar = () => {
@@ -101,8 +94,7 @@ export default function Inicio({ user, team: currentTeam }) {
   };
 
   const handleBusDirections = () => {
-    if (!busLink) return;
-    window.open(busLink, "_blank", "noopener,noreferrer");
+    navigate("/bus");
   };
 
   const userInitials = (user.apodo || user.nombre).substring(0, 2).toUpperCase();
@@ -172,7 +164,7 @@ export default function Inicio({ user, team: currentTeam }) {
               >
                 <Icons.Share /> Descargar .ics
               </button>
-              <button type="button" className="btn-bus" onClick={handleBusDirections} disabled={!busLink}>
+              <button type="button" className="btn-bus" onClick={handleBusDirections}>
                 <Icons.Bus /> Ir en bus
               </button>
             </div>
