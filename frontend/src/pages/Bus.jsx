@@ -101,6 +101,11 @@ function Bus() {
   const [scheduleError, setScheduleError] = useState("");
   const [scheduleResult, setScheduleResult] = useState(null);
 
+  const [manualCoords, setManualCoords] = useState({ lat: "", lng: "" });
+  const [originStopId, setOriginStopId] = useState("");
+  const [manualNearest, setManualNearest] = useState(null);
+  const [manualError, setManualError] = useState("");
+
   useEffect(() => {
     let aborted = false;
     setLinesLoading(true);
@@ -222,6 +227,41 @@ function Bus() {
     return list;
   }, [lines]);
 
+  const uniqueStopOptions = useMemo(() => {
+    const registry = new Map();
+    allStops.forEach((stop) => {
+      if (!registry.has(stop.id)) {
+        registry.set(stop.id, {
+          id: stop.id,
+          name: stop.name,
+          lineName: stop.lineName,
+        });
+      }
+    });
+    return Array.from(registry.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allStops]);
+
+  const linesByStop = useMemo(() => {
+    const map = new Map();
+    lines.forEach((line) => {
+      (line.stops || []).forEach((stop) => {
+        if (!map.has(stop.id)) {
+          map.set(stop.id, new Set());
+        }
+        map.get(stop.id).add(line.name);
+      });
+    });
+    return map;
+  }, [lines]);
+
+  const getLineNamesForStop = (stopId) => Array.from(linesByStop.get(stopId) ?? []);
+
+  useEffect(() => {
+    if (!originStopId && uniqueStopOptions.length > 0) {
+      setOriginStopId(uniqueStopOptions[0].id);
+    }
+  }, [originStopId, uniqueStopOptions]);
+
   const handleLocate = () => {
     if (linesLoading) {
       setGeoStatus({ state: "error", message: "Espera a que carguemos las lineas" });
@@ -263,6 +303,83 @@ function Bus() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  const handleManualSubmit = (event) => {
+    event.preventDefault();
+    if (allStops.length === 0) {
+      setManualError("No hay paradas registradas");
+      setManualNearest(null);
+      return;
+    }
+
+    const lat = Number(String(manualCoords.lat).replace(",", "."));
+    const lng = Number(String(manualCoords.lng).replace(",", "."));
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      setManualError("Introduce coordenadas válidas (latitud y longitud)");
+      setManualNearest(null);
+      return;
+    }
+
+    const basePoint = { lat, lng };
+    const stopsWithDistance = allStops
+      .map((stop) => ({
+        ...stop,
+        distance: kmDistance(basePoint, { lat: stop.lat, lng: stop.lng }),
+      }))
+      .sort((a, b) => a.distance - b.distance);
+
+    if (stopsWithDistance.length === 0) {
+      setManualError("No hay paradas disponibles");
+      setManualNearest(null);
+      return;
+    }
+
+    const topStops = stopsWithDistance.slice(0, 3);
+    const destinationStop = topStops[0];
+
+    let sharedLines = [];
+    let originStopInfo = null;
+    if (originStopId) {
+      const selectedOrigin = allStops.find((stop) => stop.id === originStopId) || null;
+      if (selectedOrigin) {
+        originStopInfo = {
+          ...selectedOrigin,
+          distance: kmDistance(basePoint, { lat: selectedOrigin.lat, lng: selectedOrigin.lng }),
+        };
+      }
+      if (originStopInfo && destinationStop) {
+        sharedLines = lines
+          .filter((line) => {
+            const hasOrigin = line.stops?.some((stop) => stop.id === originStopId);
+            const hasDestination = line.stops?.some((stop) => stop.id === destinationStop.id);
+            return hasOrigin && hasDestination;
+          })
+          .map((line) => {
+            const originIndex = line.stops.findIndex((stop) => stop.id === originStopId);
+            const destinationIndex = line.stops.findIndex((stop) => stop.id === destinationStop.id);
+            const forward = originIndex <= destinationIndex;
+            return {
+              lineId: line.id,
+              lineName: line.name,
+              direction: forward
+                ? `${line.stops[originIndex]?.name} → ${line.stops[destinationIndex]?.name}`
+                : `${line.stops[destinationIndex]?.name} ← ${line.stops[originIndex]?.name}`,
+              stopsBetween: Math.abs(destinationIndex - originIndex),
+            };
+          })
+          .sort((a, b) => a.stopsBetween - b.stopsBetween);
+      }
+    }
+
+    setManualNearest({
+      coordinates: basePoint,
+      topStops,
+      destinationStop,
+      originStop: originStopInfo,
+      sharedLines,
+    });
+    setManualError("");
   };
 
   const handleDateChange = (value) => {
@@ -497,6 +614,109 @@ function Bus() {
               Llegada a destino <strong>{scheduleResult.destination}</strong> a las {formatTime(scheduleResult.endEta)}
             </p>
             <p>Duracion estimada: {scheduleResult.totalMinutes.toFixed(1)} min</p>
+          </div>
+        )}
+      </section>
+
+      <section className="bus-section">
+        <div className="section-header">
+          <span className="section-number">03</span>
+          <div>
+            <h2>Calcular parada por coordenadas</h2>
+            <p>Introduce latitud y longitud manualmente (ej: 37.1879, -5.7855) para ver la parada y línea más cercanas.</p>
+          </div>
+        </div>
+
+        <form className="coordinate-form" onSubmit={handleManualSubmit}>
+          <label>
+            Latitud
+            <input
+              type="text"
+              placeholder="37.187915"
+              value={manualCoords.lat}
+              onChange={(event) => setManualCoords((prev) => ({ ...prev, lat: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            Longitud
+            <input
+              type="text"
+              placeholder="-5.785558"
+              value={manualCoords.lng}
+              onChange={(event) => setManualCoords((prev) => ({ ...prev, lng: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            Tu ubicación (parada de origen)
+            <select value={originStopId} onChange={(event) => setOriginStopId(event.target.value)}>
+              {uniqueStopOptions.map((stop) => (
+                <option key={stop.id} value={stop.id}>
+                  {stop.name} · {stop.lineName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="primary-btn coordinate-submit">
+            Analizar coordenadas
+          </button>
+        </form>
+
+        {manualError && <p className="error-text">{manualError}</p>}
+
+        {manualNearest && (
+          <div className="coordinate-results">
+            <div className="coordinate-column">
+              <article className="result-card">
+                <h3>Parada más cercana a tu destino</h3>
+                <p className="result-name">{manualNearest.destinationStop?.name}</p>
+                <p className="muted-text">
+                  {manualNearest.destinationStop?.distance?.toFixed(2)} km · Líneas
+                  {" "}
+                  {getLineNamesForStop(manualNearest.destinationStop?.id).join(", ") ||
+                    manualNearest.destinationStop?.lineName}
+                </p>
+              </article>
+
+              <div className="top-stops-list">
+                {manualNearest.topStops.map((stop) => (
+                  <div key={`${stop.lineId}-${stop.id}`} className="top-stop-item">
+                    <strong>{stop.name}</strong>
+                    <span>{stop.distance.toFixed(2)} km</span>
+                    <small>{getLineNamesForStop(stop.id).join(", ") || stop.lineName}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {manualNearest.originStop && (
+              <div className="coordinate-column">
+                <article className="result-card destination-card">
+                  <h3>Desde tu ubicación</h3>
+                  <p>
+                    Partida en <strong>{manualNearest.originStop.name}</strong>
+                    {manualNearest.originStop.distance
+                      ? ` · ${manualNearest.originStop.distance.toFixed(2)} km`
+                      : ""}
+                  </p>
+                  {manualNearest.sharedLines.length > 0 ? (
+                    <ul className="shared-lines-list">
+                      {manualNearest.sharedLines.map((line) => (
+                        <li key={line.lineId}>
+                          <strong>{line.lineName}</strong> · {line.direction}
+                          <small>{line.stopsBetween} paradas</small>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="muted-text">
+                      Ninguna línea va directa desde tu ubicación hasta la parada más cercana al destino.
+                    </p>
+                  )}
+                </article>
+              </div>
+            )}
           </div>
         )}
       </section>

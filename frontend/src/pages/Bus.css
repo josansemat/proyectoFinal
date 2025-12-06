@@ -152,6 +152,34 @@
 	align-self: end;
 }
 
+.coordinate-form {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 1rem;
+}
+
+.coordinate-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	font-size: 0.95rem;
+	font-weight: 500;
+	color: #1f2937;
+}
+
+.coordinate-form input,
+.coordinate-form select {
+	border-radius: 14px;
+	border: 1px solid rgba(15, 23, 42, 0.2);
+	padding: 0.65rem 0.85rem;
+	font-size: 1rem;
+	background: #fff;
+}
+
+.coordinate-submit {
+	align-self: end;
+}
+
 .schedule-summary {
 	border-radius: 18px;
 	background: #0f172a;
@@ -159,6 +187,90 @@
 	padding: 1.25rem;
 	display: grid;
 	gap: 0.4rem;
+}
+
+
+.coordinate-results {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.coordinate-column {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.result-card {
+	border-radius: 18px;
+	background: #0f172a;
+	color: #f8fafc;
+	padding: 1.25rem;
+}
+
+.result-card h3 {
+	margin: 0 0 0.35rem;
+}
+
+.result-name {
+	font-size: 1.4rem;
+	font-weight: 700;
+}
+
+.top-stops-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.top-stop-item {
+	border-radius: 16px;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	background: #f8fafc;
+	padding: 0.85rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.top-stop-item strong {
+	color: #0f172a;
+}
+
+.top-stop-item span {
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.top-stop-item small {
+	color: #475569;
+}
+
+.destination-card {
+	background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
+.shared-lines-list {
+	list-style: none;
+	padding: 0;
+	margin: 0.75rem 0 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.shared-lines-list li {
+	background: rgba(15, 23, 42, 0.45);
+	border-radius: 12px;
+	padding: 0.6rem 0.8rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.shared-lines-list li small {
+	color: rgba(248, 250, 252, 0.75);
 }
 
 .schedule-summary strong {
@@ -240,5 +352,40 @@
 
 	.schedule-form button {
 		width: 100%;
+	}
+
+	/* .coordinate-form {
+		grid-template-columns: 1fr;
+	} */
+
+	.coordinate-form button {
+		width: 100%;
+	}
+
+}
+
+@media (min-width: 960px) {
+	.coordinate-form {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		max-width: none;
+		margin: 0;
+	}
+
+	.coordinate-submit {
+		width: auto;
+		align-self: end;
+		padding: 0.8rem 1.6rem;
+	}
+
+	.coordinate-results {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		align-items: start;
+	}
+
+	.top-stops-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 	}
 }
