@@ -7,6 +7,23 @@ import React from 'react';
 const SvgSprite = () => (
   <svg style={{ display: 'none' }}>
     <defs>
+      {/* --- Inicio (Casa) --- */}
+      <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 11L12 3l9 8" />
+        <path d="M5 10v10h14V10" />
+        <path d="M9 21V13h6v8" />
+      </symbol>
+
+      {/* --- Bus --- */}
+      <symbol id="icon-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="13" rx="2" />
+        <path d="M3 11h18" />
+        <circle cx="8" cy="17" r="1.25" />
+        <circle cx="16" cy="17" r="1.25" />
+        <path d="M7 7h3" />
+        <path d="M14 7h3" />
+      </symbol>
+
       {/* --- Plantilla (Campo) --- */}
       <symbol id="icon-pitch" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="12" y1="4" x2="12" y2="20" /><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" transform="translate(0 3)" scale="0.5"/><circle cx="12" cy="12" r="2" /><path d="M2 12h3" /><path d="M22 12h-3" /></symbol>
 

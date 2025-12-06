@@ -5,9 +5,11 @@ import "./Sidebar.css";
 import SvgSprite from "./SvgSprite";
 
 const NAV_ITEMS = [
+  { path: "/", icon: "#icon-home", label: "Inicio" },
   { path: "/plantilla", icon: "#icon-pitch", label: "Plantilla" },
   { path: "/partidos", icon: "#icon-goal", label: "Partidos" },
   { path: "/ranking", icon: "#icon-trophy", label: "Ranking" },
+  { path: "/bus", icon: "#icon-bus", label: "Bus" },
 ];
 
 const Sidebar = ({

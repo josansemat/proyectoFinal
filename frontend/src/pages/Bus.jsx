@@ -501,7 +501,7 @@ function Bus() {
         )}
       </section>
 
-      <section className="bus-section">
+      {/* <section className="bus-section">
         <div className="section-header">
           <span className="section-number">03</span>
           <div>
@@ -510,7 +510,7 @@ function Bus() {
           </div>
         </div>
         <div className="map-placeholder">Imagen</div>
-      </section>
+      </section> */}
     </div>
   );
 }

@@ -164,9 +164,7 @@ export default function Inicio({ user, team: currentTeam }) {
               >
                 <Icons.Share /> Descargar .ics
               </button>
-              <button type="button" className="btn-bus" onClick={handleBusDirections}>
-                <Icons.Bus /> Ir en bus
-              </button>
+              
             </div>
           </div>
         ) : (
@@ -194,7 +192,7 @@ export default function Inicio({ user, team: currentTeam }) {
           <span className="stat-lbl">RANKING</span>
         </div>
       </section>
-      
+
     </div>
   );
 }
