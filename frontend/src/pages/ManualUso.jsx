@@ -1,4 +1,4 @@
-import "./ManualUso.css";
+import "../css/pages/ManualUso.css";
 
 const steps = [
   {

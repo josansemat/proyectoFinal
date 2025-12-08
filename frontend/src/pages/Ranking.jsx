@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import "./Ranking.css";
+import "../css/pages/Ranking.css";
 
 const formatDecimal = (value, digits = 1) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {

@@ -15,11 +15,11 @@
 
 /* Layout General */
 .compact-layout {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   /* background: var(--inicio-bg); */
   padding: 1rem 1.25rem;
-  max-width: 740px; /* Limita ancho en desktop para que parezca móvil */
-  margin: 0 auto;
+  /* max-width: 740px; Limita ancho en desktop para que parezca móvil */
+  /* margin: 0 auto; */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--inicio-text-strong);
   display: flex;

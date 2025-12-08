@@ -1,0 +1,37 @@
+.create-jugador-page .card {
+  max-width: 640px;
+  margin: 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+}
+
+.create-jugador-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.create-jugador-form label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.create-jugador-form .form-control,
+.create-jugador-form .form-select {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 0.65rem 0.85rem;
+}
+
+.create-jugador-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 575.98px) {
+  .create-jugador-actions {
+    flex-direction: column;
+  }
+}

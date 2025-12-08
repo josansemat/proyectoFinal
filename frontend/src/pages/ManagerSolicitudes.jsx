@@ -1,6 +1,6 @@
 // src/pages/ManagerSolicitudes.jsx
 import React, { useState, useEffect } from "react";
-import "./ManagerSolicitudes.css";
+import "../css/pages/ManagerSolicitudes.css";
 
 const ManagerSolicitudes = ({ user, currentTeam }) => {
   const [solicitudes, setSolicitudes] = useState([]);

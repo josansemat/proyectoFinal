@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "./Plantilla.css";
+import "../css/pages/Plantilla.css";
 
 const FORMATIONS = {
   "11": [
@@ -304,7 +304,7 @@ function Plantilla({ user, currentTeam }) {
   };
 
   return (
-    <div className="container-fluid plantilla-page">
+    <div className="container-fluid page-shell plantilla-page">
       <div className="row g-3">
         <div className="col-12">
           <div className="card shadow-sm">

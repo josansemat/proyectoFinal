@@ -1,4 +1,4 @@
-import "./PoliticaPrivacidad.css";
+import "../css/pages/PoliticaPrivacidad.css";
 
 const todayLabel = "5 de diciembre de 2025";
 

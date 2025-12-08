@@ -1,6 +1,6 @@
 // src/pages/EditarClub.jsx
 import React, { useState, useEffect } from 'react';
-import './EditarClub.css';
+import '../css/pages/EditarClub.css';
 
 const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
   // Estado para los datos del equipo

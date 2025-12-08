@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "./PartidoLineup.css";
+import "../../css/pages/PartidoLineup.css";
 
 const FORMATIONS = {
   "11": [

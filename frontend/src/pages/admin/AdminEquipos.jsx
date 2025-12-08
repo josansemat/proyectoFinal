@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import "./AdminEquipos.css";
+import "../../css/pages/AdminEquipos.css";
 
 function Badge({ active }) {
   // Aseguramos que active sea booleano, a veces la BD devuelve 1/0

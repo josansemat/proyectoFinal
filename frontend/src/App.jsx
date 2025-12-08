@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import "./css/layout/app-layout.css";
+import "./css/layout/ui-elements.css";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -70,11 +72,14 @@ function App() {
     const colorHex = currentTeam?.color_principal || defaultColor;
     const colorRgb = hexToRgb(colorHex);
     const isLight = isBackgroundLight(colorHex);
+    const contrastHex = isLight ? '#212529' : '#ffffff';
+    const contrastRgb = hexToRgb(contrastHex);
     setIsBgLight(isLight); 
 
     root.style.setProperty('--primary-color', colorHex);
     root.style.setProperty('--primary-rgb', colorRgb);
-    root.style.setProperty('--contrast-text-color', isLight ? '#212529' : '#ffffff');
+    root.style.setProperty('--contrast-text-color', contrastHex);
+    root.style.setProperty('--contrast-text-color-rgb', contrastRgb);
     root.style.setProperty('--bg-light', isLight ? '#ffffff' : '#343a40');
   }, [currentTeam]);
 

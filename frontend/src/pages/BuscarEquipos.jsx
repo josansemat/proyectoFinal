@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./BuscarEquipos.css";
+import "../css/pages/BuscarEquipos.css";
 
 // Iconos SVG simples para no depender de librerías externas
 const SearchIcon = () => (

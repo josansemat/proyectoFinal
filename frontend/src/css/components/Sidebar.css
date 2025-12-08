@@ -1,28 +1,19 @@
 /* =========================================
-   VARIABLES (ya definidas por ti)
-========================================= */
-:root {
-  --sidebar-bg: var(--primary-color);
-  --sidebar-text: var(--contrast-text-color);
-  --sidebar-text-muted: rgba(var(--contrast-text-color-rgb), 0.6);
-  --sidebar-item-bg-hover: rgba(var(--contrast-text-color-rgb), 0.1);
-  --sidebar-border-color: rgba(var(--contrast-text-color-rgb), 0.1);
-}
-
-/* =========================================
    LAYOUT / ESTRUCTURA
 ========================================= */
 
 .sidebar {
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
-  width: 260px;
+  width: 100%;
+  max-width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
   height: 100vh;
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   z-index: 3;
-  border-right: 2px solid #e5e7eb;
+  border-right: 1px solid var(--sidebar-border-color);
   transition: transform 0.3s ease;
 }
 
@@ -32,27 +23,20 @@
   color: var(--contrast-text-color);
 }
 
-.sidebar.open {
-  transform: translateX(0);
-}
+@media (max-width: 991.98px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(320px, 85vw);
+    max-width: min(320px, 85vw);
+    min-width: min(320px, 85vw);
+    transform: translateX(-100%);
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+  }
 
-.sidebar.closed {
-  transform: translateX(-100%);
-}
-
-.sidebar-desktop-spacer {
-  width: 260px;
-}
-
-/* Fondo oscuro móvil */
-.sidebar-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.5);
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
 }
 
 /* Botón móvil */
@@ -283,8 +267,8 @@
 }
 
 .btn-logout-sidebar:hover {
-  background: var(--danger-soft-bg);
-  color: var(--danger-hover-color);
+  background: rgba(220, 53, 69, 0.15);
+  color: var(--danger-color);
 }
 
 .btn-logout-sidebar:hover .sidebar-nav-icon {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import './Register.css';
+import '../css/pages/Register.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 

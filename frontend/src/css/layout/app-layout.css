@@ -1,0 +1,49 @@
+.app-container {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  background-color: transparent;
+}
+
+.app-main-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: clamp(1rem, 2vw, 2.5rem);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow-x: hidden;
+}
+
+.page-shell {
+  width: 100%;
+  padding: 16px;
+  margin: 0 auto;
+}
+
+@media (max-width: 575.98px) {
+  .page-shell {
+    padding: 12px;
+  }
+}
+
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 0;
+}
+
+@media (max-width: 991.98px) {
+  .app-container {
+    display: block;
+  }
+
+  .app-main-content {
+    padding-top: 4.5rem;
+  }
+}

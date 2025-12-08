@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Inicio.css";
+import "../css/pages/Inicio.css";
 import { buildCalendarPayload, downloadIcsFile } from "../utils/calendar";
 
 // Iconos inline simplificados para no depender de externos

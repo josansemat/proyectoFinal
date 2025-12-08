@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Sidebar.css";
+import "../css/components/Sidebar.css";
 import SvgSprite from "./SvgSprite";
 
 const NAV_ITEMS = [
@@ -91,7 +91,14 @@ const Sidebar = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
+  const sidebarClassName = [
+    "sidebar",
+    "d-flex",
+    "flex-column",
+    isOpen ? "is-open" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <>
@@ -100,8 +107,11 @@ const Sidebar = ({
       {/* Botón móvil */}
       <button
         type="button"
-        className="btn btn-movil position-fixed top-0 start-0 m-3 d-md-none z-3"
+        className="btn btn-movil position-fixed top-0 start-0 m-3 d-lg-none z-3"
         onClick={toggleSidebar}
+        aria-controls="app-sidebar"
+        aria-expanded={isOpen}
+        aria-label="Alternar navegación"
       >
         {isOpen ? "✕" : "☰"}
       </button>
@@ -109,26 +119,14 @@ const Sidebar = ({
       {/* Fondo opaco móvil */}
       {isOpen && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-md-none"
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-lg-none"
           style={{ zIndex: 2 }}
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
-      <aside
-        className="sidebar d-flex flex-column"
-        style={{
-          width: "260px",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          height: "100vh",
-          zIndex: 3,
-          transform:
-            isDesktop || isOpen ? "translateX(0)" : "translateX(-100%)",
-        }}
-      >
+      <aside id="app-sidebar" className={sidebarClassName}>
         {/* —— Selector de Equipo —— */}
         <div
           className="team-selector-container border-bottom position-relative"
@@ -411,8 +409,6 @@ const Sidebar = ({
         </div>
       </aside>
 
-      {/* Placeholder en desktop */}
-      <div className="d-none d-md-block" style={{ width: "260px" }} />
     </>
   );
 };

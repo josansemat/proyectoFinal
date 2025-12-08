@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import "./PartidosDashboard.css";
+import "../../css/pages/PartidosDashboard.css";
 import PartidoLineup from "./PartidoLineup";
 
 // Icono de Cerrar (X)

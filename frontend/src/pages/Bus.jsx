@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "./Bus.css";
+import "../css/pages/Bus.css";
 
 const MINUTES_PER_STOP = 1.5;
 const DAY_TYPES = [

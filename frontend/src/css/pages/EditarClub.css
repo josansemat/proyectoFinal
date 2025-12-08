@@ -2,7 +2,7 @@
 
 /* Wrapper principal para darle un ancho máximo en pantallas muy grandes */
 .editar-club-wrapper {
-    max-width: 1100px;
+    /* max-width: 1100px; */
     /* Asegura que el formulario quede por encima de la ilustración de fondo */
     position: relative;
     /* z-index: 10; */

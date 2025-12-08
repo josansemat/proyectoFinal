@@ -23,14 +23,14 @@
   nd: var(--match-bg); */
   min-height: 100vh;
   color: var(--match-text);
-  width: 100vw;
+  /* width: 100vw; */
   box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
   .partidos-dashboard {
-    padding-left: 220px; /* ancho típico del sidebar */
-    width: calc(100vw - 100px);
+    /* padding-left: 220px; ancho típico del sidebar */
+    /* width: calc(100vw - 100px); */
   }
 }
 

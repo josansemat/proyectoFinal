@@ -1,5 +1,5 @@
 import { useState } from "react";
-import './Register.css';
+import '../css/pages/Register.css';
 
 export default function ResetPassword({ token, switchToLogin }) {
     const [form, setForm] = useState({

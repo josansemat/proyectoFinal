@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import "./AdminJugadores.css";
+import "../../css/pages/AdminJugadores.css";
 
 // Componente para los badges de estado y rol
 function Badge({ type, children }) {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import './Register.css'; // Asegúrate de que este archivo CSS existe
+import '../css/pages/Register.css'; // Asegúrate de que este archivo CSS existe
 
 export default function Register({ switchToLogin }) {
     // 1. Añadido el campo 'apodo' al estado inicial
