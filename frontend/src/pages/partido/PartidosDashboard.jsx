@@ -1171,20 +1171,6 @@ function PartidosDashboard({ user, currentTeam }) {
                   </select>
                 </div>
                 <div className="match-field">
-                  <label htmlFor="metodo_generacion">Método generación equipos</label>
-                  <select
-                    id="metodo_generacion"
-                    name="metodo_generacion"
-                    className="match-input"
-                    value={formValues.metodo_generacion}
-                    onChange={handleChange}
-                  >
-                    <option value="manual">Manual</option>
-                    <option value="aleatorio">Aleatorio</option>
-                    <option value="equilibrado">Equilibrado</option>
-                  </select>
-                </div>
-                <div className="match-field">
                   <label htmlFor="lugar_enlace_maps">Enlace Maps</label>
                   <input
                     id="lugar_enlace_maps"
@@ -1286,16 +1272,6 @@ function PartidosDashboard({ user, currentTeam }) {
                   />
                 </div>
                 <div className="match-field match-field--cluster">
-                  <label className="match-checkbox" htmlFor="equipos_generados">
-                    <input
-                      id="equipos_generados"
-                      type="checkbox"
-                      name="equipos_generados"
-                      checked={formValues.equipos_generados}
-                      onChange={handleChange}
-                    />
-                    <span>Equipos generados</span>
-                  </label>
                   <label className="match-checkbox" htmlFor="votacion_habilitada">
                     <input
                       id="votacion_habilitada"
@@ -1614,7 +1590,6 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
         <div className="d-flex flex-wrap gap-2 mb-2">
           <span className="badge text-bg-light text-dark">{partido.tipo_partido}</span>
           <span className="badge text-bg-light text-dark">{partido.modalidad_juego?.toUpperCase()}</span>
-          <span className="badge text-bg-light text-dark">{partido.metodo_generacion}</span>
         </div>
         <div className="d-flex justify-content-between align-items-center">
           <div>
