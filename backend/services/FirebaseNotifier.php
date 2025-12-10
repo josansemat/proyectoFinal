@@ -228,7 +228,7 @@ class FirebaseNotifier
 
         $signature = '';
         $ok = openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-        openssl_free_key($privateKey);
+        $privateKey = null; // release reference for PHP 8.4+ where explicit free is deprecated
         if (!$ok) {
             throw new RuntimeException('No se pudo firmar el JWT de Firebase');
         }

@@ -15,23 +15,6 @@
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-* { box-sizing: border-box; }
-
-/* Bloqueo total del scroll lateral en la app */
-html, body {
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden; /* Corta lo que sobresalga */
-  position: relative;
-  margin: 0;
-  padding: 0;
-}
-
-/* Aseguramos que todas las cajas respeten los bordes */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
 .perfil-page {
   min-height: 100vh;
   padding: 1.5rem;
@@ -186,6 +169,7 @@ html, body {
 }
 
 .settings-tabs {
+  width: 100%;
   display: flex;
   background: rgba(0,0,0,0.2);
   border-bottom: 1px solid var(--border);

@@ -20,10 +20,18 @@ const Icons = {
     </svg>
   ),
   Whistle: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M2.5 17a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 1 0 5Z" />
-      <path d="M5 14.5a2.5 2.5 0 0 1 3.5-2.26L19 18l1.5-3.5-1.5-3.5L8.5 16.74A2.5 2.5 0 0 1 5 14.5Z" />
-    </svg>
+   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <circle cx="16" cy="16" r="14"/>
+  
+  <path d="M16 8l-5 4v6l5 4 5-4v-6z"/>
+  
+  <path d="M16 8V3"/>
+  <path d="M11 12l-4.5-2.5"/>
+  <path d="M11 18l-4.5 2.5"/>
+  <path d="M16 22v5"/>
+  <path d="M21 18l4.5 2.5"/>
+  <path d="M21 12l4.5-2.5"/>
+</svg>
   ),
   Share: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
