@@ -61,6 +61,7 @@
   /* Gradiente sutil usando el color de texto y una versión transparente */
   background: linear-gradient(to right, var(--rk-text-main), var(--rk-text-muted));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

@@ -208,12 +208,12 @@ export default function AdminJugadores({ user, currentTeam }) {
             onChange={onSearchChange}
           />
           <div className="usr-toolbar-right">
-            <select className="usr-select" value={rol} onChange={onRolChange}>
+            <select className="usr-select" value={rol} onChange={onRolChange} aria-label="Filtrar jugadores por rol">
               <option value="">Todos los Roles</option>
               <option value="admin">Admin</option>
               <option value="usuario">Usuario</option>
             </select>
-            <select className="usr-select" value={estado} onChange={onEstadoChange}>
+            <select className="usr-select" value={estado} onChange={onEstadoChange} aria-label="Filtrar jugadores por estado">
               <option value="">Todos los Estados</option>
               <option value="activo">Activo</option>
               <option value="inactivo">Inactivo</option>

@@ -2,6 +2,16 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+require_once __DIR__ . "/cors.php";
+
+header("Content-Type: application/json; charset=utf-8");
+header("Cache-Control: public, max-age=60, immutable");
+header("X-Content-Type-Options: nosniff");
+header("Content-Security-Policy: frame-ancestors 'self'");
+header_remove("Expires");
+header_remove("Pragma");
+header_remove("X-XSS-Protection");
+
 require_once "JugadoresController.php";
 require_once "SolicitudesController.php"; 
 require_once "../models/Equipo.php";

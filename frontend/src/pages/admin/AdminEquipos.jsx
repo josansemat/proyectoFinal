@@ -90,6 +90,12 @@ export default function AdminEquipos() {
   // --- PAGINACIÓN Y ESTADO ---
   const nextPage = () => setPage(p => Math.min(p + 1, totalPages));
   const prevPage = () => setPage(p => Math.max(p - 1, 1));
+  const isMobileView = () => typeof window !== "undefined" && window.innerWidth < 768;
+
+  const toggleRowExpansion = (id) => {
+    if (!isMobileView()) return;
+    setExpandedId(prev => (prev === id ? null : id));
+  };
 
   const handleToggleActivo = async (eq) => {
     try {
@@ -241,6 +247,7 @@ export default function AdminEquipos() {
             className="adm-select" 
             value={estado} 
             onChange={e=>{setPage(1);setEstado(e.target.value)}}
+            aria-label="Filtrar equipos por estado"
           >
             <option value="">Estado: Todos</option>
             <option value="activo">Activo</option>
@@ -277,17 +284,23 @@ export default function AdminEquipos() {
                       <td data-label="Equipo">
                         <div
                           className="adm-row-main"
-                          role="button"
-                          onClick={() => {
-                            if (window.innerWidth < 768) {
-                              setExpandedId(prev => prev === eq.id ? null : eq.id);
+                          role={isMobileView() ? "button" : undefined}
+                          tabIndex={isMobileView() ? 0 : undefined}
+                          aria-expanded={isMobileView() ? expandedId === eq.id : undefined}
+                          aria-controls={isMobileView() ? `equipo-${eq.id}-details` : undefined}
+                          onClick={() => toggleRowExpansion(eq.id)}
+                          onKeyDown={(event) => {
+                            if (!isMobileView()) return;
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              toggleRowExpansion(eq.id);
                             }
                           }}
                         >
                           <span className="adm-shield" style={{ backgroundColor: eq.color_principal }} />
                           <div style={{fontWeight:600}}>{eq.nombre}</div>
                           {/* Chevron solo visible en móvil por CSS del componente */}
-                          <span className="chevron" style={{display: window.innerWidth < 768 ? 'block' : 'none'}}>
+                          <span className="chevron" style={{display: isMobileView() ? 'block' : 'none'}}>
                             {expandedId === eq.id ? '▼' : '▶'}
                           </span>
                         </div>
@@ -304,13 +317,20 @@ export default function AdminEquipos() {
                       <td className="adm-hide-mobile"><Badge active={eq.activo} /></td>
                       <td className="adm-hide-mobile">
                         <div className="adm-actions">
-                          <button className="adm-icon-btn" title="Editar" onClick={()=>openEdit(eq)}>
+                          <button
+                            className="adm-icon-btn"
+                            title="Editar"
+                            aria-label={`Editar equipo ${eq.nombre}`}
+                            onClick={()=>openEdit(eq)}
+                          >
                             ✎
                           </button>
                           <button 
                               className={`adm-toggle ${eq.activo == 1 ? 'on':''}`} 
                               onClick={()=>handleToggleActivo(eq)} 
                               title={eq.activo == 1 ? "Desactivar" : "Activar"} 
+                              aria-label={eq.activo == 1 ? `Desactivar al equipo ${eq.nombre}` : `Activar al equipo ${eq.nombre}`}
+                              aria-pressed={eq.activo == 1}
                           />
                         </div>
                       </td>
@@ -318,7 +338,7 @@ export default function AdminEquipos() {
                     
                     {/* Vista Expandida Móvil */}
                     {expandedId === eq.id && (
-                      <tr className="adm-expanded-row">
+                      <tr className="adm-expanded-row" id={`equipo-${eq.id}-details`}>
                         <td colSpan={6}>
                           <div className="adm-expanded-inner">
                             <div className="adm-expanded-item">
@@ -365,9 +385,9 @@ export default function AdminEquipos() {
         {/* Paginación */}
         {totalPages > 1 && (
           <div className="adm-pagination">
-            <button className="adm-icon-btn" onClick={prevPage} disabled={page===1}>‹</button>
+            <button className="adm-icon-btn" onClick={prevPage} disabled={page===1} aria-label="Página anterior">‹</button>
             <span className="adm-page-info">Página {page} de {totalPages}</span>
-            <button className="adm-icon-btn" onClick={nextPage} disabled={page===totalPages}>›</button>
+            <button className="adm-icon-btn" onClick={nextPage} disabled={page===totalPages} aria-label="Página siguiente">›</button>
           </div>
         )}
 
@@ -377,7 +397,7 @@ export default function AdminEquipos() {
             <div className="adm-modal-card">
               <div className="adm-modal-header">
                 <h2>{modalTitle}</h2>
-                <button className="adm-icon-btn" onClick={closeModal}>✕</button>
+                <button className="adm-icon-btn" onClick={closeModal} aria-label="Cerrar modal">✕</button>
               </div>
               
               <form className="adm-modal-body" onSubmit={handleSubmit}>

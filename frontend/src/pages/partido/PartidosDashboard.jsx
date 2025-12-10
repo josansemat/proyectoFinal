@@ -1338,8 +1338,15 @@ function PartidosDashboard({ user, currentTeam }) {
                 className="match-input"
                 value={filters.search}
                 onChange={handleFilterChange}
+                aria-label="Buscar partidos por lugar o fecha"
               />
-              <select name="estado" className="match-input" value={filters.estado} onChange={handleFilterChange}>
+              <select
+                name="estado"
+                className="match-input"
+                value={filters.estado}
+                onChange={handleFilterChange}
+                aria-label="Filtrar partidos por estado"
+              >
                 {estados.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -1750,6 +1757,7 @@ function InscripcionesPanel({
               value={selected}
               onChange={(e) => setSelected(e.target.value)}
               disabled={loading || rosterLoading || !disponibles.length}
+              aria-label="Selecciona un jugador para inscribir"
             >
               <option value="">Selecciona jugador</option>
               {disponibles.map((p) => (

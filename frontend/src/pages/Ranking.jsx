@@ -260,7 +260,13 @@ function Ranking({ user, currentTeam }) {
             <span>Actualizado: {lastUpdatedLabel}</span>
           </div>
         </div>
-        <button className="btn-icon-refresh" onClick={fetchRanking} disabled={loading} title="Actualizar datos">
+        <button
+          className="btn-icon-refresh"
+          onClick={fetchRanking}
+          disabled={loading}
+          title="Actualizar datos"
+          aria-label="Actualizar ranking"
+        >
             {loading ? "..." : "⟳"}
         </button>
       </header>
