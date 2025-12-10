@@ -453,9 +453,9 @@
 }
 
 /* Utilities */
-.text-muted { color: var(--prf-text-muted); }
-.text-muted.small { font-size: 0.85rem; }
-.text-muted.tiny { font-size: 0.75rem; }
+.text-pp { color: var(--contrast-text-color); }
+.text-pp.small { font-size: 0.85rem; }
+.text-pp.tiny { font-size: 0.75rem; }
 .mb-3 { margin-bottom: 1rem; }
 .mt-2 { margin-top: 0.5rem; }
 .pp { color: var(--prf-text-muted); }

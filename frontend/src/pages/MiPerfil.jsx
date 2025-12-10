@@ -412,7 +412,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
 
                 <div className="danger-zone">
                   <h3 className="section-title text-danger">Zona de Peligro</h3>
-                  <p className="text-muted small mb-3">Gestiona tu salida de los equipos a los que perteneces.</p>
+                  <p className="text-pp small mb-3">Gestiona tu salida de los equipos a los que perteneces.</p>
                   
                   {abandonMsg.text && (
                     <div className={`alert-msg ${abandonMsg.type} mb-3`}>
@@ -421,7 +421,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                   )}
 
                   {loadingEquipos ? (
-                    <div className="text-muted small">Cargando equipos...</div>
+                    <div className="text-pp small">Cargando equipos...</div>
                   ) : misEquipos.length > 0 ? (
                     <div className="teams-list">
                       {misEquipos.map(eq => (
@@ -452,7 +452,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                       ))}
                     </div>
                   ) : (
-                    <div className="text-muted small italic">No perteneces a ningún equipo actualmente.</div>
+                    <div className="text-pp small italic">No perteneces a ningún equipo actualmente.</div>
                   )}
                 </div>
               </div>
@@ -464,7 +464,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                   <div className="notif-card__header">
                     <div>
                       <h3>Alertas push</h3>
-                      <p className="text-muted small">Activa las notificaciones para enterarte de nuevos partidos o avisos del manager.</p>
+                      <p className="text-pp small">Activa las notificaciones para enterarte de nuevos partidos o avisos del manager.</p>
                     </div>
                     <span className={`status-dot ${notificationsEnabled ? "on" : "off"}`}></span>
                   </div>
@@ -479,7 +479,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
 
                 <div className="notif-card">
                   <h3>Saludar al equipo</h3>
-                  <p className="text-muted small mb-3">Enviará una notificación instantánea a todos los miembros del equipo seleccionado.</p>
+                  <p className="text-pp small mb-3">Enviará una notificación instantánea a todos los miembros del equipo seleccionado.</p>
                   <button
                     className="btn-primary-custom"
                     onClick={sendGreeting}
@@ -488,7 +488,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                     {greetingLoading ? "Enviando..." : `Hola equipo me llamo ${user?.nombre || "Jugador"}`}
                   </button>
                   {!currentTeam?.id && (
-                    <p className="text-muted tiny mt-2">Necesitas tener un equipo seleccionado.</p>
+                    <p className="text-pp tiny mt-2">Necesitas tener un equipo seleccionado.</p>
                   )}
                 </div>
 
