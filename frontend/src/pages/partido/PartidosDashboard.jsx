@@ -1489,11 +1489,11 @@ function PartidosDashboard({ user, currentTeam }) {
                     )}
 
                     {activeTab === "formacion" && (
-                      <div className="tab-panel">
-                        <div className="match-detail__panel">
+                      <div className="tab-panel tab-panel--formacion">
+                        <div className="match-detail__panel match-detail__panel--lineup">
                           <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
                         </div>
-                        <div className="match-detail__panel">
+                        <div className="match-detail__panel match-detail__panel--events">
                           <EventosPanel
                             eventos={detalle.eventos}
                             jugadores={detalle.jugadores}

@@ -709,14 +709,19 @@
 
 @media (max-width: 640px) {
   .match-tabs {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(150px, 1fr);
+    display: flex;
+    gap: 0.5rem;
     overflow-x: auto;
     padding-bottom: 0.35rem;
+    scrollbar-width: none;
   }
 
   .match-tab {
     scroll-snap-align: start;
+  }
+
+  .match-tabs::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -740,19 +745,25 @@
 
 @media (max-width: 640px) {
   .match-tab {
-    min-height: 34px;
-    padding: 0.2rem 0.2rem;
-    font-size: 0.2rem;
-    gap: 0.15rem;
+    flex: 0 0 56px;
+    min-width: 56px;
+    min-height: 56px;
+    height: 56px;
+    width: 56px;
+    padding: 0;
+    font-size: 0.75rem;
+    gap: 0;
+    border-width: 1px;
+    justify-content: center;
   }
 
   .match-tab__icon {
-    width: 12px;
-    height: 12px;
+    width: 22px;
+    height: 22px;
   }
 
   .match-tab__label {
-    font-size: 0.78rem;
+    display: none;
   }
 }
 
@@ -792,7 +803,12 @@
   gap: 1rem;
 }
 
-@media (min-width: 1440px) {
+.tab-panel--formacion {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+/* @media (min-width: 1440px) {
   .tab-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -801,7 +817,7 @@
   .tab-panel > .match-detail__panel:nth-last-child(1):nth-child(odd) {
     grid-column: 1 / -1;
   }
-}
+} */
 
 
 @media (min-width: 1024px) {

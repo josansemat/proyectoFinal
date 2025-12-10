@@ -253,102 +253,109 @@ function PartidoLineup({ detalle, onSave, canEdit }) {
   };
 
   return (
-    <div className="match-lineup">
-      <div className="card shadow-sm">
-        <div className="card-body gap-3 d-flex flex-wrap align-items-end">
-          <div>
-            <label className="form-label mb-1">Modalidad</label>
-            <select className="form-select" value={mode} onChange={handleChangeMode} disabled={readOnly}>
+    <div className="lineup">
+      <section className="lineup__card">
+        <div className="lineup__controls">
+          <div className="lineup__control">
+            <label className="lineup__label" htmlFor="lineup-mode">Modalidad</label>
+            <select id="lineup-mode" className="lineup__input" value={mode} onChange={handleChangeMode} disabled={readOnly}>
               <option value="11">Fútbol 11</option>
               <option value="7">Fútbol 7</option>
               <option value="5">Fútbol Sala</option>
             </select>
           </div>
-          <div>
-            <label className="form-label mb-1">Formación</label>
-            <select className="form-select" value={formationByTeam[selectedTeam]} onChange={handleChangeFormation} disabled={readOnly}>
+          <div className="lineup__control">
+            <label className="lineup__label" htmlFor="lineup-formation">Formación</label>
+            <select id="lineup-formation" className="lineup__input" value={formationByTeam[selectedTeam]} onChange={handleChangeFormation} disabled={readOnly}>
               {FORMATIONS[mode].map((f) => (
                 <option key={f.value} value={f.value}>{f.value}</option>
               ))}
             </select>
           </div>
-          <div>
-            <label className="form-label mb-1">Equipo</label>
-            <div className="btn-group" role="group">
-              <input type="radio" className="btn-check" name="teamLineup" id="teamA" autoComplete="off" checked={selectedTeam === 'A'} onChange={() => !readOnly && setSelectedTeam('A')} disabled={readOnly} />
-              <label className="btn btn-outline-primary" htmlFor="teamA">Equipo A</label>
-              <input type="radio" className="btn-check" name="teamLineup" id="teamB" autoComplete="off" checked={selectedTeam === 'B'} onChange={() => !readOnly && setSelectedTeam('B')} disabled={readOnly} />
-              <label className="btn btn-outline-primary" htmlFor="teamB">Equipo B</label>
+          <div className="lineup__control">
+            <span className="lineup__label">Equipo</span>
+            <div className="lineup__toggle" role="group" aria-label="Equipos">
+              {['A', 'B'].map((team) => (
+                <button
+                  key={team}
+                  type="button"
+                  className={`lineup__toggle-btn ${selectedTeam === team ? 'is-active' : ''}`}
+                  onClick={() => !readOnly && setSelectedTeam(team)}
+                  disabled={readOnly}
+                >
+                  Equipo {team}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="ms-auto d-flex gap-2">
-            <button className="btn btn-outline-secondary" type="button" onClick={() => setAssignments((prev) => ({ ...prev, [selectedTeam]: {} }))} disabled={readOnly}>Vaciar</button>
-            <button className="btn btn-primary" type="button" onClick={handleSave} disabled={saving || readOnly}>{saving ? 'Guardando...' : 'Guardar formación'}</button>
+          <div className="lineup__actions">
+            <button className="lineup__button lineup__button--ghost" type="button" onClick={() => setAssignments((prev) => ({ ...prev, [selectedTeam]: {} }))} disabled={readOnly}>Vaciar</button>
+            <button className="lineup__button lineup__button--primary" type="button" onClick={handleSave} disabled={saving || readOnly}>{saving ? 'Guardando…' : 'Guardar formación'}</button>
           </div>
         </div>
         {statusMsg && (
-          <div className={`alert alert-${statusMsg.type === 'error' ? 'danger' : 'success'} mb-0`}>{statusMsg.text}</div>
+          <div className={`lineup__status lineup__status--${statusMsg.type === 'error' ? 'error' : 'success'}`}>{statusMsg.text}</div>
         )}
-      </div>
+      </section>
 
-      <div className="row g-3">
-        <div className="col-12 col-xl-7">
-          <div className="card shadow-sm h-100">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <div className="fw-semibold">Campo</div>
-              <small className="text-muted">Arrastra jugadores disponibles a los slots</small>
+      <div className="lineup__layout">
+        <section className="lineup__panel lineup__panel--field">
+          <header className="lineup__panel-head">
+            <div>
+              <p className="lineup__eyebrow">Campo</p>
+              <p className="lineup__title">Distribución táctica</p>
             </div>
-            <div className="card-body">
-              <Pitch
-                lines={lines}
-                slots={slots}
-                playersMap={playersMap}
-                onDropSlot={handleDropOnSlot}
-                onAllowDrop={allowDrop}
-                readOnly={readOnly}
-                mode={mode}
-              />
-            </div>
+            <p className="lineup__hint">Arrastra jugadores disponibles a los slots</p>
+          </header>
+          <div className="lineup__panel-body lineup__panel-body--field">
+            <Pitch
+              lines={lines}
+              slots={slots}
+              playersMap={playersMap}
+              onDropSlot={handleDropOnSlot}
+              onAllowDrop={allowDrop}
+              readOnly={readOnly}
+              mode={mode}
+            />
           </div>
-        </div>
-        <div className="col-12 col-xl-5">
-          <div className="card shadow-sm h-100">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <div className="fw-semibold">Disponibles</div>
-              <small className="text-muted">{benchPlayers.length} jugadores</small>
+        </section>
+        <section className="lineup__panel lineup__panel--bench">
+          <header className="lineup__panel-head">
+            <div>
+              <p className="lineup__eyebrow">Disponibles</p>
+              <p className="lineup__title">{benchPlayers.length} jugadores libres</p>
             </div>
-            <div className="card-body">
-              <div
-                className="bench-zone custom-scroll"
-                onDrop={handleDropOnBench}
-                onDragOver={allowDrop}
-              >
-                {benchPlayers.length === 0 ? (
-                  <div className="text-muted small">Sin jugadores libres</div>
-                ) : (
-                  benchPlayers.map((p) => (
-                    <div
-                      key={p.jugadorId}
-                      className="player-chip"
-                      draggable={!readOnly}
-                      onDragStart={(e) => {
-                        if (readOnly) return;
-                        e.dataTransfer.setData("text/plain", String(p.jugadorId));
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                    >
-                      <div>
-                        <div className="chip-name">{shortName(p)}</div>
-                        <div className="chip-meta">⭐ {ratingValue(p).toFixed(1)}</div>
-                      </div>
-                      {p.equipo && <span className="badge text-bg-light">{p.equipo}</span>}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            <p className="lineup__hint">Arrastra para liberar o asignar</p>
+          </header>
+          <div
+            className="lineup__bench"
+            onDrop={handleDropOnBench}
+            onDragOver={allowDrop}
+          >
+            {benchPlayers.length === 0 ? (
+              <div className="lineup__empty">Sin jugadores libres</div>
+            ) : (
+              benchPlayers.map((p) => (
+                <div
+                  key={p.jugadorId}
+                  className="lineup__player"
+                  draggable={!readOnly}
+                  onDragStart={(e) => {
+                    if (readOnly) return;
+                    e.dataTransfer.setData("text/plain", String(p.jugadorId));
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                >
+                  <div className="lineup__player-info">
+                    <span className="lineup__player-name">{shortName(p)}</span>
+                    <span className="lineup__player-meta">⭐ {ratingValue(p).toFixed(1)}</span>
+                  </div>
+                  {p.equipo && <span className="lineup__player-badge">{p.equipo}</span>}
+                </div>
+              ))
+            )}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
@@ -361,7 +368,7 @@ function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop, readOnly, mo
   const renderedRows = [];
 
   renderedRows.push(
-    <div key="row-gk" className="pitch-row">
+    <div key="row-gk" className="lineup__pitch-row" style={{ '--lineup-row-size': 1 }}>
       <Slot slot={slots[slotIndex++]} player={playersMap.GK} onDrop={onDropSlot} onAllowDrop={onAllowDrop} readOnly={readOnly} />
     </div>
   );
@@ -382,14 +389,18 @@ function Pitch({ lines, slots, playersMap, onDropSlot, onAllowDrop, readOnly, mo
       );
     }
     renderedRows.push(
-      <div key={`row-${idx + 1}`} className="pitch-row" style={{ gridTemplateColumns: `repeat(${count}, 1fr)` }}>
+      <div
+        key={`row-${idx + 1}`}
+        className="lineup__pitch-row"
+        style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`, '--lineup-row-size': count }}
+      >
         {rowSlots}
       </div>
     );
   });
 
   return (
-    <div className={`pitch pitch-${mode}`} style={{ gridTemplateRows: templateRows }}>
+    <div className={`lineup__pitch lineup__pitch--${mode}`} style={{ gridTemplateRows: templateRows }}>
       {renderedRows}
     </div>
   );
@@ -403,16 +414,16 @@ function Slot({ slot, player, onDrop, onAllowDrop, readOnly }) {
   };
 
   return (
-    <div className={`slot ${player ? "filled" : "empty"}`} onDrop={(e) => onDrop && onDrop(e, slot.id)} onDragOver={onAllowDrop}>
-      <div className="slot-inner" draggable={!!player && !readOnly} onDragStart={onDragStart}>
-        <div className="slot-label">{slot.label}</div>
+    <div className={`lineup-slot ${player ? 'lineup-slot--filled' : 'lineup-slot--empty'}`} onDrop={(e) => onDrop && onDrop(e, slot.id)} onDragOver={onAllowDrop}>
+      <div className="lineup-slot__inner" draggable={!!player && !readOnly} onDragStart={onDragStart}>
+        <div className="lineup-slot__label">{slot.label}</div>
         {player ? (
           <>
-            <div className="slot-player-name">{shortName(player)}</div>
-            <div className="slot-player-meta">⭐ {ratingValue(player).toFixed(1)}</div>
+            <div className="lineup-slot__name">{shortName(player)}</div>
+            <div className="lineup-slot__meta">⭐ {ratingValue(player).toFixed(1)}</div>
           </>
         ) : (
-          <div className="slot-placeholder">Arrastra aquí</div>
+          <div className="lineup-slot__placeholder">Arrastra aquí</div>
         )}
       </div>
     </div>
