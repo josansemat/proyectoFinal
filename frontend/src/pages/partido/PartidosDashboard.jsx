@@ -11,6 +11,7 @@ const tabIconMap = {
   info: "icono-info",
   inscripcion: "icono-inscripcion",
   formacion: "icono-cancha",
+  eventos: "icono-evento",
   votaciones: "icono-trofeo",
 };
 
@@ -818,10 +819,11 @@ function PartidosDashboard({ user, currentTeam }) {
 
   const proximo = stats?.proximoPartido;
   const matchTabs = [
-    { id: "info", label: "", icon: "info" },
-    { id: "inscripcion", label: "", icon: "inscripcion" },
-    { id: "formacion", label: "", icon: "formacion" },
-    { id: "votaciones", label: "", icon: "votaciones" },
+    { id: "info", label: "Info", icon: "info" },
+    { id: "inscripcion", label: "Inscripción", icon: "inscripcion" },
+    { id: "formacion", label: "Formación", icon: "formacion" },
+    { id: "eventos", label: "Eventos", icon: "eventos" },
+    { id: "votaciones", label: "Votaciones", icon: "votaciones" },
   ];
 
   const matchCounts = useMemo(() => {
@@ -1493,6 +1495,11 @@ function PartidosDashboard({ user, currentTeam }) {
                         <div className="match-detail__panel match-detail__panel--lineup">
                           <PartidoLineup detalle={detalle} onSave={canManagePartidos ? handleGuardarFormacion : null} canEdit={canManagePartidos} />
                         </div>
+                      </div>
+                    )}
+
+                    {activeTab === "eventos" && (
+                      <div className="tab-panel">
                         <div className="match-detail__panel match-detail__panel--events">
                           <EventosPanel
                             eventos={detalle.eventos}
@@ -1755,30 +1762,47 @@ function InscripcionesPanel({
               const pagoConfirmado = Boolean(Number(j.pago_confirmado ?? 0));
               const esPropio = id === Number(currentUserId);
               const puedeGestionarPago = canManage && typeof onTogglePago === "function";
-              const pagoBtnLabel = pagoConfirmado ? "Marcar pendiente" : "Marcar pagado";
-              const pagoBadge = pagoConfirmado ? "badge text-bg-success" : "badge text-bg-warning text-dark";
+              const pagoStatusLabel = pagoConfirmado ? "Pagado" : "Pendiente";
+              const pagoIndicatorClass = pagoConfirmado
+                ? "payment-indicator payment-indicator--paid"
+                : "payment-indicator payment-indicator--pending";
               const isPagoLoading = pagoLoadingId === id;
 
               return (
                 <div key={id} className="inscrito-row">
                   <div>
-                    <div className="fw-semibold d-flex align-items-center gap-2">
+                    <div className="fw-semibold d-flex align-items-center gap-2 flex-wrap">
                       {j.nombre}
-                      <span className={pagoBadge}>{pagoConfirmado ? "Pagado" : "Pendiente"}</span>
+                      <span className="inscrito-row__status">
+                        <span className={pagoIndicatorClass} role="img" aria-label={`Pago ${pagoStatusLabel}`}>
+                          $
+                        </span>
+                        <span className="payment-indicator__label">{pagoStatusLabel}</span>
+                      </span>
                     </div>
                     <small className="text-muted">
                       Equipo {j.equipo || "-"} · Rating {Number(j.rating_habilidad ?? 0).toFixed(1)}
                     </small>
                   </div>
                   <div className="d-flex gap-2 flex-wrap justify-content-end">
-                    {puedeGestionarPago && (
+                    {puedeGestionarPago && !pagoConfirmado && (
                       <button
                         className="btn btn-sm btn-outline-success"
                         type="button"
-                        onClick={() => onTogglePago(id, !pagoConfirmado)}
+                        onClick={() => onTogglePago(id, true)}
                         disabled={loading || isPagoLoading}
                       >
-                        {isPagoLoading ? "Actualizando..." : pagoBtnLabel}
+                        {isPagoLoading ? "Actualizando..." : "Marcar pagado"}
+                      </button>
+                    )}
+                    {puedeGestionarPago && pagoConfirmado && (
+                      <button
+                        className="btn btn-sm btn-outline-warning"
+                        type="button"
+                        onClick={() => onTogglePago(id, false)}
+                        disabled={loading || isPagoLoading}
+                      >
+                        {isPagoLoading ? "Actualizando..." : "Marcar sin pago"}
                       </button>
                     )}
                     {(canManage || esPropio) && (
