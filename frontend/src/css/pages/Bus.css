@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
 :root {
   /* --- LÓGICA DE COLORES DINÁMICOS --- */
   
@@ -24,7 +25,7 @@
   --bus-radius: 20px;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
+
 
 .bus-page {
 	padding: clamp(1.5rem, 3vw, 3rem);

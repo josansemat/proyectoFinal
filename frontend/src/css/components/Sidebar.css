@@ -200,11 +200,18 @@
   color: var(--sidebar-text);
   transition: background 0.2s ease;
 }
+.nav-link.active {
+  background-color: var(--primary-color); /* Fondo del color primario */
+  color: var(--contrast-text-color);      /* Texto en contraste */
+  font-weight: 700;                       /* Un poco más negrita */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Sombra suave para destacar */
+}
+
+
 
 .nav-link:hover {
   background-color: var(--sidebar-item-bg-hover);
   color: var(--sidebar-text);
-
 }
 
 .sidebar-nav-icon {

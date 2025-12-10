@@ -1,6 +1,6 @@
 // src/components/Sidebar.jsx
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Importamos useLocation
 import "../css/components/Sidebar.css";
 import SvgSprite from "./SvgSprite";
 
@@ -23,13 +23,19 @@ const Sidebar = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  
   const navigate = useNavigate();
+  const location = useLocation(); // Hook para saber la ruta actual
 
   const roleGlobal = user?.rol;
   const isAdmin = roleGlobal === "admin";
   const isManagerCurrentTeam = currentTeam?.mi_rol === "manager";
   const canManageTeam = isAdmin || isManagerCurrentTeam;
   const hasMultipleTeams = userTeams && userTeams.length > 1;
+
+  // —— HELPER PARA DETECTAR RUTA ACTIVA —— //
+  // Retorna true si la ruta actual coincide con el path del botón
+  const isActive = (path) => location.pathname === path;
 
   // —— MEMOIZACIONES —— //
   const currentTeamInitial = useMemo(
@@ -43,7 +49,8 @@ const Sidebar = ({
     () => ({
       letterSpacing: "1px",
       fontSize: "0.7rem",
-      color: " var(--sidebar-text)",
+      color: "var(--sidebar-text)", // Asegúrate que esta variable exista o usa var(--sidebar-text-muted)
+      opacity: 0.7
     }),
     []
   );
@@ -218,11 +225,14 @@ const Sidebar = ({
         {/* —— Navegación —— */}
         <nav className="flex-grow-1 overflow-auto p-2 custom-scrollbar d-flex flex-column">
           <ul className="nav flex-column gap-1 flex-grow-1">
+            {/* Items Principales Dinámicos */}
             {NAV_ITEMS.map((item) => (
               <li key={item.path} className="nav-item">
                 <button
                   type="button"
-                  className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                  className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                    isActive(item.path) ? "active" : ""
+                  }`}
                   onClick={() => handleNav(item.path)}
                 >
                   <svg className="sidebar-nav-icon">
@@ -237,7 +247,9 @@ const Sidebar = ({
             <li className="nav-item">
               <button
                 type="button"
-                className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                  isActive("/buscar-equipos") ? "active" : ""
+                }`}
                 onClick={() => handleNav("/buscar-equipos")}
               >
                 <svg className="sidebar-nav-icon">
@@ -257,11 +269,12 @@ const Sidebar = ({
                   Gestión de Mi Club
                 </li>
 
-                {/* CÓDIGO CORREGIDO AQUÍ: Se eliminó el bloque anidado erróneo */}
                 <li className="nav-item">
                   <button
                     type="button"
-                    className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                    className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                      isActive("/mi-club/configurar") ? "active" : ""
+                    }`}
                     onClick={() => handleNav("/mi-club/configurar")}
                   >
                     <svg className="sidebar-nav-icon">
@@ -274,7 +287,9 @@ const Sidebar = ({
                 <li className="nav-item">
                   <button
                     type="button"
-                    className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                    className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                      isActive("/mi-club/solicitudes") ? "active" : ""
+                    }`}
                     onClick={() => handleNav("/mi-club/solicitudes")}
                   >
                     <svg className="sidebar-nav-icon">
@@ -299,7 +314,9 @@ const Sidebar = ({
                 <li className="nav-item">
                   <button
                     type="button"
-                    className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                    className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                      isActive("/admin/jugadores") ? "active" : ""
+                    }`}
                     onClick={() => handleNav("/admin/jugadores")}
                   >
                     <svg className="sidebar-nav-icon">
@@ -312,7 +329,9 @@ const Sidebar = ({
                 <li className="nav-item">
                   <button
                     type="button"
-                    className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                    className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                      isActive("/admin/equipos") ? "active" : ""
+                    }`}
                     onClick={() => handleNav("/admin/equipos")}
                   >
                     <svg className="sidebar-nav-icon">
@@ -324,6 +343,7 @@ const Sidebar = ({
               </>
             )}
 
+            {/* Ayuda y Legal */}
             <li
               className="nav-item mt-4 mb-2 px-2 text-uppercase small fw-bold"
               style={sectionHeaderStyle}
@@ -333,7 +353,9 @@ const Sidebar = ({
             <li className="nav-item">
               <button
                 type="button"
-                className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                  isActive("/manual-uso") ? "active" : ""
+                }`}
                 onClick={() => handleNav("/manual-uso")}
               >
                 <svg className="sidebar-nav-icon">
@@ -352,7 +374,9 @@ const Sidebar = ({
             <li className="nav-item">
               <button
                 type="button"
-                className="btn w-100 nav-link px-2 d-flex align-items-center gap-3"
+                className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                  isActive("/politica-privacidad") ? "active" : ""
+                }`}
                 onClick={() => handleNav("/politica-privacidad")}
               >
                 <svg className="sidebar-nav-icon">
@@ -363,7 +387,7 @@ const Sidebar = ({
             </li>
           </ul>
 
-          {/* —— Sección Mi Perfil (ESTA SE MANTIENE) —— */}
+          {/* —— Sección Mi Perfil —— */}
           <div className="mt-auto pt-3 px-1">
             <ul
               className="nav flex-column border-top pt-2"
@@ -372,7 +396,9 @@ const Sidebar = ({
               <li className="nav-item">
                 <button
                   type="button"
-                  className="btn nav-link px-2 nav-link-profile"
+                  className={`btn nav-link px-2 nav-link-profile ${
+                    isActive("/mi-perfil") ? "active" : ""
+                  }`}
                   onClick={() => handleNav("/mi-perfil")}
                 >
                   <svg className="sidebar-nav-icon">
@@ -408,7 +434,6 @@ const Sidebar = ({
           </button>
         </div>
       </aside>
-
     </>
   );
 };

@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../../css/pages/AdminJugadores.css";
 
-// Componente para los badges de estado y rol
+// Badge usando clases usr-*
 function Badge({ type, children }) {
-  return <span className={`badge-pill ${type}`}>{children}</span>;
+  return <span className={`usr-badge ${type}`}>{children}</span>;
 }
 
-// Función auxiliar para formatear la fecha
 function formatDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -17,7 +16,6 @@ function formatDate(iso) {
 }
 
 export default function AdminJugadores({ user, currentTeam }) {
-  // Estados para filtros, paginación y datos de la tabla
   const [search, setSearch] = useState("");
   const [rol, setRol] = useState("");
   const [estado, setEstado] = useState("");
@@ -30,11 +28,9 @@ export default function AdminJugadores({ user, currentTeam }) {
   const [expandedId, setExpandedId] = useState(null);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 768 : false));
   
-  // Estados para el Modal de Edición
   const [editing, setEditing] = useState(null); 
   const [form, setForm] = useState({ nombre: "", apodo: "", email: "", telefono: "" });
 
-  // Memoriza los parámetros de la URL para evitar recargas innecesarias
   const query = useMemo(() => {
     const p = new URLSearchParams();
     if (search) p.set("search", search);
@@ -45,7 +41,6 @@ export default function AdminJugadores({ user, currentTeam }) {
     return p.toString();
   }, [search, rol, estado, page, limit]);
 
-  // Carga inicial y recarga de datos cuando cambia la query
   useEffect(() => {
     let ignore = false;
     const load = async () => {
@@ -90,24 +85,20 @@ export default function AdminJugadores({ user, currentTeam }) {
     }
   }, [isMobile]);
 
-  // Funciones de paginación
   const nextPage = () => setPage(p => Math.min(p + 1, totalPages));
   const prevPage = () => setPage(p => Math.max(p - 1, 1));
 
-  // Funciones de manejo de filtros
   const onSearchChange = (e) => { setPage(1); setSearch(e.target.value); };
   const onRolChange = (e) => { setPage(1); setRol(e.target.value); };
   const onEstadoChange = (e) => { setPage(1); setEstado(e.target.value); };
 
-  // Helpers para renderizar los badges
-  const rolBadge = (r) => r === 'admin' ? <Badge type="badge-blue">Admin</Badge> : <Badge type="badge-gray">Usuario</Badge>;
+  const rolBadge = (r) => r === 'admin' ? <Badge type="blue">Admin</Badge> : <Badge type="gray">Usuario</Badge>;
   const estadoBadge = (act, elim) => {
-    if (elim === 1) return <Badge type="badge-red">Eliminado</Badge>;
-    if (act === 1) return <Badge type="badge-green">Activo</Badge>;
-    return <Badge type="badge-orange">Inactivo</Badge>;
+    if (elim === 1) return <Badge type="red">Eliminado</Badge>;
+    if (act === 1) return <Badge type="green">Activo</Badge>;
+    return <Badge type="orange">Inactivo</Badge>;
   };
 
-  // Función para Banear/Desbanear
   const handleToggleActivo = async (j) => {
     try {
       const nuevoActivo = j.activo === 1 ? 0 : 1;
@@ -127,7 +118,6 @@ export default function AdminJugadores({ user, currentTeam }) {
     }
   };
 
-  // Función para Eliminar/Restaurar
   const handleToggleEliminado = async (j) => {
     try {
       const nuevoEliminado = j.eliminado === 1 ? 0 : 1;
@@ -147,9 +137,6 @@ export default function AdminJugadores({ user, currentTeam }) {
     }
   };
 
-  // --- FUNCIONES DEL MODAL DE EDICIÓN (Ahora en el lugar correcto) ---
-
-  // Abre el modal y carga los datos del jugador seleccionado
   const openEdit = (j) => {
     setEditing(j);
     setForm({
@@ -158,26 +145,23 @@ export default function AdminJugadores({ user, currentTeam }) {
       email: j.email || "",
       telefono: j.telefono || "",
     });
-    setError(""); // Limpia errores previos al abrir
+    setError("");
   };
 
-  // Cierra el modal
   const closeEdit = () => {
     setEditing(null);
     setError("");
   };
 
-  // Maneja los cambios en los inputs del formulario
   const onFormChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  // Envía los datos editados al servidor
   const submitEdit = async (e) => {
     e.preventDefault();
     if (!editing) return;
-    setError(""); // Limpia errores antes de enviar
+    setError("");
 
     try {
       const payload = {
@@ -196,7 +180,6 @@ export default function AdminJugadores({ user, currentTeam }) {
       const json = await resp.json();
       
       if (json.success) {
-        // Actualiza los datos en la tabla localmente sin recargar
         setData((prev) => prev.map((it) => it.id === editing.id ? { ...it, ...payload } : it));
         closeEdit();
       } else {
@@ -214,25 +197,24 @@ export default function AdminJugadores({ user, currentTeam }) {
 
   return (
     <div className="admin-jugadores-page">
-      <div className="perfil-bg" aria-hidden="true" />
-      <div className="panel">
-        {/* Barra de Herramientas (Búsqueda y Filtros) */}
-        <div className="toolbar">
+      <div className="usr-panel">
+        {/* Toolbar */}
+        <div className="usr-toolbar">
           <input
-            className="search-input"
+            className="usr-search-input"
             type="text"
             placeholder="Buscar por nombre o email..."
             value={search}
             onChange={onSearchChange}
           />
-          <div className="toolbar-right">
-            <select className="select" value={rol} onChange={onRolChange}>
-              <option value="">Filtrar por Rol (Todos)</option>
+          <div className="usr-toolbar-right">
+            <select className="usr-select" value={rol} onChange={onRolChange}>
+              <option value="">Todos los Roles</option>
               <option value="admin">Admin</option>
               <option value="usuario">Usuario</option>
             </select>
-            <select className="select" value={estado} onChange={onEstadoChange}>
-              <option value="">Estado (Todos)</option>
+            <select className="usr-select" value={estado} onChange={onEstadoChange}>
+              <option value="">Todos los Estados</option>
               <option value="activo">Activo</option>
               <option value="inactivo">Inactivo</option>
               <option value="eliminado">Eliminado</option>
@@ -240,73 +222,67 @@ export default function AdminJugadores({ user, currentTeam }) {
           </div>
         </div>
 
-        {/* Tabla de Datos */}
-        <div className="table-wrap">
+        {/* Tabla / Tarjetas */}
+        <div className="usr-table-wrap">
           {isMobile ? (
-            <div className="player-cards">
+            <div className="usr-player-cards">
               {loading ? (
-                <div className="card-state muted">Cargando...</div>
+                <div className="usr-card-state">Cargando...</div>
               ) : error ? (
-                <div className="card-state error">{error}</div>
+                <div className="usr-card-state usr-error">{error}</div>
               ) : data.length === 0 ? (
-                <div className="card-state muted">Sin resultados</div>
+                <div className="usr-card-state">Sin resultados</div>
               ) : (
                 data.map((j) => (
-                  <div className={`player-card ${expandedId === j.id ? 'open' : ''}`} key={j.id}>
+                  <div className={`usr-player-card ${expandedId === j.id ? 'open' : ''}`} key={j.id}>
                     <button
-                      className="player-card__summary"
+                      className="usr-player-summary"
                       type="button"
                       onClick={() => toggleExpanded(j.id)}
-                      aria-expanded={expandedId === j.id}
                     >
-                      <div className="player-card__summary-text">
-                        <span className="player-card__name">{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</span>
-                        <span className="player-card__email mono">{j.email}</span>
+                      <div className="usr-player-text">
+                        <span className="usr-player-name">{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</span>
+                        <span className="usr-player-email">{j.email}</span>
                       </div>
-                      <div className="player-card__summary-meta">
-                        {rolBadge(j.rol)}
+                      <div className="usr-player-meta">
                         {estadoBadge(j.activo, j.eliminado)}
-                        <span className="player-card__chevron" aria-hidden="true">{expandedId === j.id ? '▾' : '▸'}</span>
+                        <span className="usr-player-chevron">{expandedId === j.id ? '▲' : '▼'}</span>
                       </div>
                     </button>
-                    <div className={`player-card__details ${expandedId === j.id ? 'open' : ''}`}>
-                      <div className="player-card__grid">
+                    <div className="usr-player-details">
+                      <div className="usr-player-grid">
                         <div>
-                          <span className="player-card__label">ID</span>
-                          <span className="player-card__value mono">{j.id}</span>
+                          <span className="usr-player-label">ID</span>
+                          <span className="usr-player-value usr-mono">{j.id}</span>
                         </div>
                         <div>
-                          <span className="player-card__label">Rol</span>
-                          <span className="player-card__value">{rolBadge(j.rol)}</span>
+                          <span className="usr-player-label">Rol</span>
+                          <span className="usr-player-value">{rolBadge(j.rol)}</span>
                         </div>
                         <div>
-                          <span className="player-card__label">Rating</span>
-                          <span className="player-card__value">{Number(j.rating_habilidad || 0).toFixed(2)}</span>
+                          <span className="usr-player-label">Rating</span>
+                          <span className="usr-player-value">{Number(j.rating_habilidad || 0).toFixed(2)}</span>
                         </div>
                         <div>
-                          <span className="player-card__label">Registro</span>
-                          <span className="player-card__value mono">{formatDate(j.fecha_registro)}</span>
-                        </div>
-                        <div>
-                          <span className="player-card__label">Estado</span>
-                          <span className="player-card__value">{estadoBadge(j.activo, j.eliminado)}</span>
+                          <span className="usr-player-label">Registro</span>
+                          <span className="usr-player-value usr-mono">{formatDate(j.fecha_registro)}</span>
                         </div>
                         {j.telefono && (
                           <div>
-                            <span className="player-card__label">Teléfono</span>
-                            <span className="player-card__value mono">{j.telefono}</span>
+                            <span className="usr-player-label">Teléfono</span>
+                            <span className="usr-player-value usr-mono">{j.telefono}</span>
                           </div>
                         )}
                       </div>
-                      <div className="player-card__actions">
-                        <button className="btn btn-sm" type="button" onClick={() => openEdit(j)}>
-                          <i className="bi bi-pencil me-1"></i> Editar
+                      <div className="usr-player-actions">
+                        <button className="usr-btn-sm" onClick={() => openEdit(j)}>
+                          ✎ Editar
                         </button>
-                        <button className="btn btn-sm" type="button" onClick={() => handleToggleActivo(j)}>
-                          {j.activo === 1 ? 'Banear' : 'Desbanear'}
+                        <button className="usr-btn-sm" onClick={() => handleToggleActivo(j)}>
+                          {j.activo === 1 ? '🚫 Banear' : '✅ Desbanear'}
                         </button>
-                        <button className="btn btn-sm" type="button" onClick={() => handleToggleEliminado(j)}>
-                          {j.eliminado === 1 ? 'Restaurar' : 'Eliminar'}
+                        <button className="usr-btn-sm" onClick={() => handleToggleEliminado(j)}>
+                          {j.eliminado === 1 ? '♻️ Restaurar' : '🗑️ Eliminar'}
                         </button>
                       </div>
                     </div>
@@ -315,7 +291,7 @@ export default function AdminJugadores({ user, currentTeam }) {
               )}
             </div>
           ) : (
-            <table className="data-table">
+            <table className="usr-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -330,97 +306,35 @@ export default function AdminJugadores({ user, currentTeam }) {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={8} className="muted">Cargando...</td></tr>
+                  <tr><td colSpan={8} style={{textAlign:'center', color:'var(--usr-text-muted)'}}>Cargando...</td></tr>
                 ) : error ? (
-                  <tr><td colSpan={8} className="error">{error}</td></tr>
+                  <tr><td colSpan={8} style={{textAlign:'center', color:'var(--usr-danger)'}}>{error}</td></tr>
                 ) : data.length === 0 ? (
-                  <tr><td colSpan={8} className="muted">Sin resultados</td></tr>
+                  <tr><td colSpan={8} style={{textAlign:'center', color:'var(--usr-text-muted)'}}>Sin resultados</td></tr>
                 ) : (
                   data.map((j) => (
-                    <React.Fragment key={j.id}>
-                      <tr className={`data-row ${expandedId === j.id ? 'expanded' : ''}`}>
-                        <td className="mono hide-mobile" data-label="ID">{j.id}</td>
-                        <td data-label="Jugador">
-                          <div
-                            className="row-main"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => toggleExpanded(j.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpanded(j.id); }
-                            }}
-                            aria-expanded={expandedId === j.id}
-                          >
-                            <div className="player-cell">{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</div>
-                            <span className="chevron" aria-hidden="true">{expandedId === j.id ? '▾' : '▸'}</span>
-                          </div>
-                        </td>
-                        <td className="mono hide-mobile" data-label="Email">{j.email}</td>
-                        <td className="hide-mobile" data-label="Rol">{rolBadge(j.rol)}</td>
-                        <td className="hide-mobile" data-label="Rating">{Number(j.rating_habilidad || 0).toFixed(2)}</td>
-                        <td className="mono hide-mobile" data-label="Registro">{formatDate(j.fecha_registro)}</td>
-                        <td className="hide-mobile" data-label="Estado">{estadoBadge(j.activo, j.eliminado)}</td>
-                        <td className="hide-mobile">
-                          <div className="actions">
-                            <button className="icon-btn" title="Editar" onClick={() => openEdit(j)}>
-                              <i className="bi bi-pencil"></i>
-                            </button>
-                            <button className="icon-btn danger" title="Banear/Desbanear" onClick={() => handleToggleActivo(j)}>
-                              <i className="bi bi-slash-circle"></i>
-                            </button>
-                            <button className="icon-btn danger" title="Eliminar/Restaurar" onClick={() => handleToggleEliminado(j)}>
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className={`expanded-row ${expandedId === j.id ? 'open' : ''}`}>
-                        <td colSpan={8}>
-                          <div className={`expanded-inner ${expandedId === j.id ? 'open' : ''}`}>
-                            <div className="expanded-grid">
-                              <div className="expanded-item">
-                                <span className="expanded-label">ID</span>
-                                <span className="expanded-value mono">{j.id}</span>
-                              </div>
-                              <div className="expanded-item">
-                                <span className="expanded-label">Email</span>
-                                <span className="expanded-value mono">{j.email}</span>
-                              </div>
-                              <div className="expanded-item">
-                                <span className="expanded-label">Rol</span>
-                                <span className="expanded-value">{rolBadge(j.rol)}</span>
-                              </div>
-                              <div className="expanded-item">
-                                <span className="expanded-label">Rating</span>
-                                <span className="expanded-value">{Number(j.rating_habilidad || 0).toFixed(2)}</span>
-                              </div>
-                              <div className="expanded-item">
-                                <span className="expanded-label">Registro</span>
-                                <span className="expanded-value mono">{formatDate(j.fecha_registro)}</span>
-                              </div>
-                              <div className="expanded-item">
-                                <span className="expanded-label">Estado</span>
-                                <span className="expanded-value">{estadoBadge(j.activo, j.eliminado)}</span>
-                              </div>
-                              <div className="expanded-item">
-                                <span className="expanded-label">Acciones</span>
-                                <div className="expanded-actions">
-                                  <button className="btn btn-sm" type="button" onClick={() => openEdit(j)}>
-                                    <i className="bi bi-pencil me-1"></i> Editar
-                                  </button>
-                                  <button className="btn btn-sm" type="button" onClick={() => handleToggleActivo(j)}>
-                                    {j.activo === 1 ? 'Banear' : 'Desbanear'}
-                                  </button>
-                                  <button className="btn btn-sm" type="button" onClick={() => handleToggleEliminado(j)}>
-                                    {j.eliminado === 1 ? 'Restaurar' : 'Eliminar'}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    </React.Fragment>
+                    <tr key={j.id}>
+                      <td className="usr-mono">{j.id}</td>
+                      <td style={{fontWeight:600}}>{j.nombre}{j.apodo ? ` (${j.apodo})` : ''}</td>
+                      <td className="usr-mono">{j.email}</td>
+                      <td>{rolBadge(j.rol)}</td>
+                      <td>{Number(j.rating_habilidad || 0).toFixed(2)}</td>
+                      <td className="usr-mono">{formatDate(j.fecha_registro)}</td>
+                      <td>{estadoBadge(j.activo, j.eliminado)}</td>
+                      <td>
+                        <div className="usr-actions">
+                          <button className="usr-icon-btn" title="Editar" onClick={() => openEdit(j)}>
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                          <button className="usr-icon-btn danger" title="Banear/Desbanear" onClick={() => handleToggleActivo(j)}>
+                            <i className="bi bi-slash-circle"></i>
+                          </button>
+                          <button className="usr-icon-btn danger" title="Eliminar/Restaurar" onClick={() => handleToggleEliminado(j)}>
+                             <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>
@@ -429,44 +343,45 @@ export default function AdminJugadores({ user, currentTeam }) {
         </div>
 
         {/* Paginación */}
-        <div className="pagination">
-          <button className="page-btn" onClick={prevPage} disabled={page === 1}>‹</button>
-          <div className="page-info">Página {page} de {totalPages}</div>
-          <button className="page-btn" onClick={nextPage} disabled={page === totalPages}>›</button>
-        </div>
+        {totalPages > 1 && (
+          <div className="usr-pagination">
+            <button className="usr-page-btn" onClick={prevPage} disabled={page === 1}>‹</button>
+            <span className="usr-page-info">Página {page} de {totalPages}</span>
+            <button className="usr-page-btn" onClick={nextPage} disabled={page === totalPages}>›</button>
+          </div>
+        )}
 
-        {/* MODAL DE EDICIÓN (Tarjeta Superpuesta) */}
+        {/* MODAL DE EDICIÓN */}
         {editing && (
-          <div className="modal-backdrop">
-            <div className="modal-card">
-              <div className="modal-header">
-                <h2>Editar jugador #{editing.id}</h2>
-                <button className="icon-btn" onClick={closeEdit} title="Cerrar">
-                  <i className="bi bi-x"></i>
-                </button>
+          <div className="usr-modal-backdrop">
+            <div className="usr-modal-card">
+              <div className="usr-modal-header">
+                <h2>Editar Jugador #{editing.id}</h2>
+                <button className="usr-icon-btn" onClick={closeEdit}>✕</button>
               </div>
-              <form className="modal-body" onSubmit={submitEdit}>
-                {error && <div className="error mb-3">{error}</div>}
-                <div className="form-row">
+              <form className="usr-modal-body" onSubmit={submitEdit}>
+                {error && <div className="usr-error">{error}</div>}
+                
+                <div className="usr-form-row">
                   <label>Nombre</label>
-                  <input name="nombre" value={form.nombre} onChange={onFormChange} className="select" required />
+                  <input name="nombre" value={form.nombre} onChange={onFormChange} className="usr-input" required />
                 </div>
-                <div className="form-row">
+                <div className="usr-form-row">
                   <label>Apodo</label>
-                  <input name="apodo" value={form.apodo} onChange={onFormChange} className="select" />
+                  <input name="apodo" value={form.apodo} onChange={onFormChange} className="usr-input" />
                 </div>
-                <div className="form-row">
+                <div className="usr-form-row">
                   <label>Email</label>
-                  <input name="email" type="email" value={form.email} onChange={onFormChange} className="select" required />
+                  <input name="email" type="email" value={form.email} onChange={onFormChange} className="usr-input" required />
                 </div>
-                <div className="form-row">
+                <div className="usr-form-row">
                   <label>Teléfono</label>
-                  <input name="telefono" value={form.telefono} onChange={onFormChange} className="select" />
+                  <input name="telefono" value={form.telefono} onChange={onFormChange} className="usr-input" />
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="page-btn" onClick={closeEdit}>Cancelar</button>
-                  {/* Botón primario azul para la acción principal */}
-                  <button type="submit" className="page-btn btn-primary">Guardar</button>
+                
+                <div className="usr-modal-footer">
+                  <button type="button" className="usr-btn-cancel" onClick={closeEdit}>Cancelar</button>
+                  <button type="submit" className="usr-btn-primary">Guardar Cambios</button>
                 </div>
               </form>
             </div>

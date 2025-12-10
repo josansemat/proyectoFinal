@@ -2,9 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import "../../css/pages/AdminEquipos.css";
 
 function Badge({ active }) {
-  // Aseguramos que active sea booleano, a veces la BD devuelve 1/0
   const isActive = active === 1 || active === true;
-  return <span className={`badge ${isActive ? 'green' : 'red'}`}>{isActive ? 'Activo' : 'Inactivo'}</span>;
+  return <span className={`adm-badge ${isActive ? 'green' : 'red'}`}>{isActive ? 'Activo' : 'Inactivo'}</span>;
 }
 
 export default function AdminEquipos() {
@@ -19,18 +18,17 @@ export default function AdminEquipos() {
   const [expandedId, setExpandedId] = useState(null);
 
   // Estados para el Modal
-  const [editing, setEditing] = useState(null); // Objeto del equipo si se edita
-  const [isCreating, setIsCreating] = useState(false); // Booleano si se está creando
+  const [editing, setEditing] = useState(null); 
+  const [isCreating, setIsCreating] = useState(false); 
 
   const [fondos, setFondos] = useState([]);
-  const [jugadores, setJugadores] = useState([]); // Lista de jugadores del equipo actual
-  const [managers, setManagers] = useState({}); // {id_jugador: boolean}
+  const [jugadores, setJugadores] = useState([]); 
+  const [managers, setManagers] = useState({}); 
 
-  // Formulario inicial vacío
   const initialFormState = {
     nombre: "",
     descripcion: "",
-    color_principal: "#3b82f6", // Un azul por defecto
+    color_principal: "#3b82f6", 
     fondo_imagen: "",
     id_lanzador_penalti: "",
     id_lanzador_falta_lejana: "",
@@ -38,7 +36,7 @@ export default function AdminEquipos() {
     id_lanzador_corner_der: "",
   };
   const [form, setForm] = useState(initialFormState);
-  const [dorsales, setDorsales] = useState([]); // {id_jugador, nuevo_dorsal}
+  const [dorsales, setDorsales] = useState([]); 
 
   // --- CARGA DE DATOS ---
   const query = useMemo(() => {
@@ -80,7 +78,6 @@ export default function AdminEquipos() {
   }, [query]);
 
   useEffect(() => {
-    // Cargar lista de fondos una sola vez
     (async () => {
       try {
         const r = await fetch('/api/index.php?action=get_fondos');
@@ -103,7 +100,6 @@ export default function AdminEquipos() {
       });
       const j = await r.json();
       if (j.success) {
-        // Actualización optimista local
         setData(prev => prev.map(it => it.id === eq.id ? { ...it, activo: nuevoEstado } : it));
       } else {
         setError(j.error || 'No se pudo cambiar el estado');
@@ -111,19 +107,16 @@ export default function AdminEquipos() {
     } catch { setError('Error de conexión'); }
   };
 
-  // --- FUNCIONES DEL MODAL (CREAR / EDITAR) ---
-
-  // 1. ABRIR PARA CREAR
+  // --- FUNCIONES DEL MODAL ---
   const openCreate = () => {
       setEditing(null);
-      setJugadores([]); // Un equipo nuevo no tiene jugadores
+      setJugadores([]);
       setDorsales([]);
       setManagers({});
-      setForm(initialFormState); // Reseteamos formulario
-      setIsCreating(true); // Modo creación activado
+      setForm(initialFormState);
+      setIsCreating(true);
   };
 
-  // 2. ABRIR PARA EDITAR
   const openEdit = async (eq) => {
     try {
       const r = await fetch(`/api/index.php?action=admin_get_equipo_detalle&id=${eq.id}`);
@@ -131,10 +124,9 @@ export default function AdminEquipos() {
       if (!j.success) { setError(j.error || 'No se pudo cargar detalle'); return; }
       
       setEditing(j.equipo);
-      setIsCreating(false); // Modo edición activado
+      setIsCreating(false);
       setJugadores(j.jugadores || []);
       
-      // Rellenar formulario con datos existentes
       setForm({
         nombre: j.equipo.nombre || '',
         descripcion: j.equipo.descripcion || '',
@@ -154,7 +146,6 @@ export default function AdminEquipos() {
     } catch { setError('Error de conexión al cargar detalle'); }
   };
 
-  // 3. CERRAR MODAL
   const closeModal = () => {
       setEditing(null);
       setIsCreating(false);
@@ -163,7 +154,6 @@ export default function AdminEquipos() {
       setError("");
   };
 
-  // Manejadores de formulario
   const onFormChange = (e) => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
@@ -180,27 +170,21 @@ export default function AdminEquipos() {
     }));
   };
 
-  // 4. ENVIAR FORMULARIO (UNI-FICADO)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validación básica
     if(!form.nombre.trim()) { alert("El nombre es obligatorio"); return; }
-
     setError("");
     
     try {
       let url = '';
       let payload = {};
       const rolesPayload = (jugadores || []).map(j => ({
-      id_jugador: j.id,
-      rol: (managers[j.id] ? 'manager' : 'jugador')
+        id_jugador: j.id,
+        rol: (managers[j.id] ? 'manager' : 'jugador')
       }));
 
       if (isCreating) {
-          // MODO CREACIÓN
           url = '/api/index.php?action=admin_crear_equipo';
-          // Solo enviamos datos básicos, los jugadores se asignan después
           payload = {
               nombre: form.nombre,
               descripcion: form.descripcion,
@@ -208,9 +192,8 @@ export default function AdminEquipos() {
               fondo_imagen: form.fondo_imagen
           };
       } else if (editing) {
-          // MODO EDICIÓN
           url = '/api/index.php?action=admin_update_equipo_completo';
-        payload = { id: editing.id, ...form, dorsales, roles: rolesPayload };
+          payload = { id: editing.id, ...form, dorsales, roles: rolesPayload };
       } else {
           return;
       }
@@ -223,16 +206,13 @@ export default function AdminEquipos() {
       if (j.success) {
         closeModal();
         if (isCreating) {
-            // Si creamos, recargamos toda la data para ver el nuevo equipo al principio
             loadData(); 
         } else {
-            // Si editamos, actualizamos la lista localmente
             setData(prev => prev.map(it => it.id === editing.id ? {
               ...it,
               nombre: form.nombre,
               descripcion: form.descripcion,
               color_principal: form.color_principal,
-              // Actualizamos visualmente el estado activo si el backend lo devolviera, por ahora mantenemos el que estaba
             } : it));
         }
       } else { 
@@ -243,136 +223,138 @@ export default function AdminEquipos() {
     }
   };
 
-  // Condición para mostrar el modal
   const showModal = editing !== null || isCreating === true;
-  // Título dinámico
-  const modalTitle = isCreating ? "Nuevo Equipo" : (editing ? `Editar Equipo: ${editing.nombre}` : "");
+  const modalTitle = isCreating ? "Nuevo Equipo" : (editing ? `Editar: ${editing.nombre}` : "");
 
   return (
     <div className="admin-equipos-page">
-      <div className="perfil-bg" aria-hidden="true" />
-      
-      <div className="panel">
-        {/* Toolbar con botón de crear funcional */}
-        <div className="toolbar">
-          <input className="search" placeholder="Buscar equipo..." value={search} onChange={e=>{setPage(1);setSearch(e.target.value)}} />
-          <select className="select" value={estado} onChange={e=>{setPage(1);setEstado(e.target.value)}}>
+      <div className="adm-panel">
+        {/* Toolbar */}
+        <div className="adm-toolbar">
+          <input 
+            className="adm-search" 
+            placeholder="Buscar equipo..." 
+            value={search} 
+            onChange={e=>{setPage(1);setSearch(e.target.value)}} 
+          />
+          <select 
+            className="adm-select" 
+            value={estado} 
+            onChange={e=>{setPage(1);setEstado(e.target.value)}}
+          >
             <option value="">Estado: Todos</option>
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
           </select>
-          <button className="btn-create" onClick={openCreate}>+ Nuevo Equipo</button>
+          <button className="adm-btn-create" onClick={openCreate}>+ Nuevo Equipo</button>
         </div>
 
-        {/* Tabla */}
-        <div className="table-wrap">
-          <table className="data-table">
+        {/* Tabla Responsive */}
+        <div className="adm-table-wrap">
+          <table className="adm-table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>EQUIPO</th>
                 <th>DESCRIPCIÓN</th>
-                <th>COLOR PRINCIPAL</th>
+                <th>COLOR</th>
                 <th>ESTADO</th>
                 <th>ACCIONES</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="muted center-text">Cargando...</td></tr>
+                <tr><td colSpan={6} className="adm-muted adm-text-center">Cargando...</td></tr>
               ) : error ? (
-                <tr><td colSpan={6} className="error center-text">{error}</td></tr>
+                <tr><td colSpan={6} className="adm-error adm-text-center">{error}</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} className="muted center-text">Sin resultados</td></tr>
+                <tr><td colSpan={6} className="adm-muted adm-text-center">Sin resultados</td></tr>
               ) : (
                 data.map(eq => (
                   <React.Fragment key={eq.id}>
-                    <tr className={`data-row ${expandedId === eq.id ? 'expanded' : ''}`}>
-                      <td className="mono hide-mobile" data-label="ID">{eq.id}</td>
+                    <tr>
+                      <td className="adm-hide-mobile" style={{fontFamily:'monospace'}}>{eq.id}</td>
                       <td data-label="Equipo">
                         <div
-                          className="row-main"
+                          className="adm-row-main"
                           role="button"
-                          tabIndex={0}
                           onClick={() => {
-                            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                            if (window.innerWidth < 768) {
                               setExpandedId(prev => prev === eq.id ? null : eq.id);
                             }
                           }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                                setExpandedId(prev => prev === eq.id ? null : eq.id);
-                              }
-                            }
-                          }}
-                          aria-expanded={expandedId === eq.id}
                         >
-                          <span className="shield" style={{ background: eq.color_principal }} />
-                          <div className="data-equipo-name">{eq.nombre}</div>
-                          <span className="chevron" aria-hidden="true">{expandedId === eq.id ? '▾' : '▸'}</span>
+                          <span className="adm-shield" style={{ backgroundColor: eq.color_principal }} />
+                          <div style={{fontWeight:600}}>{eq.nombre}</div>
+                          {/* Chevron solo visible en móvil por CSS del componente */}
+                          <span className="chevron" style={{display: window.innerWidth < 768 ? 'block' : 'none'}}>
+                            {expandedId === eq.id ? '▼' : '▶'}
+                          </span>
                         </div>
                       </td>
-                      <td className="muted truncate-text hide-mobile" title={eq.descripcion} data-label="Descripción">{eq.descripcion || '-'}</td>
-                      <td className="hide-mobile" data-label="Color">
+                      <td className="adm-muted adm-hide-mobile" title={eq.descripcion} style={{maxWidth:'200px', overflow:'hidden', textOverflow:'ellipsis'}}>
+                        {eq.descripcion || '-'}
+                      </td>
+                      <td className="adm-hide-mobile">
                         <div style={{display:'flex', alignItems:'center'}}>
-                          <span className="color-swatch" style={{ background: eq.color_principal }} />
-                          <span className="mono" style={{fontSize:'0.85rem'}}>{eq.color_principal}</span>
+                          <span className="adm-color-swatch" style={{ backgroundColor: eq.color_principal }} />
+                          <span style={{fontFamily:'monospace', fontSize:'0.85rem'}}>{eq.color_principal}</span>
                         </div>
                       </td>
-                      <td className="hide-mobile" data-label="Estado"><Badge active={eq.activo} /></td>
-                      <td className="hide-mobile">
-                        <div className="actions">
-                          <button className="icon-btn" title="Editar" onClick={()=>openEdit(eq)}>
-                            <i className="bi bi-pencil" />
+                      <td className="adm-hide-mobile"><Badge active={eq.activo} /></td>
+                      <td className="adm-hide-mobile">
+                        <div className="adm-actions">
+                          <button className="adm-icon-btn" title="Editar" onClick={()=>openEdit(eq)}>
+                            ✎
                           </button>
                           <button 
-                              className={`toggle ${eq.activo == 1 ? 'on':''}`} 
+                              className={`adm-toggle ${eq.activo == 1 ? 'on':''}`} 
                               onClick={()=>handleToggleActivo(eq)} 
                               title={eq.activo == 1 ? "Desactivar" : "Activar"} 
                           />
                         </div>
                       </td>
                     </tr>
-                    <tr className={`expanded-row ${expandedId === eq.id ? 'open' : ''}`}>
-                      <td colSpan={6}>
-                        <div className={`expanded-inner ${expandedId === eq.id ? 'open' : ''}`}>
-                          <div className="expanded-grid">
-                            <div className="expanded-item">
-                              <span className="expanded-label">ID</span>
-                              <span className="expanded-value mono">{eq.id}</span>
+                    
+                    {/* Vista Expandida Móvil */}
+                    {expandedId === eq.id && (
+                      <tr className="adm-expanded-row">
+                        <td colSpan={6}>
+                          <div className="adm-expanded-inner">
+                            <div className="adm-expanded-item">
+                              <span className="adm-expanded-label">ID</span>
+                              <span>{eq.id}</span>
                             </div>
-                            <div className="expanded-item">
-                              <span className="expanded-label">Descripción</span>
-                              <span className="expanded-value">{eq.descripcion || 'Sin descripción'}</span>
+                            <div className="adm-expanded-item">
+                              <span className="adm-expanded-label">Descripción</span>
+                              <span>{eq.descripcion || '-'}</span>
                             </div>
-                            <div className="expanded-item">
-                              <span className="expanded-label">Color</span>
-                              <span className="expanded-value" style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-                                <span className="color-swatch" style={{ background: eq.color_principal }} />
-                                <span className="mono">{eq.color_principal}</span>
-                              </span>
+                            <div className="adm-expanded-item">
+                              <span className="adm-expanded-label">Color</span>
+                              <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
+                                <span className="adm-color-swatch" style={{ backgroundColor: eq.color_principal }} />
+                                {eq.color_principal}
+                              </div>
                             </div>
-                            <div className="expanded-item">
-                              <span className="expanded-label">Estado</span>
-                              <span className="expanded-value"><Badge active={eq.activo} /></span>
+                            <div className="adm-expanded-item">
+                              <span className="adm-expanded-label">Estado</span>
+                              <Badge active={eq.activo} />
                             </div>
-                            <div className="expanded-item">
-                              <span className="expanded-label">Acciones</span>
-                              <div className="expanded-actions">
-                                <button className="btn btn-sm" type="button" onClick={()=>openEdit(eq)}>
-                                  <i className="bi bi-pencil me-1" /> Editar
+                            <div className="adm-expanded-item">
+                              <span className="adm-expanded-label">Acciones</span>
+                              <div className="adm-actions">
+                                <button className="adm-btn save" style={{padding:'0.4rem 1rem', fontSize:'0.8rem'}} onClick={()=>openEdit(eq)}>
+                                  Editar
                                 </button>
-                                <button className="btn btn-sm" type="button" onClick={()=>handleToggleActivo(eq)}>
+                                <button className="adm-btn cancel" style={{padding:'0.4rem 1rem', fontSize:'0.8rem'}} onClick={()=>handleToggleActivo(eq)}>
                                   {eq.activo == 1 ? 'Desactivar' : 'Activar'}
                                 </button>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                    )}
                   </React.Fragment>
                 ))
               )}
@@ -381,120 +363,114 @@ export default function AdminEquipos() {
         </div>
 
         {/* Paginación */}
-        <div className="pagination">
-          <button className="icon-btn" onClick={prevPage} disabled={page===1}>‹</button>
-          <div className="mono" style={{fontSize:'0.9rem'}}>Página {page} de {totalPages}</div>
-          <button className="icon-btn" onClick={nextPage} disabled={page===totalPages}>›</button>
-        </div>
+        {totalPages > 1 && (
+          <div className="adm-pagination">
+            <button className="adm-icon-btn" onClick={prevPage} disabled={page===1}>‹</button>
+            <span className="adm-page-info">Página {page} de {totalPages}</span>
+            <button className="adm-icon-btn" onClick={nextPage} disabled={page===totalPages}>›</button>
+          </div>
+        )}
 
-        {/* MODAL UNIFICADO (CREAR Y EDITAR) */}
+        {/* MODAL */}
         {showModal && (
-          <div className="modal-backdrop">
-            <div className="modal-card">
-              <div className="modal-header">
+          <div className="adm-modal-backdrop">
+            <div className="adm-modal-card">
+              <div className="adm-modal-header">
                 <h2>{modalTitle}</h2>
-                <button className="icon-btn" onClick={closeModal}><i className="bi bi-x" /></button>
+                <button className="adm-icon-btn" onClick={closeModal}>✕</button>
               </div>
               
-              <form className="modal-body" onSubmit={handleSubmit}>
-                {/* Sección 1: Básica (Siempre visible) */}
-                <div className="section">
-                  <h3>Información básica y visual</h3>
-                  <div className="form-grid">
-                    <div className="form-row" style={{gridColumn:'1 / -1'}}>
+              <form className="adm-modal-body" onSubmit={handleSubmit}>
+                <div className="adm-section">
+                  <h3>Información básica</h3>
+                  <div className="adm-form-grid">
+                    <div className="adm-form-row" style={{gridColumn:'1 / -1'}}>
                       <label>Nombre del Equipo *</label>
-                      <input className="input" name="nombre" value={form.nombre} onChange={onFormChange} required placeholder="Ej: Rayo Vallecano"/>
+                      <input className="adm-input" name="nombre" value={form.nombre} onChange={onFormChange} required placeholder="Ej: Rayo Vallecano"/>
                     </div>
-                    <div className="form-row">
+                    <div className="adm-form-row">
                       <label>Color principal</label>
-                      <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                        <input className="input-color" type="color" name="color_principal" value={form.color_principal} onChange={onFormChange} />
-                        <span className="mono" style={{fontSize:'0.8rem'}}>{form.color_principal}</span>
+                      <div style={{display:'flex', gap:'0.5rem', alignItems:'center'}}>
+                        <input className="adm-input-color" type="color" name="color_principal" value={form.color_principal} onChange={onFormChange} />
                       </div>
                     </div>
-                    <div className="form-row">
-                      <label>Imagen de fondo</label>
-                      <select className="input select-input" name="fondo_imagen" value={form.fondo_imagen} onChange={onFormChange}>
+                    <div className="adm-form-row">
+                      <label>Fondo (Imagen)</label>
+                      <select className="adm-input" name="fondo_imagen" value={form.fondo_imagen} onChange={onFormChange}>
                         <option value="">(Sin fondo)</option>
                         {fondos.map(f => <option key={f} value={f}>{f}</option>)}
                       </select>
                     </div>
-                    <div className="form-row" style={{gridColumn:'1 / -1'}}>
+                    <div className="adm-form-row" style={{gridColumn:'1 / -1'}}>
                       <label>Descripción</label>
-                      <textarea className="textarea" name="descripcion" value={form.descripcion} onChange={onFormChange} placeholder="Breve descripción del club..."/>
+                      <textarea className="adm-textarea" name="descripcion" value={form.descripcion} onChange={onFormChange} placeholder="Breve descripción..."/>
                     </div>
                   </div>
                 </div>
 
-                {/* Secciones 2 y 3: SOLO VISIBLES AL EDITAR (No al crear) */}
                 {!isCreating && jugadores.length > 0 && (
                   <>
-                    <div className="section">
-                      <h3>Lanzadores a balón parado</h3>
-                      <div className="form-grid">
-                        <div className="form-row">
+                    <div className="adm-section">
+                      <h3>Lanzadores</h3>
+                      <div className="adm-form-grid">
+                        <div className="adm-form-row">
                           <label>Penaltis</label>
-                          <select className="input select-input" name="id_lanzador_penalti" value={form.id_lanzador_penalti || ''} onChange={onFormChange}>
+                          <select className="adm-input" name="id_lanzador_penalti" value={form.id_lanzador_penalti || ''} onChange={onFormChange}>
                             <option value="">(Ninguno)</option>
-                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}{j.apodo?` (${j.apodo})`:''}</option>)}
+                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}</option>)}
                           </select>
                         </div>
-                        {/* ... Repite para los otros lanzadores ... */}
-                        <div className="form-row">
-                          <label>Faltas lejanas</label>
-                          <select className="input select-input" name="id_lanzador_falta_lejana" value={form.id_lanzador_falta_lejana || ''} onChange={onFormChange}>
+                        <div className="adm-form-row">
+                          <label>Faltas</label>
+                          <select className="adm-input" name="id_lanzador_falta_lejana" value={form.id_lanzador_falta_lejana || ''} onChange={onFormChange}>
                             <option value="">(Ninguno)</option>
-                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}{j.apodo?` (${j.apodo})`:''}</option>)}
+                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}</option>)}
                           </select>
                         </div>
-                         <div className="form-row">
-                          <label>Córners izquierda</label>
-                          <select className="input select-input" name="id_lanzador_corner_izq" value={form.id_lanzador_corner_izq || ''} onChange={onFormChange}>
+                         <div className="adm-form-row">
+                          <label>Córner Izq</label>
+                          <select className="adm-input" name="id_lanzador_corner_izq" value={form.id_lanzador_corner_izq || ''} onChange={onFormChange}>
                             <option value="">(Ninguno)</option>
-                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}{j.apodo?` (${j.apodo})`:''}</option>)}
+                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}</option>)}
                           </select>
                         </div>
-                        <div className="form-row">
-                          <label>Córners derecha</label>
-                          <select className="input select-input" name="id_lanzador_corner_der" value={form.id_lanzador_corner_der || ''} onChange={onFormChange}>
+                        <div className="adm-form-row">
+                          <label>Córner Der</label>
+                          <select className="adm-input" name="id_lanzador_corner_der" value={form.id_lanzador_corner_der || ''} onChange={onFormChange}>
                             <option value="">(Ninguno)</option>
-                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}{j.apodo?` (${j.apodo})`:''}</option>)}
+                            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre}</option>)}
                           </select>
                         </div>
                       </div>
                     </div>
 
-                    <div className="section">
-                      <h3>Plantilla y Dorsales ({jugadores.length} jugadores)</h3>
-                      <div className="roster-grid">
-                        {(jugadores || []).map(j => (
-                          <div key={j.id} className="roster-item">
-                            <div className="roster-left">
-                              <span className="shield small" style={{ background: editing?.color_principal }} />
-                              <div className="roster-name text-truncate" title={j.nombre + (j.apodo?` (${j.apodo})`:'')}>
-                                {j.nombre}{j.apodo?` (${j.apodo})`:''}
-                              </div>
+                    <div className="adm-section">
+                      <h3>Plantilla ({jugadores.length})</h3>
+                      <div className="adm-roster-grid">
+                        {jugadores.map(j => (
+                          <div key={j.id} className="adm-roster-item">
+                            <div className="adm-roster-left">
+                              <span className="adm-shield small" style={{ backgroundColor: editing?.color_principal }} />
+                              <div className="adm-roster-name" title={j.nombre}>{j.nombre}</div>
                             </div>
-                            <div className="roster-right">
-                              <div className="roster-manager">
-                                <span className="roster-label d-md-none text-muted text-uppercase small">Manager</span>
-                                <div className="form-check form-switch mb-0 d-flex justify-content-center">
-                                  <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    role="switch"
-                                    checked={managers[j.id] || false}
-                                    onChange={(e) => handleManagerChange(j.id, e.target.checked)}
-                                    style={{cursor:'pointer'}}
-                                  />
-                                </div>
+                            <div className="adm-roster-right">
+                              <div style={{display:'flex', alignItems:'center', gap:'0.25rem'}}>
+                                <label style={{fontSize:'0.7rem', color:'var(--adm-text-muted)'}}>MGR</label>
+                                <input
+                                  type="checkbox"
+                                  checked={managers[j.id] || false}
+                                  onChange={(e) => handleManagerChange(j.id, e.target.checked)}
+                                  style={{cursor:'pointer'}}
+                                />
                               </div>
-                              <div className="roster-dorsal">
-                                <label className="roster-label">Dorsal</label>
-                                <input className="input dorsal-input" type="number" min={1} max={99} placeholder="#"
-                                  value={(dorsales.find(d=>d.id_jugador===j.id)?.nuevo_dorsal) ?? ''}
-                                  onChange={e=>onDorsalChange(j.id, e.target.value)} />
-                              </div>
+                              <input 
+                                className="adm-input adm-dorsal-input" 
+                                type="number" 
+                                min={1} max={99} 
+                                placeholder="#"
+                                value={(dorsales.find(d=>d.id_jugador===j.id)?.nuevo_dorsal) ?? ''}
+                                onChange={e=>onDorsalChange(j.id, e.target.value)} 
+                              />
                             </div>
                           </div>
                         ))}
@@ -504,14 +480,14 @@ export default function AdminEquipos() {
                 )}
                  
                 {!isCreating && jugadores.length === 0 && (
-                    <div className="alert alert-info" style={{fontSize:'0.9rem'}}>
-                        Este equipo aún no tiene jugadores asignados. Los jugadores deben unirse al equipo para poder asignarles dorsales y roles.
+                    <div className="adm-alert">
+                        Este equipo aún no tiene jugadores asignados.
                     </div>
                 )}
 
-                <div className="modal-footer">
-                  <button type="button" className="btn cancel" onClick={closeModal}>Cancelar</button>
-                  <button type="submit" className="btn save">
+                <div className="adm-modal-footer">
+                  <button type="button" className="adm-btn cancel" onClick={closeModal}>Cancelar</button>
+                  <button type="submit" className="adm-btn save">
                       {isCreating ? "Crear Equipo" : "Guardar Cambios"}
                   </button>
                 </div>
