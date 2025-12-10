@@ -125,9 +125,9 @@
 	margin-left: auto;
 	padding: 0.85rem 1.8rem;
 	border-radius: 999px;
-	border: 1px solid rgba(255,255,255,0.1);
+	border: 1px solid var(--contrast-text-color);
 	background: linear-gradient(120deg, var(--bus-accent), color-mix(in srgb, var(--bus-accent), black 10%));
-	color: #ffffff; /* Siempre blanco para el botón de acento */
+	color: var(--contrast-text-color); /* Siempre blanco para el botón de acento */
 	font-weight: 600;
 	cursor: pointer;
 	/* box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4); */

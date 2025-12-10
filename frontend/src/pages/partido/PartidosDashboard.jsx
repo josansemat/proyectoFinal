@@ -2267,7 +2267,6 @@ function VotacionPanel({
     <div className="card panel-soft h-100 votacion-panel">
       <div className="card-header d-flex justify-content-between align-items-center">
         <span className="fw-semibold">Votaciones</span>
-        <small className="text-muted">Modo: {modo === "manager" ? "Solo manager" : "Todos los jugadores"}</small>
       </div>
       <div className="card-body d-flex flex-column gap-3">
         {!enabled && <div className="alert alert-light border mb-0">Las votaciones se habilitarán una vez el manager las active.</div>}

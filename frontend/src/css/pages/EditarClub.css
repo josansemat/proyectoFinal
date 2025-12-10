@@ -1,193 +1,380 @@
-/* EditarClub.css */
+:root {
+  /* --- SISTEMA MONOCROMÁTICO DINÁMICO --- */
+  
+  /* Bases */
+  --edt-bg: var(--primary-color);
+  --edt-text: var(--contrast-text-color);
 
-/* Wrapper principal para darle un ancho máximo en pantallas muy grandes */
-.editar-club-wrapper {
-    /* max-width: 1100px; */
-    /* Asegura que el formulario quede por encima de la ilustración de fondo */
-    position: relative;
-    /* z-index: 10; */
-}
+  /* Superficies */
+  /* Surface: Fondo + 6% del texto */
+  --edt-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 6%);
+  /* Surface Highlight (Hover/Card): Fondo + 10% del texto */
+  --edt-surface-high: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 10%);
+  /* Input BG: Fondo + 14% del texto */
+  --edt-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 14%);
 
-/* Estilo para el banner oscuro del título */
-.club-title-banner {
-    /* Usamos un color oscuro fijo como en la imagen de referencia */
-    background-color:  var(--primary-color, #212529); 
-    color:var(--contrast-text-color, #ffffff);
-    padding: 1.5rem;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    /* Quitamos margen inferior para que se pegue al formulario */
-    margin-bottom: 0;
-}
-.btn-guardar{
-    color: var(--contrast-text-color, #ffffff);
-    background-color:  var(--primary-color);
-}
-.title-drop{
-    color: #ffffff;
-}
-.club-title-banner h2 {
-    font-weight: 800;
-    letter-spacing: 0.5px;
-}
+  /* Bordes */
+  --edt-border: color-mix(in srgb, var(--contrast-text-color), transparent 88%);
 
-/* Estilos para la tarjeta del formulario */
-.club-form-card {
-    /* Redondeamos solo abajo para que coincida con el banner */
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    /* Forzamos fondo blanco y texto oscuro para legibilidad */
-    background-color: #ffffff !important;
-    color: #212529 !important;
-    gap: 1.5rem;
+  /* Textos secundarios */
+  --edt-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
+  --edt-text-label: color-mix(in srgb, var(--contrast-text-color), transparent 20%);
+
+  /* Acento (Monocromático Invertido) */
+  --edt-accent: var(--contrast-text-color);
+  --edt-accent-fg: var(--primary-color);
+
+  /* Estados Semánticos (Suavizados) */
+  --edt-success: #10b981;
+  --edt-danger: #ef4444;
+  --edt-info: #3b82f6;
+
+  /* Geometría */
+  --edt-radius: 16px;
+  --edt-radius-sm: 10px;
+  --edt-shadow: 0 10px 30px -10px color-mix(in srgb, var(--contrast-text-color), transparent 90%);
 }
 
-/* Etiquetas de formulario más grandes y marcadas */
-.club-form-card .form-label {
-    color: #212529;
+.editar-club-page {
+  position: relative;
+  background-color: var(--edt-bg);
+  color: var(--edt-text);
+  min-height: 100vh;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  padding-bottom: 3rem;
 }
 
-/* Contenedor de la vista previa */
-.preview-container {
+/* --- CABECERA --- */
+.edt-header {
+  margin-bottom: 2rem;
+  background: var(--edt-surface-high);
+  padding: 1.5rem;
+  border-radius: var(--edt-radius);
+  border: 1px solid var(--edt-border);
+  text-align: center;
+  box-shadow: var(--edt-shadow);
+}
+
+.edt-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--contrast-text-color);
+}
+
+/* --- GRID DE FORMULARIO --- */
+.edt-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* --- SECCIONES (TARJETAS) --- */
+.edt-section {
+  background: var(--edt-surface);
+  border: 1px solid var(--edt-border);
+  border-radius: var(--edt-radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  height: 100%; /* Para igualar alturas en grid */
+}
+
+.edt-section-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--edt-text);
+  border-bottom: 1px solid var(--edt-border);
+  padding-bottom: 0.75rem;
+}
+
+/* --- INPUTS Y CAMPOS --- */
+.edt-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edt-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--edt-text-label);
+}
+
+.edt-input,
+.edt-select,
+.edt-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--edt-input-bg);
+  border: 1px solid var(--edt-border);
+  border-radius: var(--edt-radius-sm);
+  padding: 0.75rem 1rem;
+  color: var(--edt-text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.edt-input:focus,
+.edt-select:focus,
+.edt-textarea:focus {
+  border-color: var(--edt-text);
+}
+
+.edt-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Selector de Color */
+.edt-color-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.edt-input-color {
+  width: 50px;
+  height: 42px;
+  padding: 0 0.25rem;
+  background: var(--edt-input-bg);
+  border: 1px solid var(--edt-border);
+  border-radius: var(--edt-radius-sm);
+  cursor: pointer;
+}
+
+/* --- PREVIEW DE IMAGEN --- */
+.edt-preview-box {
+  width: 100%;
+  height: 200px;
+  background: var(--edt-input-bg);
+  border: 2px dashed var(--edt-border);
+  border-radius: var(--edt-radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.edt-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edt-preview-placeholder {
+  color: var(--edt-text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* --- LISTA DE JUGADORES --- */
+.edt-roster-header {
+  display: flex;
+  padding: 0 0.75rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--edt-text-muted);
+  border-bottom: 1px solid var(--edt-border);
+}
+
+.edt-roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem; /* Espacio para scrollbar */
+}
+
+.edt-player-row {
+  display: flex;
+  align-items: center;
+  background: var(--edt-input-bg);
+  border: 1px solid var(--edt-border);
+  border-radius: var(--edt-radius-sm);
+  padding: 0.75rem;
+  justify-content: space-between;
+}
+
+.edt-player-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  overflow: hidden;
+}
+
+.edt-player-shield {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff; /* Siempre blanco para contrastar con el fondo de color */
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.edt-player-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edt-player-apodo {
+  font-size: 0.8rem;
+  color: var(--edt-text-muted);
+  margin-left: 0.4rem;
+}
+
+.edt-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Checkbox Manager */
+.edt-manager-check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.edt-check-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--edt-text-muted);
+}
+.edt-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: black /* Color nativo del checkbox */
+}
+
+/* Input Dorsal */
+.edt-dorsal-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.edt-input-dorsal {
+  width: 50px;
+  text-align: center;
+  padding: 0.4rem;
+  font-weight: 700;
+  background: var(--edt-surface);
+  border: 1px solid var(--edt-border);
+  color: var(--edt-text);
+  border-radius: 6px;
+}
+
+/* --- BOTÓN GUARDAR --- */
+.edt-footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.edt-btn-save {
+  width: 100%;
+  max-width: 400px;
+  background: var(--edt-accent);
+  color: var(--edt-accent-fg);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.edt-btn-save:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+.edt-btn-save:active {
+  transform: translateY(0);
+}
+
+/* --- MENSAJES --- */
+.edt-alert {
+  padding: 1rem;
+  border-radius: var(--edt-radius-sm);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+.edt-alert.success {
+  background: color-mix(in srgb, var(--edt-success), transparent 85%);
+  color: var(--edt-success);
+  border: 1px solid color-mix(in srgb, var(--edt-success), transparent 70%);
+}
+.edt-alert.error {
+  background: color-mix(in srgb, var(--edt-danger), transparent 85%);
+  color: var(--edt-danger);
+  border: 1px solid color-mix(in srgb, var(--edt-danger), transparent 70%);
+}
+.edt-alert.info {
+  background: color-mix(in srgb, var(--edt-info), transparent 85%);
+  color: var(--edt-info);
+  border: 1px solid color-mix(in srgb, var(--edt-info), transparent 70%);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .edt-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .edt-roster-header {
+    display: none; /* Ocultar cabecera en móvil, usar etiquetas inline */
+  }
+  
+  .edt-player-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .edt-player-info {
     width: 100%;
-    max-width: 500px; /* Ancho máximo para que no se deforme demasiado */
-    height: 280px; /* Altura fija considerablemente mayor */
-    border: 3px solid #fff; /* Efecto marco blanco */
-    border-radius: 8px;
-    background-color: #fff;
-    overflow: hidden;
-    /* Sombra suave para el efecto "polaroid" pegada */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* La imagen dentro de la vista previa */
-.preview-image {
+    border-bottom: 1px solid var(--edt-border);
+    padding-bottom: 0.5rem;
+  }
+  
+  .edt-player-controls {
     width: 100%;
-    height: 100%;
-    object-fit: cover; /* Asegura que la imagen llene el cuadro sin estirarse feo */
-}
-
-/* Transición suave para el botón */
-.btn-guardar {
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn-guardar:hover {
-    filter: brightness(110%) contrast(110%);
-    transform: translateY(-2px);
-}
-
-/* Button sizing: default (mobile-first) and larger on desktop */
-.btn-guardar {
-    padding: 0.6rem 0.9rem;
-    font-size: 1rem;
-    border-radius: 10px;
-}
-
-@media (min-width: 768px) {
-    .btn-guardar {
-        padding: 0.9rem 1.1rem;
-        font-size: 1.05rem;
-    }
-}
-
-@media (min-width: 992px) {
-    .btn-guardar {
-        padding: 1.05rem 1.25rem;
-        font-size: 1.125rem;
-    }
-}
-
-.player-list {
-    scrollbar-gutter: stable both-edges;
-}
-
-.player-row__label {
-    display: none;
-}
-
-.player-row__manager .form-check,
-.player-row__number input {
-    max-width: 110px;
-}
-
-/* RESPONSIVE: Ajustes para móviles */
-@media (max-width: 991.98px) {
-    /* En tablets y móviles, la altura de la preview puede ser menor */
-    .preview-container {
-        height: 200px;
-    }
-    
-    /* El textarea no necesita ser tan alto en móvil */
-    textarea[name="descripcion"] {
-        height: 120px !important;
-    }
-}
-
-@media (max-width: 767.98px) {
-    .editar-club-wrapper {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-    }
-
-    .club-title-banner {
-        border-radius: 12px;
-        padding: 1rem;
-        text-align: center;
-    }
-
-    .club-form-card {
-        padding: 1.5rem 1rem;
-        gap: 1rem;
-    }
-
-    .preview-container {
-        max-width: 100%;
-        height: 170px;
-    }
-
-    .roster-header {
-        display: none !important;
-    }
-
-    .player-list {
-        max-height: none !important;
-    }
-
-    .player-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.85rem;
-    }
-
-    .player-row__info {
-        order: 1;
-    }
-
-    .player-row__manager,
-    .player-row__number {
-        width: 100% !important;
-        align-items: flex-start;
-        justify-content: flex-start;
-    }
-
-    .player-row__manager .form-check {
-        margin-left: 0;
-    }
-
-    .player-row__number input {
-        max-width: 100%;
-    }
-
-    .player-row__label {
-        display: block;
-    }
-
-    .btn-guardar {
-        font-size: 1rem;
-    }
+    justify-content: space-between;
+  }
+  
+  .edt-manager-check, .edt-dorsal-wrapper {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+  
+  .edt-check-label, .edt-dorsal-label {
+    font-size: 0.8rem;
+    display: block; /* Mostrar etiquetas en móvil */
+  }
 }

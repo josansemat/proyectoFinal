@@ -310,19 +310,19 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
               className={`tab-btn ${activeTab === "datos" ? "active" : ""}`}
               onClick={() => setActiveTab("datos")}
             >
-              <UserIcon /> Datos
+              <UserIcon /> 
             </button>
             <button
               className={`tab-btn ${activeTab === "seguridad" ? "active" : ""}`}
               onClick={() => setActiveTab("seguridad")}
             >
-              <ShieldIcon /> Seguridad
+              <ShieldIcon /> 
             </button>
             <button
               className={`tab-btn ${activeTab === "notificaciones" ? "active" : ""}`}
               onClick={() => setActiveTab("notificaciones")}
             >
-              <BellIcon /> Alertas
+              <BellIcon /> 
             </button>
           </div>
 
