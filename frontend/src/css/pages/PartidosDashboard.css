@@ -166,8 +166,8 @@
   margin-top: 1.5rem;
   padding: 1.25rem;
   border-radius: 18px;
-  background: var(--primary-color);
-  color: var(--contrax-color-primary, #fff);
+  border: solid 1px var(--primary-color);
+  color: var(--contrax-color-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
