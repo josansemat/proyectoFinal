@@ -398,8 +398,22 @@ function PartidosDashboard({ user, currentTeam }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || "No se pudo guardar el partido");
+      const raw = await response.text();
+      let data = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch (parseErr) {
+          console.warn("Respuesta no JSON al guardar partido", raw);
+        }
+      }
+      if (!response.ok) {
+        const errorMessage = data?.error || raw || `Error HTTP ${response.status}`;
+        throw new Error(errorMessage);
+      }
+      if (!data || data.success === false) {
+        throw new Error(data?.error || "No se pudo guardar el partido");
+      }
       const newId = !editingId ? Number(data.id) : null;
       setMessage({ type: "success", text: editingId ? "Partido actualizado" : "Partido creado" });
       resetForm();
