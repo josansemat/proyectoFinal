@@ -149,3 +149,16 @@
     max-width: 16vw;
   }
 }
+
+.btnpp {
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-primarypp {
+  background-color: var(--primary-color);
+  color: var(--contrast-text-color);
+  border: none;
+}

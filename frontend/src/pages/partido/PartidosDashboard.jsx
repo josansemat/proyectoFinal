@@ -1058,7 +1058,7 @@ function PartidosDashboard({ user, currentTeam }) {
             )}
             <button
               type="button"
-              className="button button--primary"
+              className="button btn-primary-custom"
               disabled={!canManagePartidos}
               onClick={() => setIsFormOpen((prev) => !prev)}
             >
@@ -1080,7 +1080,7 @@ function PartidosDashboard({ user, currentTeam }) {
 
         {proximo && (
           <div className="match-highlight">
-            <div>
+            <div class="pepe">
               <p className="match-highlight__label">Próximo partido</p>
               <h2>{proximo.lugar_nombre}</h2>
               <p>{formatDate(proximo.fecha_hora)}</p>

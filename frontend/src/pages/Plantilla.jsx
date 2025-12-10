@@ -310,16 +310,16 @@ function Plantilla({ user, currentTeam }) {
           <div className="card shadow-sm">
             <div className="card-body d-flex flex-wrap gap-3 align-items-end">
               <div>
-                <label className="form-label mb-1">Modalidad</label>
-                <select className="form-select" value={mode} onChange={handleChangeMode}>
+                <label className="form-label mb-1 p-2">Modalidad</label>
+                <select className="form-select px-5" value={mode} onChange={handleChangeMode}>
                   <option value="11">Fútbol 11</option>
                   <option value="7">Fútbol 7</option>
-                  <option value="5">Fútbol Sala (5)</option>
+                  <option value="5">Fútbol 5</option>
                 </select>
               </div>
 
               <div>
-                <label className="form-label mb-1">Formación</label>
+                <label className="form-label mb-1 p-2">Formación</label>
                 <select className="form-select" value={formation} onChange={handleChangeFormation}>
                   {FORMATIONS[mode].map((f) => (
                     <option key={f.value} value={f.value}>{f.value}</option>
@@ -329,7 +329,7 @@ function Plantilla({ user, currentTeam }) {
 
               <div className="ms-auto d-flex gap-2">
                 <button className="btn btn-outline-secondary" onClick={handleReset}>Reiniciar</button>
-                <button className="btn btn-primary" onClick={handleSave}>Guardar</button>
+                <button className="btn btn-primarypp" onClick={handleSave}>Guardar</button>
               </div>
             </div>
             {saveMsg.text && (

@@ -1,9 +1,9 @@
 :root {
   --rk-bg: #0f172a;           /* Fondo principal muy oscuro */
-  --rk-surface: #1e293b;      /* Color de las tarjetas */
+  --rk-surface: var(--primary-color);      /* Color de las tarjetas */
   --rk-surface-highlight: #334155; 
-  --rk-text-main: #f8fafc;    /* Blanco casi puro */
-  --rk-text-muted: #94a3b8;   /* Gris azulado */
+  --rk-text-main: var(--contrast-text-color);    /* Blanco casi puro */
+  --rk-text-muted: var(--contrast-text-color); /* Gris azulado */
   --rk-accent: #3b82f6;       /* Azul eléctrico */
   --rk-gold: #fbbf24;         /* Oro */
   --rk-gold-dim: rgba(251, 191, 36, 0.15);
@@ -13,12 +13,19 @@
 }
 
 .ranking-page {
-  background-color: #0f172a;
+  background-color:var(--primary-color);
   color: var(--rk-text-main);
   min-height: 100vh;
   padding: 1.5rem;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+.ranking-page span{
+  color: white;
+}
+
+
+
 
 /* --- Header --- */
 .ranking-header {
@@ -83,6 +90,7 @@
   flex-direction: column;
   justify-content: center;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  width: 20%;
 }
 
 .stat-value {
@@ -251,7 +259,7 @@
 
 .position-card__info small {
   display: block;
-  color: var(--rk-text-muted);
+  color:white;
   font-size: 0.72rem;
 }
 
@@ -315,7 +323,7 @@
 }
 
 .skill-card__info small {
-  color: var(--rk-text-muted);
+  color: white;
   font-size: 0.7rem;
 }
 
@@ -460,7 +468,7 @@
 .ranking-score-box small {
   font-size: 0.55rem;
   letter-spacing: 0.1em;
-  color: var(--rk-text-muted);
+  color: white;
   margin-bottom: 2px;
 }
 
@@ -529,4 +537,9 @@
   .ranking-score-box strong {
     font-size: 1.1rem;
   }
+}
+
+
+.header-meta span{
+  color: var(--rk-text-muted);
 }
