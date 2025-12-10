@@ -1080,7 +1080,7 @@ function PartidosDashboard({ user, currentTeam }) {
 
         {proximo && (
           <div className="match-highlight">
-            <div class="pepe">
+            <div className="match-highlight__summary">
               <p className="match-highlight__label">Próximo partido</p>
               <h2>{proximo.lugar_nombre}</h2>
               <p>{formatDate(proximo.fecha_hora)}</p>
