@@ -472,7 +472,7 @@ function Bus() {
     <div className="bus-page">
       <header className="bus-hero">
         <div>
-          <p className="eyebrow">Movilidad Urbana</p>
+          <span className="eyebrow">Movilidad Urbana</span>
           <h1>Planifica tu viaje en bus</h1>
           <p>Encuentra paradas cercanas, calcula horarios y explora el mapa de lineas oficiales.</p>
         </div>
@@ -623,7 +623,7 @@ function Bus() {
           <span className="section-number">03</span>
           <div>
             <h2>Calcular parada por coordenadas</h2>
-            <p>Introduce latitud y longitud manualmente (ej: 37.1879, -5.7855) para ver la parada y línea más cercanas.</p>
+            <p>Introduce latitud y longitud manualmente para ver la parada más cercana.</p>
           </div>
         </div>
 
@@ -720,17 +720,6 @@ function Bus() {
           </div>
         )}
       </section>
-
-      {/* <section className="bus-section">
-        <div className="section-header">
-          <span className="section-number">03</span>
-          <div>
-            <h2>Mapa de lineas</h2>
-            <p>Proximamente integraremos un mapa interactivo. De momento veras la referencia visual.</p>
-          </div>
-        </div>
-        <div className="map-placeholder">Imagen</div>
-      </section> */}
     </div>
   );
 }

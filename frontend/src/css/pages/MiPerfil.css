@@ -1,25 +1,49 @@
 :root {
-  --bg-app: #0f172a;           /* Fondo principal */
-  --bg-surface: #1e293b;       /* Tarjetas */
-  --bg-input: #020617;         /* Inputs */
-  --text-main: #f8fafc;        /* Texto blanco */
-  --text-muted: #cbd5ff;       /* Texto secundario con mayor contraste */
-  --text-muted-strong: #e2e8ff;/* Texto suave pero legible */
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #3b82f6;           /* Azul eléctrico */
-  --accent-hover: #2563eb;
-  --danger: #ef4444;
-  --success: #10b981;
-  --gold: #fbbf24;
-  --radius: 16px;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  /* --- BASES DEL SISTEMA --- */
+  --prf-bg: var(--primary-color);
+  --prf-text: var(--contrast-text-color);
+
+  /* --- GENERACIÓN AUTOMÁTICA DE TONOS (Sin Azul) --- */
+  
+  /* Superficie: Fondo + 7% del color de texto */
+  --prf-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 7%);
+  
+  /* Inputs: Fondo + 12% del color de texto */
+  --prf-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 12%);
+
+  /* Bordes: Texto + mucha transparencia */
+  --prf-border: color-mix(in srgb, var(--contrast-text-color), transparent 85%);
+
+  /* Textos secundarios (Grises generados a partir del color de texto principal) */
+  --prf-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
+  --prf-text-soft: color-mix(in srgb, var(--contrast-text-color), transparent 20%);
+
+  /* --- ACENTO MONOCROMÁTICO --- */
+  /* El acento es el propio color de contraste (Blanco en dark mode, Negro en light mode) */
+  --prf-accent: var(--contrast-text-color); 
+  
+  /* El texto DENTRO de un botón de acento debe ser del color del fondo para que se lea */
+  --prf-accent-fg: var(--primary-color);
+
+  /* Hover del acento: El color de texto con un poco de transparencia */
+  --prf-accent-hover: color-mix(in srgb, var(--contrast-text-color), transparent 20%);
+
+  /* Colores funcionales (Semánticos indispensables, pero planos) */
+  --prf-danger: #ef4444;
+  --prf-success: #10b981;
+  --prf-gold: #fbbf24;
+  
+  --prf-radius: 16px;
+  --prf-shadow: 0 4px 20px -5px color-mix(in srgb, var(--contrast-text-color), transparent 95%);
 }
 
 .perfil-page {
   min-height: 100vh;
   padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  /* background-color: var(--prf-bg); */
+  color: var(--prf-text);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* --- Header --- */
@@ -27,51 +51,34 @@
   margin-bottom: 2rem;
   text-align: center;
 }
-.perfil-header h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.02em;
-}
-.perfil-header p {
-  color: var(--text-muted);
-  margin: 0;
-}
 
-/* --- Grid Layout --- */
+/* --- Layout Grid --- */
 .perfil-grid {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 @media (min-width: 992px) {
   .perfil-grid {
     display: grid;
-    grid-template-columns: 350px 1fr; /* Sidebar fija, contenido flexible */
+    grid-template-columns: 320px 1fr;
     align-items: start;
   }
 }
 
-/* --- Profile Card (Left Panel) --- */
+/* --- Profile Card (Izquierda) --- */
 .profile-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--prf-surface);
+  border: 1px solid var(--prf-border);
+  border-radius: var(--prf-radius);
   padding: 2rem;
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow);
-}
-
-/* Fondo decorativo sutil en la tarjeta */
-.profile-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 120px;
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.1), transparent);
-  pointer-events: none;
+  box-shadow: var(--prf-shadow);
 }
 
 .avatar-container {
@@ -85,27 +92,29 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  /* FONDO PLANO: Usamos la superficie un poco más clara/oscura en vez de gradiente azul */
+  background: var(--prf-input-bg);
+  border: 2px solid var(--prf-text); /* Borde sólido del color de texto */
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2.5rem;
   font-weight: 700;
-  color: white;
+  color: var(--prf-text);
   position: relative;
   z-index: 2;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 0 4px var(--prf-surface); /* Anillo falso */
 }
 
 .profile-name {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0 0 0.25rem 0;
-  color: var(--text-main);
+  color: var(--prf-text);
 }
 
 .profile-nickname {
-  color: var(--text-muted-strong);
+  color: var(--prf-text-muted);
   font-size: 0.95rem;
   margin: 0 0 1.5rem 0;
 }
@@ -117,19 +126,33 @@
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 1rem 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--prf-border);
+  border-bottom: 1px solid var(--prf-border);
 }
 
 .stat-box {
   flex: 1;
 }
 
-.stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted-strong); margin-bottom: 0.25rem; }
-.stat-value { font-size: 1.25rem; font-weight: 800; color: var(--text-main); line-height: 1.2; }
-.stat-sub { font-size: 0.7rem; color: var(--text-muted); }
-.text-accent { color: var(--accent); }
-.stat-stars { color: var(--gold); font-size: 0.8rem; margin-top: 2px; }
+.stat-label { 
+  font-size: 0.75rem; 
+  text-transform: uppercase; 
+  color: var(--prf-text-muted); 
+  margin-bottom: 0.25rem; 
+  font-weight: 600;
+}
+.stat-value { 
+  font-size: 1.25rem; 
+  font-weight: 800; 
+  color: var(--prf-text); 
+  line-height: 1.2; 
+}
+.stat-sub { 
+  font-size: 0.7rem; 
+  color: var(--prf-text-muted); 
+}
+.text-accent { color: var(--prf-accent); }
+.stat-stars { color: var(--prf-gold); font-size: 0.8rem; margin-top: 4px; }
 
 /* Details List */
 .profile-details {
@@ -145,7 +168,8 @@
   font-size: 0.9rem;
 }
 
-.detail-row span:first-child { color: var(--text-muted-strong); }
+.detail-row span:first-child { color: var(--prf-text-muted); }
+.detail-row strong { color: var(--prf-text); }
 
 .badge {
   padding: 0.25rem 0.75rem;
@@ -154,25 +178,35 @@
   font-weight: 600;
   text-transform: uppercase;
 }
-.badge-role { background: rgba(255,255,255,0.1); color: var(--text-main); }
-.badge-number { background: var(--bg-input); border: 1px solid var(--border); color: var(--accent); font-family: monospace; }
+.badge-role { 
+  background: var(--prf-input-bg);
+  color: var(--prf-text); 
+  border: 1px solid var(--prf-border);
+}
+.badge-number { 
+  background: var(--prf-surface); 
+  border: 1px solid var(--prf-text); 
+  color: var(--prf-text); 
+  font-family: monospace; 
+}
 
-/* --- Settings Panel (Right Panel) --- */
+/* --- Settings Panel (Derecha) --- */
 .settings-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--prf-surface);
+  border: 1px solid var(--prf-border);
+  border-radius: var(--prf-radius);
   overflow: hidden;
-  box-shadow: var(--shadow);
+  box-shadow: var(--prf-shadow);
   display: flex;
   flex-direction: column;
 }
 
+/* Tabs */
 .settings-tabs {
   width: 100%;
   display: flex;
-  background: rgba(0,0,0,0.2);
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--prf-bg), transparent 50%);
+  border-bottom: 1px solid var(--prf-border);
   padding: 0 1rem;
   overflow-x: auto;
 }
@@ -180,23 +214,25 @@
 .tab-btn {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--prf-text-muted);
   padding: 1.25rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-bottom: 2px solid transparent;
+  gap: 0.6rem;
+  border-bottom: 3px solid transparent;
   transition: all 0.2s;
   white-space: nowrap;
 }
 
-.tab-btn:hover { color: var(--text-main); }
+.tab-btn:hover { color: var(--prf-text); }
+
+/* Tab Activa: Usamos el color de texto como indicador (estilo monocromo) */
 .tab-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: var(--prf-text);
+  border-bottom-color: var(--prf-text);
 }
 
 .settings-content {
@@ -214,25 +250,25 @@
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.85rem;
-  color: var(--text-muted-strong);
-  font-weight: 500;
+  color: var(--prf-text-soft);
+  font-weight: 600;
 }
 
 .form-input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--prf-input-bg);
+  border: 1px solid var(--prf-border);
+  border-radius: 10px;
   padding: 0.75rem 1rem;
-  color: var(--text-main);
+  color: var(--prf-text);
   font-size: 1rem;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--prf-text); /* Focus en el color de texto principal */
 }
 
 .row-2-col {
@@ -241,78 +277,99 @@
   gap: 1rem;
 }
 
-/* Buttons */
+/* Botones y Acciones */
 .form-actions { margin-top: 2rem; }
 
+/* Botón Primario INVERTIDO: Fondo texto, Texto fondo */
 .btn-primary {
-  background: var(--accent);
-  color: white;
-  border: none;
+  background: var(--prf-accent); 
+  color: var(--contrast-text-color);
+  border: 1px solid var(--prf-accent);
   padding: 0.85rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: opacity 0.2s, transform 0.1s;
   width: 100%;
 }
-.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:hover { 
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
 
 .btn-danger {
-  background: var(--danger);
+  background: var(--prf-danger);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-outline-danger {
   background: transparent;
-  border: 1px solid var(--danger);
-  color: var(--danger);
+  border: 1px solid var(--prf-danger);
+  color: var(--prf-danger);
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
-.btn-outline-danger:hover { background: var(--danger); color: white; }
+.btn-outline-danger:hover { background: var(--prf-danger); color: white; }
 
 .btn-text {
   background: transparent;
   border: none;
-  color: var(--text-muted-strong);
+  color: var(--prf-text-muted);
   cursor: pointer;
+  text-decoration: underline;
 }
-.btn-text:hover { color: var(--text-main); }
+.btn-text:hover { color: var(--prf-text); }
 
 .btn-sm { font-size: 0.85rem; padding: 0.4rem 0.8rem; }
 
 /* Alerts */
 .alert-msg {
-  padding: 0.75rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
   font-size: 0.9rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
 }
-.alert-msg.success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-.alert-msg.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+.alert-msg.success { 
+  background: color-mix(in srgb, var(--prf-success), transparent 90%); 
+  color: var(--prf-success); 
+  border: 1px solid var(--prf-success); 
+}
+.alert-msg.error { 
+  background: color-mix(in srgb, var(--prf-danger), transparent 90%); 
+  color: var(--prf-danger); 
+  border: 1px solid var(--prf-danger); 
+}
 
-/* Danger Zone */
+/* Security / Danger Zone */
+.security-section {
+    display: flex;
+    flex-direction: column;
+}
+
 .danger-zone {
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px dashed var(--border);
+  border-top: 2px dashed var(--prf-border);
 }
 
 .section-title {
   font-size: 1.1rem;
   margin: 0 0 1rem 0;
-  font-weight: 600;
-  color: var(--text-main);
+  font-weight: 700;
+  color: var(--prf-text);
 }
-.text-danger { color: var(--danger); }
+.text-danger { color: var(--prf-danger); }
 
 .teams-list {
   display: flex;
@@ -324,35 +381,34 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0,0,0,0.2);
+  background: var(--prf-input-bg);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: 10px;
+  border: 1px solid var(--prf-border);
 }
 
-.team-name { font-weight: 500; font-size: 0.95rem; }
+.team-name { font-weight: 600; font-size: 0.95rem; color: var(--prf-text); }
 .confirm-actions { display: flex; gap: 0.5rem; align-items: center; }
 
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: var(--text-muted-strong);
-}
-.empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-
+/* Notifications Panel */
 .notifications-panel {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  color: var(--prf-text);
 }
 
 .notif-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--prf-input-bg);
+  border: 1px solid var(--prf-border);
+  border-radius: var(--prf-radius);
   padding: 1.5rem;
-  box-shadow: var(--shadow);
+}
+
+.notif-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--prf-text);
 }
 
 .notif-card__header {
@@ -362,95 +418,63 @@
   gap: 1rem;
   margin-bottom: 1rem;
 }
-.pp{
-  color: white;
-}
 
 .status-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   margin-top: 0.35rem;
-  background: var(--danger);
-  box-shadow: 0 0 8px rgba(0,0,0,0.35);
+  background: var(--prf-danger);
+  box-shadow: 0 0 0 2px var(--prf-surface);
 }
 .status-dot.on {
-  background: var(--success);
-  box-shadow: 0 0 12px rgba(16,185,129,0.6);
+  background: var(--prf-success);
+  box-shadow: 0 0 0 2px var(--prf-surface);
 }
 
+/* Toggle Button Monocromático */
 .toggle-button {
-  border: 1px solid var(--accent);
+  border: 1px solid var(--prf-text);
   background: transparent;
-  color: var(--accent);
-  padding: 0.85rem 1.25rem;
+  color: var(--prf-text);
+  padding: 0.75rem 1.5rem;
   border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  width: fit-content;
 }
 .toggle-button.active {
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 10px 20px rgba(59,130,246,0.25);
+  background: var(--prf-text);
+  color: var(--prf-bg); /* Invertido */
 }
 .toggle-button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.text-muted.small {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-.text-muted.tiny {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
+/* Utilities */
+.text-muted { color: var(--prf-text-muted); }
+.text-muted.small { font-size: 0.85rem; }
+.text-muted.tiny { font-size: 0.75rem; }
 .mb-3 { margin-bottom: 1rem; }
 .mt-2 { margin-top: 0.5rem; }
-/* Mobile Optimizations - MiPerfil.css */
+.pp { color: var(--prf-text-muted); }
+
+/* Mobile */
 @media (max-width: 768px) {
   .perfil-page {
-    padding: 1rem 0.75rem; /* Reducimos padding lateral */
-    width: 100%;
-    overflow-x: hidden; /* Seguridad extra */
+    padding: 1rem 0.75rem;
   }
-
-  /* Forzamos que la grid no sea más ancha que la pantalla */
   .perfil-grid {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 100%;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
-
-  /* Ajuste de las pestañas para que no empujen el ancho */
-  .settings-tabs {
-    width: 100%;
-    max-width: 100vw; /* Asegura que no pase del viewport */
-    padding: 0 0.5rem;
-  }
-  
-  .tab-btn {
-    padding: 1rem; /* Botones un poco más compactos */
-    font-size: 0.9rem;
-  }
-  
-  /* Ajuste de inputs para que no se salgan */
   .row-2-col {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 1rem;
   }
-  
-  /* Inputs al 100% real del contenedor padre */
-  .form-input {
-    width: 100%;
-    min-width: 0; /* Truco flexbox para evitar desbordes */
+  .tab-btn {
+    padding: 1rem;
+    font-size: 0.85rem;
   }
-}
-
-.notifications-panel{
-  color: white;
 }

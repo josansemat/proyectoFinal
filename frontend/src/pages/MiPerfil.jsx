@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from "react";
 import { registerPushToken, deregisterPushToken } from "../services/pushNotifications";
 import "../css/pages/MiPerfil.css";
 
-// Iconos simples SVG
 const UserIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const ShieldIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 const BellIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
@@ -30,6 +29,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
   const [greetingLoading, setGreetingLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
     nombre: user?.nombre || "",
     apodo: user?.apodo || "",
@@ -194,7 +194,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
           setNotificationsEnabled(true);
           setNotifStatus({ type: "success", text: "Notificaciones activadas" });
         } else {
-          setNotifStatus({ type: "error", text: "No se pudo activar. Revisa los permisos del navegador." });
+          setNotifStatus({ type: "error", text: "No se pudo activar. Revisa los permisos." });
         }
       } else {
         await deregisterPushToken();
@@ -238,7 +238,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
         try {
           data = JSON.parse(raw);
         } catch (parseErr) {
-          console.warn("Respuesta no JSON del backend al enviar notificación", raw);
+          console.warn("Respuesta no JSON", raw);
         }
       }
 
@@ -263,16 +263,12 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
 
   return (
     <div className="perfil-page">
-      <header className="perfil-header">
-      </header>
-
       <div className="perfil-grid">
-        {/* Panel Izquierdo: Ficha Estilo "Carta de Jugador" */}
+        {/* Panel Izquierdo */}
         <aside className="profile-card">
           <div className="profile-card__header">
             <div className="avatar-container">
               <div className="avatar">{initials}</div>
-              <div className="avatar-ring"></div>
             </div>
             <h2 className="profile-name">{user?.nombre || "Jugador"}</h2>
             <p className="profile-nickname">{user?.apodo || "Sin apodo"}</p>
@@ -307,26 +303,26 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
           </div>
         </aside>
 
-        {/* Panel Derecho: Tabs y Formularios */}
+        {/* Panel Derecho */}
         <main className="settings-panel">
           <div className="settings-tabs">
             <button
               className={`tab-btn ${activeTab === "datos" ? "active" : ""}`}
               onClick={() => setActiveTab("datos")}
             >
-              <UserIcon /> 
+              <UserIcon /> Datos
             </button>
             <button
               className={`tab-btn ${activeTab === "seguridad" ? "active" : ""}`}
               onClick={() => setActiveTab("seguridad")}
             >
-              <ShieldIcon /> 
+              <ShieldIcon /> Seguridad
             </button>
             <button
               className={`tab-btn ${activeTab === "notificaciones" ? "active" : ""}`}
               onClick={() => setActiveTab("notificaciones")}
             >
-              <BellIcon /> 
+              <BellIcon /> Alertas
             </button>
           </div>
 
@@ -379,14 +375,14 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                 )}
 
                 <div className="form-actions">
-                  <button className="btn-primary" type="submit">Guardar Cambios</button>
+                  <button className="btn-primary-custom" type="submit">Guardar Cambios</button>
                 </div>
               </form>
             )}
 
             {activeTab === "seguridad" && (
               <div className="security-section">
-                <form className="settings-form mb-4" onSubmit={handleChangePassword}>
+                <form className="settings-form mb-3" onSubmit={handleChangePassword}>
                   <h3 className="section-title">Cambiar Contraseña</h3>
                   <div className="form-group">
                     <label>Contraseña Actual</label>
@@ -410,13 +406,13 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                   )}
                   
                   <div className="form-actions">
-                    <button className="btn-primary" type="submit">Actualizar Password</button>
+                    <button className="btn-primary-custom" type="submit">Actualizar Password</button>
                   </div>
                 </form>
 
                 <div className="danger-zone">
                   <h3 className="section-title text-danger">Zona de Peligro</h3>
-                  <p className="pp small mb-3">Gestiona tu salida de los equipos a los que perteneces.</p>
+                  <p className="text-muted small mb-3">Gestiona tu salida de los equipos a los que perteneces.</p>
                   
                   {abandonMsg.text && (
                     <div className={`alert-msg ${abandonMsg.type} mb-3`}>
@@ -456,7 +452,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                       ))}
                     </div>
                   ) : (
-                    <div className=" small italic">No perteneces a ningún equipo actualmente.</div>
+                    <div className="text-muted small italic">No perteneces a ningún equipo actualmente.</div>
                   )}
                 </div>
               </div>
@@ -468,7 +464,7 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
                   <div className="notif-card__header">
                     <div>
                       <h3>Alertas push</h3>
-                      <p className=" small">Activa las notificaciones para enterarte de nuevos partidos o avisos del manager.</p>
+                      <p className="text-muted small">Activa las notificaciones para enterarte de nuevos partidos o avisos del manager.</p>
                     </div>
                     <span className={`status-dot ${notificationsEnabled ? "on" : "off"}`}></span>
                   </div>
@@ -483,9 +479,9 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
 
                 <div className="notif-card">
                   <h3>Saludar al equipo</h3>
-                  <p className=" small mb-3">Enviará una notificación instantánea a todos los miembros del equipo seleccionado.</p>
+                  <p className="text-muted small mb-3">Enviará una notificación instantánea a todos los miembros del equipo seleccionado.</p>
                   <button
-                    className="btn-primary"
+                    className="btn-primary-custom"
                     onClick={sendGreeting}
                     disabled={greetingLoading || !currentTeam?.id}
                   >

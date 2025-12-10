@@ -13,7 +13,7 @@ const trendLabel = (trend) => {
     return "—";
   }
   const numeric = Number(trend);
-  const prefix = numeric > 0 ? "▲" : numeric < 0 ? "▼" : ""; // Usamos flechas para mejor visual
+  const prefix = numeric > 0 ? "▲" : numeric < 0 ? "▼" : "";
   return `${prefix} ${Math.abs(numeric).toFixed(1)}`;
 };
 
@@ -135,6 +135,7 @@ function Ranking({ user, currentTeam }) {
 
   const maxScoreRelative = ranking.length ? ranking[0].score_relative ?? 100 : 100;
 
+  // Render Helpers
   const renderHighlightCard = (card) => {
     const player = card.player;
     const name = player?.apodo || player?.nombre || "—";
@@ -248,25 +249,23 @@ function Ranking({ user, currentTeam }) {
   };
 
   if (!user) return null;
-  if (!currentTeam) return <div className="ranking-empty">Selecciona un club</div>;
-
-  const topPerformer = ranking[0];
-  const restPlayers = ranking.slice(1);
+  if (!currentTeam) return <div className="ranking-page"><div className="ranking-empty">Selecciona un club</div></div>;
 
   return (
     <div className="ranking-page">
       <header className="ranking-header">
         <div className="header-content">
+          <h1>Ranking del Club</h1>
           <div className="header-meta">
             <span>Actualizado: {lastUpdatedLabel}</span>
           </div>
         </div>
-        <button className="btn-icon-refresh" onClick={fetchRanking} disabled={loading}>
-            {loading ? "↻" : "⟳"}
+        <button className="btn-icon-refresh" onClick={fetchRanking} disabled={loading} title="Actualizar datos">
+            {loading ? "..." : "⟳"}
         </button>
       </header>
 
-      {error && <div className="ranking-alert error">{error}</div>}
+      {error && <div className="ranking-alert">{error}</div>}
 
       <div className="ranking-stats-grid">
         {metricCards.map((c) => (
@@ -307,11 +306,8 @@ function Ranking({ user, currentTeam }) {
         <div className="ranking-empty">No hay datos suficientes aún.</div>
       )}
 
-      {/* Renderizamos la lista completa, pero el primero tiene estilo especial si quieres, 
-          o simplemente usamos la lista unificada para mayor elegancia y consistencia */}
       <section className="ranking-list">
-        {topPerformer && renderPlayerCard(topPerformer, true)}
-        {restPlayers.map((player) => renderPlayerCard(player, false))}
+        {ranking.map((player, index) => renderPlayerCard(player, index === 0))}
       </section>
     </div>
   );
