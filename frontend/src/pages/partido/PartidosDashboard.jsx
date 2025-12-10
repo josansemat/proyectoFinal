@@ -401,20 +401,26 @@ function PartidosDashboard({ user, currentTeam }) {
       const raw = await response.text();
       let data = null;
       if (raw) {
-        try {
-          data = JSON.parse(raw);
-        } catch (parseErr) {
-          console.warn("Respuesta no JSON al guardar partido", raw);
+        const trimmed = raw.trim();
+        if (trimmed) {
+          try {
+            data = JSON.parse(trimmed);
+          } catch (parseErr) {
+            console.warn("Respuesta no JSON al guardar partido", trimmed);
+            data = { success: response.ok, message: trimmed };
+          }
         }
       }
       if (!response.ok) {
         const errorMessage = data?.error || raw || `Error HTTP ${response.status}`;
         throw new Error(errorMessage);
       }
-      if (!data || data.success === false) {
-        throw new Error(data?.error || "No se pudo guardar el partido");
+      const successFlag = data?.success;
+      const isSuccess = successFlag === undefined ? true : Boolean(successFlag);
+      if (!isSuccess) {
+        throw new Error(data?.error || data?.message || "No se pudo guardar el partido");
       }
-      const newId = !editingId ? Number(data.id) : null;
+      const newId = !editingId ? Number(data?.id) || null : null;
       setMessage({ type: "success", text: editingId ? "Partido actualizado" : "Partido creado" });
       resetForm();
       setIsFormOpen(false);
@@ -1214,6 +1220,7 @@ function PartidosDashboard({ user, currentTeam }) {
                   <label htmlFor="precio_total_pista">Precio total (€)</label>
                   <input
                     id="precio_total_pista"
+                    
                     type="number"
                     step="0.01"
                     name="precio_total_pista"
