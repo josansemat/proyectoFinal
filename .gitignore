@@ -6,4 +6,3 @@
 # These files contain secrets, API keys, and environment-specific settings
 .env
 **/firebase-credentials.json
-**/firebase-messaging-sw.js
