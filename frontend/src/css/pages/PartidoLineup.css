@@ -1,5 +1,5 @@
 .lineup {
-  --lineup-surface: color-mix(in srgb, var(--primary-color) 40%, var(--contrast-text-color) 60%);
+  --lineup-surface: color-mix(in srgb, var(--primary-color) 80%, var(--contrast-text-color) 20%);
   --lineup-elevated: color-mix(in srgb, var(--primary-color) 40%, var(--contrast-text-color) 60%);
   --lineup-border: color-mix(in srgb, var(--primary-color) 28%, var(--contrast-text-color) 72%);
   --lineup-muted: var(--contrast-text-color);
@@ -306,8 +306,7 @@
 }
 
 .lineup__panel--bench {
-  background: var(--lineup-elevated);
-}
+background: var(--lineup-surface);}
 
 .lineup__bench {
   border: 1px dashed var(--lineup-border);

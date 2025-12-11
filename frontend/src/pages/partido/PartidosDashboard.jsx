@@ -17,6 +17,7 @@ const tabIconMap = {
 
 const estados = [
   { value: "todos", label: "Todos" },
+  { value: "closest", label: "Partido más cercano" },
   { value: "programado", label: "Programados" },
   { value: "en_curso", label: "En curso" },
   { value: "completado", label: "Completados" },
@@ -120,7 +121,7 @@ function PartidosDashboard({ user, currentTeam }) {
   const isAdmin = globalRole === "admin";
 
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [filters, setFilters] = useState({ estado: "todos", search: "" });
+  const [filters, setFilters] = useState({ estado: "todos", search: "", closest: false });
   const [partidos, setPartidos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -192,7 +193,16 @@ function PartidosDashboard({ user, currentTeam }) {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    setFilters((prev) => {
+      if (name === "estado") {
+        return {
+          ...prev,
+          estado: value,
+          closest: value === "closest",
+        };
+      }
+      return { ...prev, [name]: value };
+    });
     setPage(1);
   };
 
@@ -211,7 +221,7 @@ function PartidosDashboard({ user, currentTeam }) {
         limit: String(pageLimit),
         with_stats: "1",
       });
-      if (filters.estado && filters.estado !== "todos") {
+      if (filters.estado && filters.estado !== "todos" && filters.estado !== "closest") {
         params.append("estado", filters.estado);
       }
       if (filters.search?.trim()) {
@@ -307,7 +317,7 @@ function PartidosDashboard({ user, currentTeam }) {
       setDetalle(null);
       setChatMessages([]);
       setChatMeta({ open: false, close: null });
-      setFilters({ estado: "todos", search: "" });
+      setFilters({ estado: "todos", search: "", closest: false });
       setPage(1);
       setIsFormOpen(false);
       setCategoriaSelections({});
@@ -318,7 +328,7 @@ function PartidosDashboard({ user, currentTeam }) {
       return;
     }
     setPage(1);
-    setFilters({ estado: "todos", search: "" });
+    setFilters({ estado: "todos", search: "", closest: false });
     setIsFormOpen(false);
     resetForm();
   }, [currentTeamId, resetForm]);
@@ -907,6 +917,43 @@ function PartidosDashboard({ user, currentTeam }) {
     return chips;
   }, [matchCounts, ocupacionPromedio, stats, cupoPromedio]);
 
+  const closestPartido = useMemo(() => {
+    if (!partidos.length) {
+      return null;
+    }
+    const now = Date.now();
+    const withTime = partidos
+      .map((partido) => {
+        const time = new Date(partido.fecha_hora).getTime();
+        return Number.isNaN(time) ? null : { partido, time };
+      })
+      .filter(Boolean);
+
+    if (!withTime.length) {
+      return partidos[0];
+    }
+
+    const future = withTime.filter((entry) => entry.time >= now);
+    const pool = future.length ? future : withTime;
+
+    const closest = pool.reduce((prev, entry) => {
+      if (!prev) return entry;
+      if (entry.time < prev.time) return entry;
+      return prev;
+    }, null);
+
+    return closest?.partido ?? null;
+  }, [partidos]);
+
+  const displayPartidos = useMemo(() => {
+    if (filters.closest) {
+      return closestPartido ? [closestPartido] : [];
+    }
+    return partidos;
+  }, [filters.closest, partidos, closestPartido]);
+
+  const showPagination = !filters.closest && totalPages > 1;
+
   const renderMatchCard = (partido) => {
     const inscritos = partido.total_inscritos || 0;
     const cupo = partido.max_jugadores || 0;
@@ -1089,7 +1136,7 @@ function PartidosDashboard({ user, currentTeam }) {
           </div>
         </div>
 
-        {heroChips.length > 0 && (
+        {canManagePartidos && heroChips.length > 0 && (
           <div className="match-metrics">
             {heroChips.map((chip) => (
               <div key={chip.label} className="match-metric">
@@ -1359,8 +1406,8 @@ function PartidosDashboard({ user, currentTeam }) {
           <div className="match-list__content">
             {loading ? (
               <div className="match-empty">Cargando partidos...</div>
-            ) : partidos.length ? (
-              partidos.map((partido) => renderMatchCard(partido))
+            ) : displayPartidos.length ? (
+              displayPartidos.map((partido) => renderMatchCard(partido))
             ) : (
               <div className="match-empty">
                 <p>No hay partidos con los filtros actuales.</p>
@@ -1368,7 +1415,7 @@ function PartidosDashboard({ user, currentTeam }) {
                   type="button"
                   className="button button--ghost"
                   onClick={() => {
-                    setFilters({ estado: "todos", search: "" });
+                    setFilters({ estado: "todos", search: "", closest: false });
                     setPage(1);
                   }}
                 >
@@ -1378,7 +1425,7 @@ function PartidosDashboard({ user, currentTeam }) {
             )}
           </div>
 
-          {totalPages > 1 && (
+          {showPagination && (
             <div className="match-pagination">
               <button type="button" className="button button--ghost" disabled={page === 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))}>
                 Anterior
