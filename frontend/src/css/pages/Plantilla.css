@@ -14,9 +14,9 @@
 .pitch-row {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  align-items: center;
   justify-items: center;
-  gap: 12px;
+  gap: clamp(0.3rem, 1vw, 0.75rem);
+  --lineup-row-size: 4;
 }
 
 .slot {
