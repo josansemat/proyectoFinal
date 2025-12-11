@@ -68,6 +68,15 @@ const Sidebar = ({
     if (hasMultipleTeams) setIsTeamDropdownOpen((prev) => !prev);
   };
 
+  const handleSelectTeamNav = () => {
+    // Mostrar una acción explícita en el menú para abrir el selector.
+    // Si solo hay 0/1 equipos, no tiene sentido abrir el dropdown.
+    if (!hasMultipleTeams) {
+      return;
+    }
+    setIsTeamDropdownOpen(true);
+  };
+
   const handleSelectTeam = (team) => {
     onTeamChange(team);
     setIsTeamDropdownOpen(false);
@@ -225,6 +234,25 @@ const Sidebar = ({
         {/* —— Navegación —— */}
         <nav className="flex-grow-1 overflow-auto p-2 custom-scrollbar d-flex flex-column">
           <ul className="nav flex-column gap-1 flex-grow-1">
+            {/* Seleccionar Equipo (atajo explícito) */}
+            <li className="nav-item">
+              <button
+                type="button"
+                className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
+                  isTeamDropdownOpen ? "active" : ""
+                }`}
+                onClick={handleSelectTeamNav}
+                disabled={!hasMultipleTeams}
+                aria-disabled={!hasMultipleTeams}
+                aria-label="Seleccionar equipo"
+              >
+                <svg className="sidebar-nav-icon">
+                  <use href="#icon-shield" />
+                </svg>
+                <span>Seleccionar equipo</span>
+              </button>
+            </li>
+
             {/* Items Principales Dinámicos */}
             {NAV_ITEMS.map((item) => (
               <li key={item.path} className="nav-item">
