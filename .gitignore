@@ -2,8 +2,8 @@
 # Ignore SQL dump files
 *.sql
 
-# IMPORTANT: Do NOT ignore these files - they should be committed to repository
-# These contain necessary configuration for the application
-*.env
-*/firebase-credentials.json
-*/firebase-messaging-sw.js
+# Ignore sensitive configuration files - DO NOT commit to repository
+# These files contain secrets, API keys, and environment-specific settings
+.env
+**/firebase-credentials.json
+**/firebase-messaging-sw.js
