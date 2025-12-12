@@ -38,7 +38,7 @@
 
 .editar-club-page {
   position: relative;
-  background-color: var(--edt-bg);
+  /* background-color: var(--edt-bg); */
   color: var(--edt-page-text);
   min-height: 100vh;
   padding: 1.5rem clamp(1rem, 3vw, 2rem);

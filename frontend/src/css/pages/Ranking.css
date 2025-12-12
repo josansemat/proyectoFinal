@@ -5,14 +5,14 @@
   --rk-bg: var(--primary-color); 
   
   /* Texto Principal: Tu color de contraste (blanco o negro) */
-  --rk-text-main: var(--contrast-text-color);
+  --rk-text-main: black;
 
   /* Texto dentro de cards blancas */
   --rk-surface-text: var(--surface-fg, #212529);
   --rk-surface-text-muted: color-mix(in srgb, var(--rk-surface-text), transparent 40%);
   
   /* Texto Muted: El mismo color de contraste pero al 60% de opacidad (se adapta solo) */
-  --rk-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
+  --rk-text-muted: black;
 
   /* Superficie de las tarjetas: */
   /* MEZCLA: Toma el color primario y le añade un 7% del color de contraste.
@@ -53,8 +53,11 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--rk-surface-highlight);
+  background-color: var(--contrast-text-color);
+  border-radius:10px ;
+  
 }
 
 .header-content h1 {
@@ -63,7 +66,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   /* Gradiente sutil usando el color de texto y una versión transparente */
-  background: linear-gradient(to right, var(--rk-text-main), var(--rk-text-muted));
+  background: var(--primary-color);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -71,14 +74,14 @@
 
 .header-meta {
   font-size: 0.75rem;
-  color: var(--rk-text-muted);
+  color: var(--primary-color);
   margin-top: 0.25rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .header-meta span {
-  color: var(--rk-text-muted);
+  color: var(--primary-color);
 }
 
 .btn-icon-refresh {
@@ -250,7 +253,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--rk-text-muted);
+  color: black;
   border-left: 3px solid var(--rk-text-main);
   padding-left: 0.75rem;
 }
@@ -335,7 +338,7 @@
 /* El Top 1 (Gold) - Diseño adaptativo */
 .ranking-card--gold {
   /* Fondo: Un degradado sutil entre superficie y oro muy transparente */
-  background: linear-gradient(145deg, var(--rk-gold-dim), var(--rk-surface));
+  background: white;
   border: 1px solid var(--rk-gold);
   position: relative;
   margin-bottom: 1rem;
@@ -347,10 +350,14 @@
   font-size: 1.4rem;
   text-shadow: 0 0 10px var(--rk-gold-dim);
 }
+.ranking-card .ranking-score-box strong{
+  color: var(--contrast-text-color);
+}
 
 .ranking-card--gold .ranking-score-box strong {
   color: var(--rk-gold);
 }
+
 
 /* Left Section: Rank + Avatar */
 .ranking-card__left {
@@ -374,7 +381,7 @@
   height: 42px;
   border-radius: 50%;
   background: var(--rk-bg);
-  color: var(--rk-text-main);
+  color: var(--contrast-text-color);
   display: flex;
   align-items: center;
   justify-content: center;

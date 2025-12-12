@@ -671,7 +671,7 @@ function Bus() {
               <article className="result-card">
                 <h3>Parada más cercana a tu destino</h3>
                 <p className="result-name">{manualNearest.destinationStop?.name}</p>
-                <p className="muted-text">
+                <p className="muted-pp">
                   {manualNearest.destinationStop?.distance?.toFixed(2)} km · Líneas
                   {" "}
                   {getLineNamesForStop(manualNearest.destinationStop?.id).join(", ") ||

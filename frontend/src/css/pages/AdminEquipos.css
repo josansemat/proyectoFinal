@@ -331,7 +331,7 @@
   width: 100%;
   max-width: 800px;
   max-height: 90vh;
-  background: var(--adm-bg);
+  background: white;
   border: 1px solid var(--adm-border);
   border-radius: var(--adm-radius);
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
@@ -351,13 +351,14 @@
   align-items: center;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--adm-border);
-  background: var(--adm-surface);
+  background: var(--primary-color);
   border-radius: var(--adm-radius) var(--adm-radius) 0 0;
 }
 .adm-modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--contrast-text-color);
 }
 
 .adm-modal-body {

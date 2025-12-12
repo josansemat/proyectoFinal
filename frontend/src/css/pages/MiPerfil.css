@@ -445,17 +445,14 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-.toggle-button.active {
-  background: var(--prf-text);
-  color: var(--prf-bg); /* Invertido */
-}
+
 .toggle-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Utilities */
-.text-pp { color: var(--contrast-text-color); }
+.text-pp { color: black }
 .text-pp.small { font-size: 0.85rem; }
 .text-pp.tiny { font-size: 0.75rem; }
 .mb-3 { margin-bottom: 1rem; }

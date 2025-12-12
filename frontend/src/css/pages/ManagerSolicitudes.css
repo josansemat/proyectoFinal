@@ -18,12 +18,13 @@
   margin-bottom: 2rem;
 }
 
-.section-title {
+.section-titlesoli {
   font-weight: 700;
   margin-bottom: 0.5rem;
   font-size: 1.75rem;
   display: flex;
   align-items: center;
+  color: var(--primary-color, #212529); /* Cambiado a --primary-color para que sea visible */
 }
 
 .section-subtitle {

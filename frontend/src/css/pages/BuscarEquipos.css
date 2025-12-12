@@ -8,7 +8,7 @@
   --mkt-text-main: var(--contrast-text-color);
 
   /* Texto en superficies (cards blancas) */
-  --mkt-surface-text: var(--surface-fg, #212529);
+  --mkt-surface-text: black;
   
   /* Texto Muted: 60% opacidad */
   --mkt-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
@@ -17,13 +17,13 @@
   --mkt-surface: var(--surface-bg, #ffffff);
   
   /* Bordes */
-  --mkt-border: color-mix(in srgb, var(--mkt-surface-text), transparent 88%);
+  --mkt-border: color-mix(in srgb, black, transparent 88%);
 
   /* Inputs: un poco más contrastado que la superficie */
-  --mkt-input-bg: color-mix(in srgb, var(--mkt-surface) 92%, var(--mkt-surface-text) 8%);
+  --mkt-input-bg: color-mix(in srgb, var(--mkt-surface) 92%, black 8%);
 
   /* Acciones (alineadas con el equipo; evita primarios muy claros) */
-  --mkt-accent: var(--primary-action-color, var(--primary-color));
+  --mkt-accent: var(--primary-color);
   --mkt-success: #22c55e;
   --mkt-danger: #ef4444;
   
@@ -217,7 +217,7 @@
 
 /* Pendiente: Fondo plano */
 .btn-action.btn-pending {
-  background: var(--mkt-input-bg);
+  background: var(--primary-color);
   color: var(--mkt-text-muted);
   cursor: default;
   border: 1px solid var(--mkt-border);
@@ -245,7 +245,7 @@
   border-radius: 50%;
   background: var(--mkt-surface);
   border: 1px solid var(--mkt-border);
-  color: var(--mkt-text-main);
+  color: black;
   display: flex;
   align-items: center;
   justify-content: center;

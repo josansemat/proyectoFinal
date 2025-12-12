@@ -72,9 +72,9 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
     <div className="manager-solicitudes-container p-4">
       {/* Título de sección con el NUEVO estilo de banner */}
       <div className="section-header-banner mb-4 shadow-sm">
-        <h2 className="section-title m-0">
+        <h2 className="section-title-soli m-0 ">
           <i className="bi bi-journal-text me-3"></i>
-          Gestión de Solicitudes
+             Gestión de Solicitudes
         </h2>
         <p className="section-subtitle mt-2 mb-0">
           Revisa y responde las solicitudes pendientes para{" "}
@@ -112,14 +112,14 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
                         onClick={() => handleResponse(sol.id, "aceptada")}
                         disabled={processingId === sol.id}
                       >
-                        {processingId === sol.id ? "..." : "✅ Aceptar"}
+                        {processingId === sol.id ? "..." : " Aceptar"}
                       </button>
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleResponse(sol.id, "rechazada")}
                         disabled={processingId === sol.id}
                       >
-                        {processingId === sol.id ? "..." : "❌ Rechazar"}
+                        {processingId === sol.id ? "..." : " Rechazar"}
                       </button>
                     </td>
                   </tr>

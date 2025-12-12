@@ -397,7 +397,7 @@
 .usr-modal-card {
   width: 100%;
   max-width: 500px;
-  background: var(--usr-bg);
+  background: white;
   border: 1px solid var(--usr-border);
   border-radius: var(--usr-radius);
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
@@ -417,13 +417,14 @@
   align-items: center;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--usr-border);
-  background: var(--usr-surface);
+  background: var(--primary-color);
   border-radius: var(--usr-radius) var(--usr-radius) 0 0;
 }
 .usr-modal-header h2 {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
+  color: var(--contrast-text-color);
 }
 
 .usr-modal-body {
