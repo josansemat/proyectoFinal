@@ -101,11 +101,15 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="login-email">
+                Correo electrónico
+              </label>
               <span className="input-icon">
                 <i className="bi bi-envelope"></i>
               </span>
               <input
                 type="email"
+                id="login-email"
                 name="email"
                 placeholder="Correo electrónico"
                 value={form.email}
@@ -115,11 +119,15 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
             </div>
 
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="login-password">
+                Contraseña
+              </label>
               <span className="input-icon">
                 <i className="bi bi-lock"></i>
               </span>
               <input
                 type="password"
+                id="login-password"
                 name="password"
                 placeholder="Contraseña"
                 value={form.password}
@@ -182,6 +190,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
                 <input
                   id="forgot-email"
                   type="email"
+                  name="email"
                   placeholder="tu@email.com"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}

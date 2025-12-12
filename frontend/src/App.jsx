@@ -177,7 +177,7 @@ function App() {
         if (storedTeamStr) {
           const storedTeam = JSON.parse(storedTeamStr);
           try {
-            const resp = await fetch(`/api/index.php?action=get_equipo&id=${storedTeam.id}`);
+            const resp = await fetch(`/api/index.php?action=get_equipo&id=${storedTeam.id}`, { cache: "no-store" });
             const raw = await resp.json();
             if (raw.success) {
               const enriched = { ...raw.equipo, mi_rol: storedTeam.mi_rol ?? raw.equipo?.mi_rol ?? null };
@@ -199,7 +199,7 @@ function App() {
 
   const fetchUserTeams = async (userId) => {
     try {
-      const response = await fetch(`/api/index.php?action=mis_equipos&id_jugador=${userId}`);
+      const response = await fetch(`/api/index.php?action=mis_equipos&id_jugador=${userId}`, { cache: "no-store" });
       const data = await response.json();
       if (data.success && data.equipos.length > 0) {
         setUserTeams(data.equipos);
@@ -242,23 +242,33 @@ function App() {
       const role = base.mi_rol ?? cachedRole ?? resolveRoleFromList(base.id);
       return { ...base, mi_rol: role };
     };
+
+    // Actualización optimista: refleja el cambio en UI inmediatamente.
+    const optimistic = withRole(team);
+    setCurrentTeam(optimistic);
+    localStorage.setItem("equipo_actual_furbo", JSON.stringify(optimistic));
+    setUserTeams((prev) => prev.map((t) => (t.id === optimistic.id ? { ...t, ...optimistic } : t)));
+
     try {
-      const resp = await fetch(`/api/index.php?action=get_equipo&id=${team.id}`);
+      const resp = await fetch(`/api/index.php?action=get_equipo&id=${team.id}`, { cache: "no-store" });
       const raw = await resp.json();
       if (raw.success && raw.equipo) {
         const enriched = withRole(raw.equipo);
         setCurrentTeam(enriched);
         localStorage.setItem("equipo_actual_furbo", JSON.stringify(enriched));
+        setUserTeams((prev) => prev.map((t) => (t.id === enriched.id ? { ...t, ...enriched } : t)));
       } else {
         const fallback = withRole(team);
         setCurrentTeam(fallback);
         localStorage.setItem("equipo_actual_furbo", JSON.stringify(fallback));
+        setUserTeams((prev) => prev.map((t) => (t.id === fallback.id ? { ...t, ...fallback } : t)));
       }
     } catch (err) {
       console.error("Error refrescando equipo:", err);
       const fallback = withRole(team);
       setCurrentTeam(fallback);
       localStorage.setItem("equipo_actual_furbo", JSON.stringify(fallback));
+      setUserTeams((prev) => prev.map((t) => (t.id === fallback.id ? { ...t, ...fallback } : t)));
     }
   };
 

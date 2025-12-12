@@ -5,11 +5,13 @@ ini_set('display_errors', 1);
 require_once __DIR__ . "/cors.php";
 
 header("Content-Type: application/json; charset=utf-8");
-header("Cache-Control: public, max-age=60, immutable");
+// API: nunca cachear respuestas (evita datos antiguos hasta Ctrl+F5)
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
 header("X-Content-Type-Options: nosniff");
 header("Content-Security-Policy: frame-ancestors 'self'");
-header_remove("Expires");
-header_remove("Pragma");
+// Mantener Expires/Pragma establecidos arriba para evitar caché
 header_remove("X-XSS-Protection");
 
 require_once "JugadoresController.php";

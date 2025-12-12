@@ -81,11 +81,15 @@ export default function Register({ switchToLogin }) {
           <form onSubmit={handleSubmit}>
             {/* Nombre Completo */}
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="register-nombre">
+                Nombre completo
+              </label>
               <span className="input-icon">
                 <i className="bi bi-person"></i>
               </span>
               <input
                 type="text"
+                id="register-nombre"
                 name="nombre"
                 placeholder="Nombre completo"
                 value={form.nombre}
@@ -96,11 +100,15 @@ export default function Register({ switchToLogin }) {
 
             {/* 2. NUEVO INPUT: Apodo (Opcional) */}
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="register-apodo">
+                Apodo (opcional)
+              </label>
               <span className="input-icon">
                 <i className="bi bi-star"></i> {/* Icono de estrella para apodo */}
               </span>
               <input
                 type="text"
+                id="register-apodo"
                 name="apodo"
                 placeholder="Apodo (opcional)"
                 value={form.apodo}
@@ -110,11 +118,15 @@ export default function Register({ switchToLogin }) {
 
             {/* Correo Electrónico */}
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="register-email">
+                Correo electrónico
+              </label>
               <span className="input-icon">
                 <i className="bi bi-envelope"></i>
               </span>
               <input
                 type="email"
+                id="register-email"
                 name="email"
                 placeholder="Correo electrónico"
                 value={form.email}
@@ -125,11 +137,15 @@ export default function Register({ switchToLogin }) {
 
             {/* Teléfono */}
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="register-telefono">
+                Teléfono
+              </label>
               <span className="input-icon">
                 <i className="bi bi-telephone"></i>
               </span>
               <input
                 type="tel" // Cambiado a type="tel" para mejor teclado en móviles
+                id="register-telefono"
                 name="telefono"
                 placeholder="Teléfono (9 dígitos)"
                 value={form.telefono}
@@ -141,11 +157,15 @@ export default function Register({ switchToLogin }) {
 
             {/* Contraseña */}
             <div className="input-group">
+              <label className="visually-hidden" htmlFor="register-password">
+                Contraseña
+              </label>
               <span className="input-icon">
                 <i className="bi bi-lock"></i>
               </span>
               <input
                 type="password"
+                id="register-password"
                 name="password"
                 placeholder="Contraseña"
                 value={form.password}
@@ -160,6 +180,7 @@ export default function Register({ switchToLogin }) {
                <input
                 type="checkbox"
                 id="privacy"
+                name="privacy"
                 checked={privacyChecked}
                 onChange={(e) => setPrivacyChecked(e.target.checked)}
                 style={{ width: 'auto', margin: 0 }} // Ajuste de estilo rápido

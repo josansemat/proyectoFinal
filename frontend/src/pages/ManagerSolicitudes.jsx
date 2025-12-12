@@ -22,7 +22,8 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/index.php?action=ver_solicitudes_equipo&id_equipo=${currentTeam.id}`
+        `/api/index.php?action=ver_solicitudes_equipo&id_equipo=${currentTeam.id}`,
+        { cache: "no-store" }
       );
       const data = await response.json();
       if (data.success) setSolicitudes(data.solicitudes);
@@ -36,6 +37,11 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
 
   const handleResponse = async (idSolicitud, estado) => {
     setProcessingId(idSolicitud);
+
+    // Optimista: retirar la solicitud de la UI inmediatamente.
+    const previous = solicitudes;
+    setSolicitudes((prev) => prev.filter((s) => s.id !== idSolicitud));
+
     try {
       const response = await fetch(
         "/api/index.php?action=responder_solicitud",
@@ -50,10 +56,16 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
         }
       );
       const data = await response.json();
-      if (data.success) fetchSolicitudes();
-      else alert(data.error);
+      if (data.success) {
+        // Re-sincroniza por si el backend modifica más cosas.
+        fetchSolicitudes();
+      } else {
+        alert(data.error);
+        setSolicitudes(previous);
+      }
     } catch (error) {
       console.error(error);
+      setSolicitudes(previous);
     } finally {
       setProcessingId(null);
     }

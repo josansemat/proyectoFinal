@@ -41,7 +41,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
 
   const cargarDatosEquipo = async () => {
     try {
-        const response = await fetch(`/api/index.php?action=get_equipo&id=${currentTeam.id}`);
+      const response = await fetch(`/api/index.php?action=get_equipo&id=${currentTeam.id}`, { cache: "no-store" });
         const data = await response.json();
         if (data.success) {
             const eq = data.equipo;
