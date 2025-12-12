@@ -6,7 +6,29 @@ const TOKEN_OWNER_KEY = "furbo_fcm_token_owner";
 const headers = { "Content-Type": "application/json" };
 
 function supportsNotifications() {
-  return typeof window !== "undefined" && "Notification" in window;
+  if (typeof window === "undefined") return false;
+  if (!("Notification" in window)) return false;
+  // Los permisos de notificación y service workers requieren contexto seguro.
+  // localhost es seguro; HTTP en IP/dominio no lo es.
+  if (window.isSecureContext === false) return false;
+  return true;
+}
+
+export function debugNotificationSupport() {
+  if (typeof window === "undefined") {
+    return { ok: false, reason: "no-window" };
+  }
+
+  const info = {
+    ok: supportsNotifications(),
+    isSecureContext: window.isSecureContext,
+    notificationApi: "Notification" in window,
+    serviceWorkerApi: "serviceWorker" in navigator,
+    pushManagerApi: "PushManager" in window,
+    permission: typeof Notification !== "undefined" ? Notification.permission : "unsupported",
+  };
+
+  return info;
 }
 
 export async function registerPushToken(user) {

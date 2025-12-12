@@ -235,7 +235,7 @@ const Sidebar = ({
         <nav className="flex-grow-1 overflow-auto p-2 custom-scrollbar d-flex flex-column">
           <ul className="nav flex-column gap-1 flex-grow-1">
             {/* Seleccionar Equipo (atajo explícito) */}
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <button
                 type="button"
                 className={`btn w-100 nav-link px-2 d-flex align-items-center gap-3 ${
@@ -251,7 +251,7 @@ const Sidebar = ({
                 </svg>
                 <span>Seleccionar equipo</span>
               </button>
-            </li>
+            </li> */}
 
             {/* Items Principales Dinámicos */}
             {NAV_ITEMS.map((item) => (

@@ -63,7 +63,12 @@ export async function generateFcmToken() {
   if (!swRegistration) {
     return null;
   }
-  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  // La clave VAPID es pública (no es un secreto). Permitimos que venga por .env,
+  // pero incluimos un fallback para que funcione también en despliegues donde
+  // no se inyecten variables en build.
+  const vapidKey =
+    import.meta.env.VITE_FIREBASE_VAPID_KEY ||
+    "BME-K1Ru1-cmcITK8BjJzH_lSJufHdtHTVnEXzdagX0-YR7QZUGwolLz6D4f2ez-nPGYyQ9Bb2W3m_WDJD9iu_g";
   if (!vapidKey) {
     console.warn("Falta VITE_FIREBASE_VAPID_KEY en el entorno. No se generará token FCM.");
     return null;

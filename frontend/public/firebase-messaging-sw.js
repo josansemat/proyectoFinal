@@ -14,18 +14,22 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  // Si el payload trae "notification", el navegador ya la muestra automáticamente.
-  if (payload?.notification) {
-    return;
-  }
-
   const data = payload?.data || {};
-  const notificationTitle = data.title || "Furbo";
+  const notif = payload?.notification || {};
+  const fcmLink = payload?.fcmOptions?.link;
+
+  const notificationTitle = notif.title || data.title || "Furbo";
   const notificationOptions = {
-    body: data.body || "Tienes una nueva notificación",
-    icon: data.icon || "/vite.svg",
-    data,
+    body: notif.body || data.body || "Tienes una nueva notificación",
+    icon: notif.icon || data.icon || "/vite.svg",
+    image: notif.image || data.image,
+    // Guardamos info para el click. Priorizamos link absoluto si viene de FCM.
+    data: {
+      ...data,
+      click_action: data.click_action || fcmLink || notif.click_action || "/inicio",
+    },
   };
+
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 

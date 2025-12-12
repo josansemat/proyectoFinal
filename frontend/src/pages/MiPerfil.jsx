@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { registerPushToken, deregisterPushToken } from "../services/pushNotifications";
+import { registerPushToken, deregisterPushToken, debugNotificationSupport } from "../services/pushNotifications";
 import "../css/pages/MiPerfil.css";
 
 const UserIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
@@ -189,12 +189,35 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
     setNotifLoading(true);
     try {
       if (!notificationsEnabled) {
+        // Log de diagnóstico para depurar en consola (no afecta UX).
+        try {
+          console.log("[push] support:", debugNotificationSupport());
+        } catch {
+          // no-op
+        }
+
+        if (typeof window !== "undefined" && window.isSecureContext === false) {
+          setNotifStatus({
+            type: "error",
+            text: "Para activar notificaciones necesitas HTTPS (o entrar por localhost).",
+          });
+          return;
+        }
+
         const token = await registerPushToken(user);
         if (token) {
           setNotificationsEnabled(true);
           setNotifStatus({ type: "success", text: "Notificaciones activadas" });
         } else {
-          setNotifStatus({ type: "error", text: "No se pudo activar. Revisa los permisos." });
+          const permission = typeof Notification !== "undefined" ? Notification.permission : "unsupported";
+          const hint =
+            permission === "denied"
+              ? "El navegador tiene las notificaciones bloqueadas para este sitio."
+              : "Revisa los permisos del navegador y que el sitio esté en HTTPS.";
+          setNotifStatus({
+            type: "error",
+            text: `No se pudo activar. ${hint}`,
+          });
         }
       } else {
         await deregisterPushToken();
