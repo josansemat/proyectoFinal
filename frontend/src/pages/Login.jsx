@@ -1,5 +1,6 @@
 import { useState } from "react";
 import '../css/pages/Register.css';
+import '../css/pages/Login.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -173,20 +174,20 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (
-        <div className="modal-overlay" onClick={() => setShowForgotPassword(false)}>
-          <div className="modal-card forgot-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>¿Olvidaste tu contraseña?</h3>
-              <button className="icon-btn" type="button" onClick={() => setShowForgotPassword(false)}>
+        <div className="fp-overlay" onClick={() => setShowForgotPassword(false)}>
+          <div className="fp-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="fp-title">
+            <div className="fp-header">
+              <h3 className="fp-title" id="fp-title">¿Olvidaste tu contraseña?</h3>
+              <button className="fp-close" type="button" onClick={() => setShowForgotPassword(false)} aria-label="Cerrar">
                 <i className="bi bi-x"></i>
               </button>
             </div>
-            <div className="modal-body">
-              <p className="modal-text">
+            <div className="fp-body">
+              <p className="fp-text">
                 Te enviaremos un enlace temporal al correo asociado a tu cuenta.
               </p>
-              <form className="modal-form" onSubmit={handleForgotPassword}>
-                <label className="modal-label" htmlFor="forgot-email">Correo electrónico</label>
+              <form className="fp-form" onSubmit={handleForgotPassword}>
+                <label htmlFor="forgot-email">Correo electrónico</label>
                 <input
                   id="forgot-email"
                   type="email"
@@ -198,14 +199,7 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
                 />
                 {forgotError && <div className="error-message small">{forgotError}</div>}
                 {forgotMessage && <div className="success-message small">{forgotMessage}</div>}
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setShowForgotPassword(false)}
-                  >
-                    Cancelar
-                  </button>
+                <div className="fp-actions">
                   <button type="submit" className="btn-primary" disabled={forgotLoading}>
                     {forgotLoading ? "Enviando..." : "Enviar enlace"}
                   </button>
