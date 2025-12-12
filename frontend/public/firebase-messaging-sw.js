@@ -14,6 +14,13 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
+  // Si el mensaje incluye `notification`, FCM/WebPush suele mostrar la notificación automáticamente.
+  // En ese caso, si además hacemos `showNotification` aquí, aparecen duplicadas.
+  const hasNotificationPayload = !!(payload?.notification && Object.keys(payload.notification).length);
+  if (hasNotificationPayload) {
+    return;
+  }
+
   const data = payload?.data || {};
   const notif = payload?.notification || {};
   const fcmLink = payload?.fcmOptions?.link;
@@ -35,6 +42,29 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = event.notification?.data?.click_action || "/inicio";
-  event.waitUntil(clients.openWindow(targetUrl));
+
+  const fcmMsg = event.notification?.data?.FCM_MSG;
+  const targetUrl =
+    event.notification?.data?.click_action ||
+    fcmMsg?.data?.click_action ||
+    fcmMsg?.fcmOptions?.link ||
+    "/inicio";
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of allClients) {
+        try {
+          const url = new URL(client.url);
+          const target = new URL(targetUrl, url.origin);
+          if (url.href === target.href) {
+            return client.focus();
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })()
+  );
 });
