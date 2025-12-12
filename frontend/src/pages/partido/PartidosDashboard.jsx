@@ -1650,6 +1650,11 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
   const cupoTexto = partido.max_jugadores ? `${inscritos}/${partido.max_jugadores}` : `${inscritos}`;
   const costoDisponible = costo !== null && costo !== undefined;
   const costoDetalle = partido.tipo_partido === "externo" ? "Se reparte entre ambos equipos." : "Se reparte entre los inscritos.";
+
+  const golesA = Number(partido.goles_equipo_A ?? 0);
+  const golesB = Number(partido.goles_equipo_B ?? 0);
+  const marcadorLabel = partido.estado === "completado" ? "Resultado final" : partido.estado === "en_curso" ? "Resultado actual" : "Marcador";
+
   return (
     <div className="card panel-soft">
       <div className="card-body">
@@ -1660,6 +1665,18 @@ function PartidoResumenCard({ partido, costo, inscritos }) {
           </div>
           <span className={`badge estado ${partido.estado}`}>{partido.estado}</span>
         </div>
+
+        <div className="mb-3">
+          <div className="text-muted small">{marcadorLabel}</div>
+          <div className="d-flex align-items-center justify-content-between gap-2">
+            <span className="fw-semibold">Equipo A</span>
+            <span className="fw-bold" aria-label={`Marcador: Equipo A ${golesA}, Equipo B ${golesB}`} style={{ fontSize: "1.2rem" }}>
+              {golesA} - {golesB}
+            </span>
+            <span className="fw-semibold">Equipo B</span>
+          </div>
+        </div>
+
         <div className="mb-2">
           <div className="text-muted small">Lugar</div>
           <div className="fw-semibold">{partido.lugar_nombre}</div>
