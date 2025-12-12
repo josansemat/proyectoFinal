@@ -3,26 +3,27 @@
   
   /* Bases */
   --adm-bg: var(--primary-color);
-  --adm-text: var(--contrast-text-color);
+  --adm-page-text: var(--contrast-text-color);
+  --adm-text: var(--surface-fg, #212529);
 
   /* Superficies */
   /* Surface: Fondo + 6% del texto */
-  --adm-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 6%);
+  --adm-surface: var(--surface-bg, #ffffff);
   /* Surface Highlight (Hover/Card): Fondo + 10% del texto */
-  --adm-surface-high: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 10%);
+  --adm-surface-high: var(--surface-bg, #ffffff);
   /* Input BG: Fondo + 14% del texto */
-  --adm-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 14%);
+  --adm-input-bg: color-mix(in srgb, var(--adm-surface) 92%, var(--adm-text) 8%);
 
   /* Bordes */
-  --adm-border: color-mix(in srgb, var(--contrast-text-color), transparent 88%);
+  --adm-border: color-mix(in srgb, var(--adm-text), transparent 88%);
 
   /* Textos secundarios */
-  --adm-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
-  --adm-text-placeholder: color-mix(in srgb, var(--contrast-text-color), transparent 60%);
+  --adm-text-muted: color-mix(in srgb, var(--adm-text), transparent 40%);
+  --adm-text-placeholder: color-mix(in srgb, var(--adm-text), transparent 60%);
 
   /* Acento (Monocromático Invertido) */
-  --adm-accent: var(--contrast-text-color);
-  --adm-accent-fg: var(--primary-color);
+  --adm-accent: var(--primary-action-color, var(--primary-color));
+  --adm-accent-fg: var(--primary-action-contrast-text, var(--contrast-text-color));
 
   /* Estados Semánticos (Suavizados) */
   --adm-success: #10b981;
@@ -32,13 +33,13 @@
   /* Geometría */
   --adm-radius: 16px;
   --adm-radius-sm: 10px;
-  --adm-shadow: 0 10px 30px -10px color-mix(in srgb, var(--contrast-text-color), transparent 90%);
+  --adm-shadow: 0 10px 30px -10px color-mix(in srgb, var(--adm-text), transparent 90%);
 }
 
 .admin-equipos-page {
   position: relative;
   /* background-color: var(--adm-bg); */
-  color: var(--adm-text);
+  color: var(--adm-page-text);
   min-height: 100vh;
   padding: 1.5rem clamp(1rem, 3vw, 2rem);
   font-family: system-ui, -apple-system, sans-serif;
@@ -56,6 +57,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  color: var(--adm-text);
 }
 
 /* --- TOOLBAR --- */

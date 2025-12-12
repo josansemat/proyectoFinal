@@ -64,8 +64,9 @@
   border: 1px solid rgba(14, 165, 233, 0.2);
   border-radius: 22px;
 }
-.manual-glossary > p,h2 {
-    color: white;
+.manual-glossary > p,
+.manual-glossary h2 {
+  color: white;
 }
 
 .manual-glossary-grid {

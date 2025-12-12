@@ -6,6 +6,14 @@
   --contrast-text-color-rgb: 255, 255, 255;
   --bg-light: #343a40;
 
+  /* Superficies (cards) — regla del proyecto: fondo blanco */
+  --surface-bg: #ffffff;
+  --surface-fg: #212529;
+
+  /* Acción primaria: por defecto igual al primario, pero App.jsx puede oscurecerlo si el primario es muy claro */
+  --primary-action-color: var(--primary-color);
+  --primary-action-contrast-text: var(--contrast-text-color);
+
   /* Colores fijos */
   --accent-color: #ffffff;
   --danger-color: #dc3545;

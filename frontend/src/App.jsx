@@ -54,6 +54,25 @@ const isBackgroundLight = (hexcolor) => {
   return (((r * 299) + (g * 587) + (b * 114)) / 1000) >= 128;
 };
 
+const clampByte = (value) => Math.max(0, Math.min(255, value));
+
+const darkenHex = (hex, amount = 0.22) => {
+  if (!hex) return hex;
+  let normalized = hex.replace("#", "");
+  if (normalized.length === 3) {
+    normalized = normalized[0] + normalized[0] + normalized[1] + normalized[1] + normalized[2] + normalized[2];
+  }
+  if (normalized.length !== 6) return hex;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  const factor = 1 - amount;
+  const rr = clampByte(Math.round(r * factor));
+  const gg = clampByte(Math.round(g * factor));
+  const bb = clampByte(Math.round(b * factor));
+  return `#${rr.toString(16).padStart(2, "0")}${gg.toString(16).padStart(2, "0")}${bb.toString(16).padStart(2, "0")}`;
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [currentTeam, setCurrentTeam] = useState(null);
@@ -76,11 +95,19 @@ function App() {
     const contrastRgb = hexToRgb(contrastHex);
     setIsBgLight(isLight); 
 
+    // Acción primaria: si el color del equipo es claro, oscurecemos para que el CTA destaque sobre cards blancas.
+    const actionHex = isLight ? darkenHex(colorHex, 0.28) : colorHex;
+    const actionIsLight = isBackgroundLight(actionHex);
+    const actionContrastHex = actionIsLight ? '#212529' : '#ffffff';
+
     root.style.setProperty('--primary-color', colorHex);
     root.style.setProperty('--primary-rgb', colorRgb);
     root.style.setProperty('--contrast-text-color', contrastHex);
     root.style.setProperty('--contrast-text-color-rgb', contrastRgb);
     root.style.setProperty('--bg-light', isLight ? '#ffffff' : '#343a40');
+
+    root.style.setProperty('--primary-action-color', actionHex);
+    root.style.setProperty('--primary-action-contrast-text', actionContrastHex);
   }, [currentTeam]);
 
   useEffect(() => {

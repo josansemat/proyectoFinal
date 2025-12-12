@@ -1,18 +1,20 @@
 .lineup {
-  --lineup-surface: color-mix(in srgb, var(--primary-color) 80%, var(--contrast-text-color) 20%);
-  --lineup-elevated: color-mix(in srgb, var(--primary-color) 40%, var(--contrast-text-color) 60%);
-  --lineup-border: color-mix(in srgb, var(--primary-color) 28%, var(--contrast-text-color) 72%);
-  --lineup-muted: var(--contrast-text-color);
-  --lineup-ghost: color-mix(in srgb, var(--contrast-text-color) 85%, var(--primary-color) 15%);
-  --lineup-strong: color-mix(in srgb, var(--primary-color) 55%, var(--contrast-text-color) 45%);
-  --lineup-success: color-mix(in srgb, var(--primary-color) 65%, var(--contrast-text-color) 35%);
-  --lineup-error: color-mix(in srgb, var(--contrast-text-color) 70%, var(--primary-color) 30%);
+  --lineup-surface: var(--surface-bg, #ffffff);
+  --lineup-elevated: var(--surface-bg, #ffffff);
+  --lineup-text: var(--surface-fg, #212529);
+  --lineup-border: color-mix(in srgb, var(--lineup-text), transparent 88%);
+  --lineup-muted: color-mix(in srgb, var(--lineup-text), transparent 40%);
+  --lineup-ghost: color-mix(in srgb, var(--lineup-surface) 92%, var(--lineup-text) 8%);
+  --lineup-strong: var(--primary-action-color, var(--primary-color));
+  --lineup-strong-fg: var(--primary-action-contrast-text, var(--contrast-text-color));
+  --lineup-success: #10b981;
+  --lineup-error: #ef4444;
   display: flex;
   flex-direction: column;
   gap: clamp(1rem, 2vw, 1.5rem);
   padding: clamp(1rem, 3vw, 2rem);
-  background: color-mix(in srgb, var(--primary-color) 4%, var(--contrast-text-color) 96%);
-  color: var(--contrast-text-color);
+  background: color-mix(in srgb, var(--primary-color) 4%, var(--lineup-surface) 96%);
+  color: var(--lineup-text);
 }
 
 .lineup * {
@@ -25,7 +27,7 @@
   border: 1px solid var(--lineup-border);
   border-radius: 1.35rem;
   padding: clamp(1rem, 2.6vw, 1.6rem);
-  box-shadow: 0 28px 60px color-mix(in srgb, var(--primary-color) 6%, var(--contrast-text-color) 94%);
+  box-shadow: 0 28px 60px color-mix(in srgb, var(--lineup-text) 10%, transparent 90%);
   display: flex;
   flex-direction: column;
   gap: clamp(0.75rem, 2vw, 1.25rem);
@@ -47,7 +49,7 @@
 .lineup__label {
   font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 600;
-  color: var(--contrast-text-color);
+  color: var(--lineup-muted);
 }
 
 .lineup__input,
@@ -63,14 +65,14 @@
   border-radius: 0.9rem;
   border: 1px solid var(--lineup-border);
   background: var(--lineup-ghost);
-  color: var(--contrast-text-color);
+  color: var(--lineup-text);
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .lineup__input:focus {
   outline: none;
   border-color: var(--lineup-strong);
-  background: color-mix(in srgb, var(--primary-color) 12%, var(--contrast-text-color) 88%);
+  background: color-mix(in srgb, var(--lineup-strong) 10%, var(--lineup-surface) 90%);
 }
 
 .lineup__toggle {
@@ -95,7 +97,7 @@
 
 .lineup__toggle-btn.is-active {
   background: var(--lineup-strong);
-  color: var(--contrast-text-color);
+  color: var(--lineup-strong-fg);
 }
 
 .lineup__toggle-btn:disabled {
@@ -125,9 +127,9 @@
 }
 
 .lineup__button--primary {
-  background: var(--contrast-text-color);
-  color: var(--primary-color);
-  border-color: var(--contrast-text-color);
+  background: var(--lineup-strong);
+  color: var(--lineup-strong-fg);
+  border-color: var(--lineup-strong);
 }
 
 .lineup__button--ghost {
@@ -138,7 +140,7 @@
 
 .lineup__button:not(:disabled):hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px color-mix(in srgb, var(--primary-color) 8%, var(--contrast-text-color) 92%);
+  box-shadow: 0 15px 35px color-mix(in srgb, var(--lineup-text) 12%, transparent 88%);
 }
 
 .lineup__status {
@@ -148,12 +150,12 @@
 }
 
 .lineup__status--success {
-  background: color-mix(in srgb, var(--lineup-success) 20%, var(--contrast-text-color) 80%);
+  background: color-mix(in srgb, var(--lineup-success) 16%, var(--lineup-surface) 84%);
   border: 1px solid var(--lineup-success);
 }
 
 .lineup__status--error {
-  background: color-mix(in srgb, var(--lineup-error) 20%, var(--contrast-text-color) 80%);
+  background: color-mix(in srgb, var(--lineup-error) 16%, var(--lineup-surface) 84%);
   border: 1px solid var(--lineup-error);
 }
 

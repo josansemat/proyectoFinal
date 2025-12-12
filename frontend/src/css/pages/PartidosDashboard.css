@@ -2,8 +2,8 @@
   --match-bg: #f6f7fb;
   --match-surface: #ffffff;
   --match-border: rgba(15, 23, 42, 0.08);
-  --match-primary:var(--primary-color);
-  --match-primary-dark: var(--contrax-color-primary);
+  --match-primary: var(--primary-action-color, var(--primary-color));
+  --match-primary-fg: var(--primary-action-contrast-text, var(--contrast-text-color));
   --match-ghost: rgba(15, 23, 42, 0.06);
   --match-text: #0f172a;
   --match-muted: #64748b;
@@ -80,7 +80,7 @@
 
 .button--primary {
   background: var(--match-primary);
-  color:var(--contrax-color-primary);
+  color: var(--match-primary-fg);
   box-shadow: 0 12px 18px rgba(37, 99, 235, 0.25);
 }
 
@@ -93,7 +93,7 @@
 
 .button--secondary {
   background: rgba(37, 99, 235, 0.15);
-  color: var(--match-primary-dark);
+  color: var(--match-primary);
 }
 
 .button--danger {
@@ -166,8 +166,9 @@
   margin-top: 1.5rem;
   padding: 1.25rem;
   border-radius: 18px;
-  border: solid 1px var(--primary-color);
-  color: var(--contrax-color-primary);
+  background: color-mix(in srgb, var(--match-primary) 10%, var(--match-surface) 90%);
+  border: 1px solid color-mix(in srgb, var(--match-primary), transparent 55%);
+  color: var(--match-text);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1009,7 +1010,7 @@
 
 .btn-primary {
   background: var(--match-primary);
-  color: #fff;
+  color: var(--match-primary-fg);
 }
 
 .btn-outline-secondary,
@@ -1017,7 +1018,7 @@
 .btn-outline-danger {
   background: transparent;
   border: 1px solid var(--primary-color);
-  color: var(--contrax-color-primary);
+  color: var(--match-primary);
 }
 
 .btn-outline-danger {
@@ -1039,7 +1040,7 @@
 
 .badge.estado.programado {
   background: rgba(37, 99, 235, 0.2);
-  color: var(--match-primary-dark);
+  color: var(--match-primary);
 }
 
 .badge.estado.en_curso {

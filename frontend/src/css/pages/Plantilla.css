@@ -158,7 +158,7 @@
     transition: all 0.2s;
 }
 .btn-primarypp {
-  background-color: var(--primary-color);
-  color: var(--contrast-text-color);
+  background-color: var(--primary-action-color, var(--primary-color));
+  color: var(--primary-action-contrast-text, var(--contrast-text-color));
   border: none;
 }

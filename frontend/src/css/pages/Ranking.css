@@ -6,6 +6,10 @@
   
   /* Texto Principal: Tu color de contraste (blanco o negro) */
   --rk-text-main: var(--contrast-text-color);
+
+  /* Texto dentro de cards blancas */
+  --rk-surface-text: var(--surface-fg, #212529);
+  --rk-surface-text-muted: color-mix(in srgb, var(--rk-surface-text), transparent 40%);
   
   /* Texto Muted: El mismo color de contraste pero al 60% de opacidad (se adapta solo) */
   --rk-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
@@ -14,13 +18,13 @@
   /* MEZCLA: Toma el color primario y le añade un 7% del color de contraste.
      - Si el fondo es negro y el texto blanco -> La tarjeta se vuelve gris muy oscuro (visible).
      - Si el fondo es blanco y el texto negro -> La tarjeta se vuelve gris muy claro (visible). */
-  --rk-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 7%);
+  --rk-surface: var(--surface-bg, #ffffff);
   
   /* Borde de tarjetas: Un poco más marcado que la superficie */
-  --rk-surface-highlight: color-mix(in srgb, var(--contrast-text-color), transparent 85%);
+  --rk-surface-highlight: color-mix(in srgb, var(--rk-surface-text), transparent 88%);
 
   /* Colores funcionales (mantenemos valores fijos para estados, o podrías usar variables globales si tienes) */
-  --rk-accent: #3b82f6;       /* Azul para barras y detalles */
+  --rk-accent: var(--primary-action-color, var(--primary-color));
   --rk-gold: #fbbf24;         /* Oro para el MVP */
   --rk-gold-dim: rgba(251, 191, 36, 0.2);
   --rk-success: #4ade80;
@@ -29,7 +33,7 @@
 }
 
 .ranking-page {
-  background-color: var(--rk-bg);
+  /* background-color: var(--rk-bg); */
   color: var(--rk-text-main);
   min-height: 100vh;
   padding: 1.5rem;
@@ -80,7 +84,7 @@
 .btn-icon-refresh {
   background: var(--rk-surface);
   border: 1px solid var(--rk-surface-highlight);
-  color: var(--rk-text-main);
+  color: var(--rk-surface-text);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -118,19 +122,20 @@
   flex-direction: column;
   justify-content: center;
   /* Sombra sutil usando el color de contraste en muy baja opacidad */
-  box-shadow: 0 4px 6px -1px color-mix(in srgb, var(--contrast-text-color), transparent 95%);
+  box-shadow: 0 4px 6px -1px color-mix(in srgb, var(--rk-surface-text), transparent 92%);
+  color: var(--rk-surface-text);
 }
 
 .stat-value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--rk-text-main);
+  color: var(--rk-surface-text);
   line-height: 1.2;
 }
 
 .stat-label {
   font-size: 0.65rem;
-  color: var(--rk-text-muted);
+  color: var(--rk-surface-text-muted);
   text-transform: uppercase;
   margin-top: 0.25rem;
   font-weight: 600;

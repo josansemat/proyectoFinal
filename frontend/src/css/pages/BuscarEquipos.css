@@ -6,21 +6,24 @@
   
   /* Texto Principal */
   --mkt-text-main: var(--contrast-text-color);
+
+  /* Texto en superficies (cards blancas) */
+  --mkt-surface-text: var(--surface-fg, #212529);
   
   /* Texto Muted: 60% opacidad */
   --mkt-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
 
-  /* Superficie: Mezcla del primario con 7% de texto para contraste plano */
-  --mkt-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 7%);
+  /* Superficie: blanco (regla del sistema de diseño) */
+  --mkt-surface: var(--surface-bg, #ffffff);
   
   /* Bordes */
-  --mkt-border: color-mix(in srgb, var(--contrast-text-color), transparent 85%);
+  --mkt-border: color-mix(in srgb, var(--mkt-surface-text), transparent 88%);
 
-  /* Inputs: Un poco más contrastado que la superficie */
-  --mkt-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 12%);
+  /* Inputs: un poco más contrastado que la superficie */
+  --mkt-input-bg: color-mix(in srgb, var(--mkt-surface) 92%, var(--mkt-surface-text) 8%);
 
-  /* Acciones */
-  --mkt-accent: #3b82f6; 
+  /* Acciones (alineadas con el equipo; evita primarios muy claros) */
+  --mkt-accent: var(--primary-action-color, var(--primary-color));
   --mkt-success: #22c55e;
   --mkt-danger: #ef4444;
   
@@ -86,7 +89,7 @@
   background: var(--mkt-input-bg);
   border: 1px solid var(--mkt-border);
   border-radius: 999px;
-  color: var(--mkt-text-main);
+  color: var(--mkt-surface-text);
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s ease;
@@ -94,7 +97,7 @@
 }
 
 .search-wrapper input:focus {
-  border-color: var(--mkt-text-muted);
+  border-color: var(--mkt-accent);
 }
 
 .btn-clear {
@@ -136,11 +139,12 @@
   transition: transform 0.2s;
   position: relative;
   overflow: hidden;
+  color: var(--mkt-surface-text);
 }
 
 .team-card:hover {
   transform: translateY(-4px);
-  border-color: var(--mkt-text-muted);
+  border-color: color-mix(in srgb, var(--mkt-surface-text), transparent 70%);
 }
 
 .team-card__content {
@@ -160,22 +164,22 @@
   justify-content: center;
   font-size: 2rem;
   font-weight: 800;
-  color: #fff; 
+  color: #fff;
   margin-bottom: 1rem;
   /* Borde sutil para separar del fondo si los colores son similares */
-  border: 2px solid color-mix(in srgb, var(--mkt-text-main), transparent 90%);
+  border: 2px solid color-mix(in srgb, var(--mkt-surface-text), transparent 90%);
 }
 
 .team-name {
   margin: 0 0 0.25rem 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--mkt-text-main);
+  color: var(--mkt-surface-text);
 }
 
 .team-meta {
   font-size: 0.85rem;
-  color: var(--mkt-text-muted);
+  color: var(--mkt-surface-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;

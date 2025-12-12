@@ -1,17 +1,19 @@
 
-/* Reset básico */
-* {
+/* Reset básico (acotado a estas páginas para no afectar al resto de la app) */
+.register-page,
+.register-page *,
+.auth-page,
+.auth-page * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Contenedor principal (registro y login) */
 .register-page,
 .auth-page {
   display: flex;
-  height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 }
 

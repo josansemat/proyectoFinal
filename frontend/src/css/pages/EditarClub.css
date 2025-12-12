@@ -3,26 +3,27 @@
   
   /* Bases */
   --edt-bg: var(--primary-color);
-  --edt-text: var(--contrast-text-color);
+  --edt-page-text: var(--contrast-text-color);
+  --edt-text: var(--surface-fg, #212529);
 
   /* Superficies */
   /* Surface: Fondo + 6% del texto */
-  --edt-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 6%);
+  --edt-surface: var(--surface-bg, #ffffff);
   /* Surface Highlight (Hover/Card): Fondo + 10% del texto */
-  --edt-surface-high: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 10%);
+  --edt-surface-high: var(--surface-bg, #ffffff);
   /* Input BG: Fondo + 14% del texto */
-  --edt-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 14%);
+  --edt-input-bg: color-mix(in srgb, var(--edt-surface) 92%, var(--edt-text) 8%);
 
   /* Bordes */
-  --edt-border: color-mix(in srgb, var(--contrast-text-color), transparent 88%);
+  --edt-border: color-mix(in srgb, var(--edt-text), transparent 88%);
 
   /* Textos secundarios */
-  --edt-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
-  --edt-text-label: color-mix(in srgb, var(--contrast-text-color), transparent 20%);
+  --edt-text-muted: color-mix(in srgb, var(--edt-text), transparent 40%);
+  --edt-text-label: color-mix(in srgb, var(--edt-text), transparent 20%);
 
   /* Acento (Monocromático Invertido) */
-  --edt-accent: var(--contrast-text-color);
-  --edt-accent-fg: var(--primary-color);
+  --edt-accent: var(--primary-action-color, var(--primary-color));
+  --edt-accent-fg: var(--primary-action-contrast-text, var(--contrast-text-color));
 
   /* Estados Semánticos (Suavizados) */
   --edt-success: #10b981;
@@ -32,13 +33,13 @@
   /* Geometría */
   --edt-radius: 16px;
   --edt-radius-sm: 10px;
-  --edt-shadow: 0 10px 30px -10px color-mix(in srgb, var(--contrast-text-color), transparent 90%);
+  --edt-shadow: 0 10px 30px -10px color-mix(in srgb, var(--edt-text), transparent 90%);
 }
 
 .editar-club-page {
   position: relative;
   background-color: var(--edt-bg);
-  color: var(--edt-text);
+  color: var(--edt-page-text);
   min-height: 100vh;
   padding: 1.5rem clamp(1rem, 3vw, 2rem);
   font-family: system-ui, -apple-system, sans-serif;
@@ -62,7 +63,7 @@
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--contrast-text-color);
+  color: var(--edt-text);
 }
 
 /* --- GRID DE FORMULARIO --- */
@@ -82,6 +83,7 @@
   flex-direction: column;
   gap: 1.25rem;
   height: 100%; /* Para igualar alturas en grid */
+  color: var(--edt-text);
 }
 
 .edt-section-title {
@@ -126,7 +128,7 @@
 .edt-input:focus,
 .edt-select:focus,
 .edt-textarea:focus {
-  border-color: var(--edt-text);
+  border-color: var(--edt-accent);
 }
 
 .edt-textarea {

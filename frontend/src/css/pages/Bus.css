@@ -11,14 +11,18 @@
   /* Texto Muted (60% opacidad del texto principal) */
   --bus-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
 
-  /* Superficie de las tarjetas (Mezcla sutil del primario con el texto para contraste) */
-  --bus-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 7%);
+	/* Superficie de las tarjetas: blanco (regla del sistema de diseño) */
+	--bus-surface: var(--surface-bg, #ffffff);
+	--bus-surface-text: var(--surface-fg, #212529);
   
   /* Borde/Resaltado de superficies */
-  --bus-surface-highlight: color-mix(in srgb, var(--contrast-text-color), transparent 85%);
+	--bus-surface-highlight: color-mix(in srgb, var(--bus-surface-text), transparent 88%);
 
   /* Inputs (un poco más contrastados que la superficie normal) */
-  --bus-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 12%);
+	--bus-input-bg: color-mix(in srgb, var(--bus-surface) 92%, var(--bus-surface-text) 8%);
+
+	/* Acento (usar primario derivado para que no quede demasiado claro) */
+	--bus-accent: var(--primary-action-color, var(--primary-color));
 
   /* Colores funcionales */
   /* --bus-accent: #3b82f6; */
@@ -85,14 +89,15 @@
 	border-radius: var(--bus-radius);
 	border: 1px solid var(--bus-surface-highlight);
 	/* Sombra sutil basada en el color de texto (funciona en claro y oscuro) */
-	box-shadow: 0 20px 50px -20px color-mix(in srgb, var(--bus-text-main), transparent 95%);
+	box-shadow: 0 20px 50px -20px color-mix(in srgb, var(--bus-surface-text), transparent 92%);
 	display: flex;
 	flex-direction: column;
 	gap: 1.5rem;
+	color: var(--bus-surface-text);
 }
 
 .bus-section h2 {
-    color: var(--bus-text-main);
+	color: var(--bus-surface-text);
 	font-weight: 700;
 }
 
@@ -203,7 +208,7 @@
 	gap: 0.5rem;
 	font-size: 0.9rem;
 	font-weight: 600;
-	color: var(--bus-text-muted);
+	color: color-mix(in srgb, var(--bus-surface-text), transparent 40%);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }
@@ -217,7 +222,7 @@
 	padding: 0.75rem 1rem;
 	font-size: 1rem;
 	background: var(--bus-input-bg);
-	color: var(--bus-text-main);
+	color: var(--bus-surface-text);
 	outline: none;
 	transition: border-color 0.2s;
 }

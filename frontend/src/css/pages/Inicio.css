@@ -1,9 +1,12 @@
 :root {
   --inicio-bg: linear-gradient(160deg, rgba(var(--primary-rgb, 33, 37, 41), 0.15), rgba(255, 255, 255, 0.4));
-  --inicio-surface:var(--contrast-text-color);
-  --inicio-text-strong: var(--primary-color, #0f172a);
-  --inicio-text-muted:var(--primary-color);
-  --inicio-accent: var(--primary-color) ;
+  /* Superficies: cards en blanco (regla del sistema de diseño) */
+  --inicio-surface: var(--surface-bg, #ffffff);
+  /* Texto dentro de cards: estable y legible */
+  --inicio-text-strong: var(--surface-fg, #212529);
+  --inicio-text-muted: color-mix(in srgb, var(--surface-fg, #212529) 70%, transparent);
+  /* Acentos/CTA: usar el primario derivado (más oscuro si el primario es claro) */
+  --inicio-accent: var(--primary-action-color, var(--primary-color));
   --inicio-secondary: #fef9c3;
   --inicio-chip-bg: rgba(255, 255, 255, 0.4);
   --inicio-card-shadow: 0 35px 80px rgba(15, 23, 42, 0.18);
@@ -94,7 +97,12 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.match-badge { color: var(--inicio-accent); background: rgba(37, 99, 235, 0.08); padding: 4px 8px; border-radius: 6px;}
+.match-badge {
+  color: var(--inicio-accent);
+  background: color-mix(in srgb, var(--inicio-accent) 12%, transparent);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
 .status-dot { color: var(--inicio-text-muted);
 display: flex;
 align-items: center; 
@@ -128,7 +136,7 @@ margin-right: 10px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: #f1f5f9;
+  background: color-mix(in srgb, var(--inicio-accent) 8%, var(--inicio-surface) 92%);
   padding: 0.5rem 1rem;
   border-radius: 99px;
   font-size: 0.9rem;
@@ -193,7 +201,7 @@ margin-right: 10px;
 
 .btn-save {
   background:  var(--inicio-accent);
-  color:var(--contrast-text-color);
+  color: var(--primary-action-contrast-text, var(--contrast-text-color));
   box-shadow: 0 15px 30px rgba(67, 56, 202, 0.2);
 }
 
@@ -240,19 +248,19 @@ margin-right: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: var(--primary-color);
+  background-color: var(--primary-action-color, var(--primary-color));
 }
 .stat-val {
   font-size: 1.4rem;
   font-weight: 800;
-  color:var(--contrast-text-color);
+  color:black;
   line-height: 1.1;
 }
 
 .stat-lbl {
   font-size: 0.65rem;
   font-weight: 700;
-  color:var(--contrast-text-color);
+  color: black;
   margin-top: 0.25rem;
 }
 

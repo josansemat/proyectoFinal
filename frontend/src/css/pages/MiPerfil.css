@@ -1,32 +1,33 @@
 :root {
   /* --- BASES DEL SISTEMA --- */
   --prf-bg: var(--primary-color);
-  --prf-text: var(--contrast-text-color);
+  --prf-page-text: var(--contrast-text-color);
+  --prf-text: var(--surface-fg, #212529);
 
   /* --- GENERACIÓN AUTOMÁTICA DE TONOS (Sin Azul) --- */
   
   /* Superficie: Fondo + 7% del color de texto */
-  --prf-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 7%);
+  --prf-surface: var(--surface-bg, #ffffff);
   
   /* Inputs: Fondo + 12% del color de texto */
-  --prf-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 12%);
+  --prf-input-bg: color-mix(in srgb, var(--prf-surface) 92%, var(--prf-text) 8%);
 
   /* Bordes: Texto + mucha transparencia */
-  --prf-border: color-mix(in srgb, var(--contrast-text-color), transparent 85%);
+  --prf-border: color-mix(in srgb, var(--prf-text), transparent 88%);
 
   /* Textos secundarios (Grises generados a partir del color de texto principal) */
-  --prf-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
-  --prf-text-soft: color-mix(in srgb, var(--contrast-text-color), transparent 20%);
+  --prf-text-muted: color-mix(in srgb, var(--prf-text), transparent 40%);
+  --prf-text-soft: color-mix(in srgb, var(--prf-text), transparent 20%);
 
   /* --- ACENTO MONOCROMÁTICO --- */
   /* El acento es el propio color de contraste (Blanco en dark mode, Negro en light mode) */
-  --prf-accent: var(--contrast-text-color); 
+  --prf-accent: var(--primary-action-color, var(--primary-color));
   
   /* El texto DENTRO de un botón de acento debe ser del color del fondo para que se lea */
-  --prf-accent-fg: var(--primary-color);
+  --prf-accent-fg: var(--primary-action-contrast-text, var(--contrast-text-color));
 
   /* Hover del acento: El color de texto con un poco de transparencia */
-  --prf-accent-hover: color-mix(in srgb, var(--contrast-text-color), transparent 20%);
+  --prf-accent-hover: color-mix(in srgb, var(--prf-accent), transparent 20%);
 
   /* Colores funcionales (Semánticos indispensables, pero planos) */
   --prf-danger: #ef4444;
@@ -34,14 +35,14 @@
   --prf-gold: #fbbf24;
   
   --prf-radius: 16px;
-  --prf-shadow: 0 4px 20px -5px color-mix(in srgb, var(--contrast-text-color), transparent 95%);
+  --prf-shadow: 0 4px 20px -5px color-mix(in srgb, var(--prf-text), transparent 92%);
 }
 
 .perfil-page {
   min-height: 100vh;
   padding: 1.5rem;
   /* background-color: var(--prf-bg); */
-  color: var(--prf-text);
+  color: var(--prf-page-text);
   font-family: system-ui, -apple-system, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -79,6 +80,7 @@
   position: relative;
   overflow: hidden;
   box-shadow: var(--prf-shadow);
+  color: var(--prf-text);
 }
 
 .avatar-container {
@@ -283,7 +285,7 @@
 /* Botón Primario INVERTIDO: Fondo texto, Texto fondo */
 .btn-primary {
   background: var(--prf-accent); 
-  color: var(--contrast-text-color);
+  color: var(--prf-accent-fg);
   border: 1px solid var(--prf-accent);
   padding: 0.85rem 1.5rem;
   border-radius: 10px;

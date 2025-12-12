@@ -3,26 +3,27 @@
   
   /* Bases */
   --usr-bg: var(--primary-color);
-  --usr-text: var(--contrast-text-color);
+  --usr-page-text: var(--contrast-text-color);
+  --usr-text: var(--surface-fg, #212529);
 
   /* Superficies */
   /* Surface: Fondo + 6% del texto */
-  --usr-surface: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 6%);
+  --usr-surface: var(--surface-bg, #ffffff);
   /* Surface Highlight (Hover/Card): Fondo + 10% del texto */
-  --usr-surface-high: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 10%);
+  --usr-surface-high: var(--surface-bg, #ffffff);
   /* Input BG: Fondo + 14% del texto */
-  --usr-input-bg: color-mix(in srgb, var(--primary-color), var(--contrast-text-color) 14%);
+  --usr-input-bg: color-mix(in srgb, var(--usr-surface) 92%, var(--usr-text) 8%);
 
   /* Bordes */
-  --usr-border: color-mix(in srgb, var(--contrast-text-color), transparent 88%);
+  --usr-border: color-mix(in srgb, var(--usr-text), transparent 88%);
 
   /* Textos secundarios */
-  --usr-text-muted: color-mix(in srgb, var(--contrast-text-color), transparent 40%);
-  --usr-text-placeholder: color-mix(in srgb, var(--contrast-text-color), transparent 60%);
+  --usr-text-muted: color-mix(in srgb, var(--usr-text), transparent 40%);
+  --usr-text-placeholder: color-mix(in srgb, var(--usr-text), transparent 60%);
 
   /* Acento (Monocromático Invertido) */
-  --usr-accent: var(--contrast-text-color);
-  --usr-accent-fg: var(--primary-color);
+  --usr-accent: var(--primary-action-color, var(--primary-color));
+  --usr-accent-fg: var(--primary-action-contrast-text, var(--contrast-text-color));
 
   /* Estados Semánticos (Suavizados) */
   --usr-success: #10b981;
@@ -33,13 +34,13 @@
   /* Geometría */
   --usr-radius: 16px;
   --usr-radius-sm: 10px;
-  --usr-shadow: 0 10px 30px -10px color-mix(in srgb, var(--contrast-text-color), transparent 90%);
+  --usr-shadow: 0 10px 30px -10px color-mix(in srgb, var(--usr-text), transparent 90%);
 }
 
 .admin-jugadores-page {
   position: relative;
   /* background-color: var(--usr-bg); */
-  color: var(--usr-text);
+  color: var(--usr-page-text);
   min-height: 100vh;
   padding: 1.5rem clamp(1rem, 3vw, 2rem);
   font-family: system-ui, -apple-system, sans-serif;
@@ -57,6 +58,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  color: var(--usr-text);
 }
 
 /* --- TOOLBAR --- */
