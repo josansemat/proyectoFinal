@@ -92,6 +92,11 @@ const Sidebar = ({
     navigate("/");
   };
 
+  const handleReloadClick = () => {
+    closeSidebar();
+    window.location.reload();
+  };
+
   // —— CERRAR DROPDOWN AL CLICK FUERA —— //
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -450,6 +455,19 @@ const Sidebar = ({
           className="p-2 border-top logout-section"
           style={{ borderColor: "var(--sidebar-border-color)" }}
         >
+          <button
+            type="button"
+            className="btn w-100 text-start px-2 d-flex align-items-center gap-3 nav-link"
+            onClick={handleReloadClick}
+            aria-label="Recargar la página"
+            title="Recargar para actualizar permisos y datos"
+          >
+            <svg className="sidebar-nav-icon">
+              <use href="#icon-settings" />
+            </svg>
+            <span className="fw-semibold">Recargar</span>
+          </button>
+
           <button
             type="button"
             className="btn w-100 text-start px-2 d-flex align-items-center gap-3 btn-logout-sidebar nav-link"

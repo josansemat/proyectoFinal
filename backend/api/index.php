@@ -68,6 +68,10 @@ switch ($action) {
         $controller->actualizarDatos();
         break;
 
+    case "get_jugador":
+        $controller->getJugador();
+        break;
+
     case "listar_equipos_todos":
         $rolGlobal = $_GET['rol_global'] ?? 'usuario';
         $equipos = Equipo::getAllEquipos($rolGlobal === 'admin');

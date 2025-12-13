@@ -8,6 +8,12 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
   const [processingId, setProcessingId] = useState(null);
   const [feedback, setFeedback] = useState({ type: "", text: "" });
 
+  useEffect(() => {
+    if (!feedback.text) return;
+    const timeout = setTimeout(() => setFeedback({ type: "", text: "" }), 4000);
+    return () => clearTimeout(timeout);
+  }, [feedback]);
+
   const isManager = currentTeam?.mi_rol === "manager";
   const roleGlobal = user?.rol_global ?? user?.rol;
   const isAdminGlobal = roleGlobal === "admin";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import '../css/pages/Register.css';
 
 export default function ResetPassword({ token, switchToLogin }) {
@@ -8,6 +8,12 @@ export default function ResetPassword({ token, switchToLogin }) {
     });
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (!error) return;
+        const timeout = setTimeout(() => setError(""), 4000);
+        return () => clearTimeout(timeout);
+    }, [error]);
 
     const handleChange = (e) => {
         setForm({

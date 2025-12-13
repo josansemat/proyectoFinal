@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../css/pages/CreateJugador.css";
 
 const INITIAL_FORM = {
@@ -15,6 +15,12 @@ export default function CreateJugador() {
     const [form, setForm] = useState({ ...INITIAL_FORM });
     const [feedback, setFeedback] = useState({ type: "", text: "" });
     const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (!feedback.text) return;
+        const timeout = setTimeout(() => setFeedback({ type: "", text: "" }), 4000);
+        return () => clearTimeout(timeout);
+    }, [feedback]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;

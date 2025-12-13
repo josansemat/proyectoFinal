@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./css/layout/app-layout.css";
 import "./css/layout/ui-elements.css";
@@ -282,7 +282,7 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     deregisterPushToken();
     setUser(null); setCurrentTeam(null); setUserTeams([]);
     localStorage.removeItem("usuario_furbo"); localStorage.removeItem("equipo_actual_furbo");
@@ -291,7 +291,67 @@ function App() {
     document.documentElement.style.removeProperty('--primary-rgb');
     document.documentElement.style.removeProperty('--contrast-text-color');
     document.documentElement.style.removeProperty('--bg-light');
-  };
+  }, []);
+
+  // --- VALIDACIÓN/REFRESCO DE SESIÓN ---
+  // - Si el usuario fue baneado (activo=0) o eliminado -> cerramos sesión.
+  // - Al volver a la pestaña, refrescamos equipos/roles para que el Sidebar se actualice.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+
+    const validateAndRefresh = async () => {
+      try {
+        const r = await fetch(`/api/index.php?action=get_jugador&id=${user.id}`, { cache: "no-store" });
+        const j = await r.json();
+        if (cancelled) return;
+
+        if (!j?.success || !j?.jugador) {
+          handleLogout();
+          return;
+        }
+        if (Number(j.jugador.activo) === 0) {
+          handleLogout();
+          return;
+        }
+
+        // Si cambió el rol global (admin/usuario), lo actualizamos y refrescamos equipos.
+        const nextRole = j.jugador.rol;
+        if (nextRole && nextRole !== user.rol) {
+          const updatedUser = {
+            ...user,
+            rol: nextRole,
+            nombre: j.jugador.nombre ?? user.nombre,
+            apodo: j.jugador.apodo ?? user.apodo,
+            email: j.jugador.email ?? user.email,
+          };
+          setUser(updatedUser);
+          localStorage.setItem("usuario_furbo", JSON.stringify(updatedUser));
+          try { await fetchUserTeams(updatedUser.id, updatedUser); } catch (e) { console.error(e); }
+          return;
+        }
+
+        // Refrescar equipos/roles por si te hicieron manager/jugador.
+        try { await fetchUserTeams(user.id, user); } catch (e) { console.error(e); }
+      } catch (e) {
+        // Si falla la validación, no forzamos logout (puede ser caída temporal).
+      }
+    };
+
+    validateAndRefresh();
+    const onFocus = () => validateAndRefresh();
+    const onVis = () => { if (document.visibilityState === 'visible') validateAndRefresh(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVis);
+    const interval = setInterval(validateAndRefresh, 45000);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVis);
+      clearInterval(interval);
+    };
+  }, [user, handleLogout]);
 
   // --- FONDO DINÁMICO ---
   const defaultBgPath = "/fondos/fondo-default.png";

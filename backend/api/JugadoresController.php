@@ -76,6 +76,12 @@ class JugadoresController {
         $jugador = Jugador::getByEmail($email);
 
         if ($jugador) {
+            // Si está baneado/desactivado, no permitimos iniciar sesión
+            if ((int)$jugador->getActivo() === 0) {
+                echo json_encode(["success" => false, "error" => "Tu cuenta está desactivada. Contacta con un administrador."]);
+                return;
+            }
+
             // Verificar contraseña
             if (password_verify($passwordInput, $jugador->getPassword())) {
                 
@@ -110,6 +116,40 @@ class JugadoresController {
         $arr = [];
         foreach ($jugadores as $j) { $arr[] = (array)$j; }
         echo json_encode($arr);
+    }
+
+    // --------------------------
+    // GET JUGADOR (estado sesión/rol)
+    // --------------------------
+    public function getJugador() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            echo json_encode(["success" => false, "error" => "Falta id"]);
+            return;
+        }
+
+        try {
+            $jugador = Jugador::getJugadorById($id);
+            if (!$jugador) {
+                echo json_encode(["success" => false, "error" => "Jugador no encontrado"]);
+                return;
+            }
+
+            echo json_encode([
+                "success" => true,
+                "jugador" => [
+                    "id" => $jugador->getId(),
+                    "nombre" => $jugador->getNombre(),
+                    "apodo" => $jugador->getApodo(),
+                    "email" => $jugador->getEmail(),
+                    "rol" => $jugador->getRol(),
+                    "activo" => (int)$jugador->getActivo(),
+                ]
+            ]);
+        } catch (Exception $e) {
+            error_log('Error getJugador: '.$e->getMessage());
+            echo json_encode(["success" => false, "error" => "No se pudo cargar el usuario"]);
+        }
     }
     public function misEquipos() {
         // En un caso real, el ID vendría del token de sesión.

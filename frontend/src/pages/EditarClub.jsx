@@ -22,6 +22,13 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
   const [kickLoadingIds, setKickLoadingIds] = useState(() => new Set());
   const [kickDialog, setKickDialog] = useState(null); // { id, nombre }
 
+  useEffect(() => {
+    if (!message?.text) return;
+    if (message.type === 'info') return;
+    const timeout = setTimeout(() => setMessage({ text: '', type: '' }), 4000);
+    return () => clearTimeout(timeout);
+  }, [message]);
+
   const rolGlobal = user?.rol_global ?? user?.rol ?? 'usuario';
   const isAdmin = rolGlobal === 'admin';
   const isManager = currentTeam?.mi_rol === 'manager';

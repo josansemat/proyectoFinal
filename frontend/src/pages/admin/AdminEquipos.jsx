@@ -17,6 +17,12 @@ export default function AdminEquipos() {
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
+  useEffect(() => {
+    if (!error) return;
+    const timeout = setTimeout(() => setError(""), 4500);
+    return () => clearTimeout(timeout);
+  }, [error]);
+
   // Estados para el Modal
   const [editing, setEditing] = useState(null); 
   const [isCreating, setIsCreating] = useState(false); 

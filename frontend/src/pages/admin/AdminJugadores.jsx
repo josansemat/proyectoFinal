@@ -27,6 +27,12 @@ export default function AdminJugadores({ user, currentTeam }) {
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 768 : false));
+
+  useEffect(() => {
+    if (!error) return;
+    const timeout = setTimeout(() => setError(""), 4500);
+    return () => clearTimeout(timeout);
+  }, [error]);
   
   const [editing, setEditing] = useState(null); 
   const [form, setForm] = useState({ nombre: "", apodo: "", email: "", telefono: "" });

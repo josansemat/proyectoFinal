@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import '../css/pages/Register.css';
 import '../css/pages/Login.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -16,6 +16,21 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
   const [forgotMessage, setForgotMessage] = useState("");
   const [forgotError, setForgotError] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
+
+    useEffect(() => {
+      if (!error) return;
+      const timeout = setTimeout(() => setError(""), 4500);
+      return () => clearTimeout(timeout);
+    }, [error]);
+
+    useEffect(() => {
+      if (!forgotMessage && !forgotError) return;
+      const timeout = setTimeout(() => {
+        setForgotMessage("");
+        setForgotError("");
+      }, 5000);
+      return () => clearTimeout(timeout);
+    }, [forgotMessage, forgotError]);
 
     const handleChange = (e) => {
         setForm({
