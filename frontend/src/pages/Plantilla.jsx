@@ -46,6 +46,18 @@ function Plantilla({ user, currentTeam }) {
   const [error, setError] = useState("");
   const [saveMsg, setSaveMsg] = useState({ type: null, text: "" });
 
+  useEffect(() => {
+    if (!error) return;
+    const timeout = setTimeout(() => setError(""), 4500);
+    return () => clearTimeout(timeout);
+  }, [error]);
+
+  useEffect(() => {
+    if (!saveMsg?.text) return;
+    const timeout = setTimeout(() => setSaveMsg({ type: null, text: "" }), 4000);
+    return () => clearTimeout(timeout);
+  }, [saveMsg]);
+
   // Cargar jugadores del equipo actual y estado guardado
   useEffect(() => {
     let ignore = false;

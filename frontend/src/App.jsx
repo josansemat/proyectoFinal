@@ -33,6 +33,18 @@ function RequireAdmin({ user, children }) {
   return children;
 }
 
+// Guard de rutas para manager o admin (evita acceso por URL a páginas de gestión de club)
+function RequireManagerOrAdmin({ user, currentTeam, children }) {
+  const role = user?.rol_global ?? user?.rol ?? "usuario";
+  const isAdmin = role === "admin";
+  const teamRole = (currentTeam?.mi_rol ?? "").toLowerCase();
+  const isManager = teamRole === "manager";
+  if (!isAdmin && !isManager) {
+    return <Navigate to="/inicio" replace />;
+  }
+  return children;
+}
+
 const hexToRgb = (hex) => {
   if (!hex) return '33, 37, 41';
   hex = hex.replace('#', '');
@@ -126,11 +138,21 @@ function App() {
         await registerPushToken(user);
         const unsub = await listenForegroundNotifications((payload) => {
           if (!mounted) return;
+
+          const data = payload?.data || {};
+          // Trigger silencioso: refrescar roles/equipos sin mostrar toast.
+          if (data?.type === "roles_updated") {
+            if (user?.id) {
+              fetchUserTeams(user.id, user);
+            }
+            return;
+          }
+
           const notification = payload?.notification || {};
           setIncomingNotification({
             title: notification.title || "Furbo",
             body: notification.body || "Tienes una nueva notificación",
-            data: payload?.data || {},
+            data,
             receivedAt: Date.now(),
           });
         });
@@ -150,6 +172,22 @@ function App() {
         notificationSubRef.current = null;
       }
     };
+  }, [user]);
+
+  // Recibir triggers silenciosos desde el Service Worker (cuando el navegador está en background)
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!('serviceWorker' in navigator)) return;
+
+    const onMessage = (event) => {
+      const msg = event?.data || {};
+      if (msg?.type === 'roles_updated') {
+        fetchUserTeams(user.id, user);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
   }, [user]);
 
   useEffect(() => {
@@ -222,7 +260,8 @@ function App() {
         }
         if (!currentTeam || currentTeam.id !== teamToSelect.id) {
           handleTeamChange(teamToSelect);
-        } else if (!currentTeam.mi_rol && teamToSelect.mi_rol) {
+        } else if (teamToSelect.mi_rol && teamToSelect.mi_rol !== currentTeam.mi_rol) {
+          // Si te cambian de rol (jugador <-> manager), hay que reflejarlo sin recargar.
           const enrichedCurrent = { ...currentTeam, mi_rol: teamToSelect.mi_rol };
           setCurrentTeam(enrichedCurrent);
           localStorage.setItem("equipo_actual_furbo", JSON.stringify(enrichedCurrent));
@@ -402,8 +441,22 @@ function App() {
             <Route path="/" element={<Inicio user={user} team={currentTeam} />} />
             <Route path="/inicio" element={<Inicio user={user} team={currentTeam} />} />
             <Route path="/buscar-equipos" element={<BuscarEquipos user={user} userTeams={userTeams} isBgLight={isBgLight} />} />
-            <Route path="/mi-club/solicitudes" element={<ManagerSolicitudes user={user} currentTeam={currentTeam} isBgLight={isBgLight} />} />
-            <Route path="/mi-club/configurar" element={<EditarClub user={user} currentTeam={currentTeam} onTeamUpdate={handleTeamChange} />} />
+            <Route
+              path="/mi-club/solicitudes"
+              element={
+                <RequireManagerOrAdmin user={user} currentTeam={currentTeam}>
+                  <ManagerSolicitudes user={user} currentTeam={currentTeam} isBgLight={isBgLight} />
+                </RequireManagerOrAdmin>
+              }
+            />
+            <Route
+              path="/mi-club/configurar"
+              element={
+                <RequireManagerOrAdmin user={user} currentTeam={currentTeam}>
+                  <EditarClub user={user} currentTeam={currentTeam} onTeamUpdate={handleTeamChange} />
+                </RequireManagerOrAdmin>
+              }
+            />
             <Route path="/crear-jugador" element={<CreateJugador />} />
             <Route path="/plantilla" element={<Plantilla user={user} currentTeam={currentTeam} />} />
             <Route path="/partidos" element={<PartidosDashboard user={user} currentTeam={currentTeam} />} />

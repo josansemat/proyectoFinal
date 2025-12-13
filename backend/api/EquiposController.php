@@ -3,6 +3,8 @@
 require_once 'cors.php';
 require_once '../models/Equipo.php';
 require_once '../models/Jugador.php';
+require_once '../models/FcmToken.php';
+require_once '../services/FirebaseNotifier.php';
 
 class EquiposController {
 
@@ -143,6 +145,30 @@ class EquiposController {
             if (is_array($roles) && !empty($roles)) {
                 // Llamamos al nuevo método del modelo
                 Equipo::updateRolesJugadores((int)$idEquipo, $roles);
+
+                // Trigger silencioso por FCM para que los usuarios refresquen roles/equipos al momento.
+                // Enviamos a todos los jugadores afectados en el payload (aunque no hayan cambiado).
+                $userIds = [];
+                foreach ($roles as $row) {
+                    $uid = (int)($row['id_jugador'] ?? 0);
+                    if ($uid > 0) $userIds[] = $uid;
+                }
+                $userIds = array_values(array_unique($userIds));
+                if (!empty($userIds)) {
+                    try {
+                        $tokens = FcmToken::listActiveTokensByUsers($userIds);
+                        if (!empty($tokens)) {
+                            FirebaseNotifier::sendMulticastDataOnly($tokens, [
+                                'type' => 'roles_updated',
+                                'id_equipo' => (string)$idEquipo,
+                                'ts' => (string)time(),
+                            ]);
+                        }
+                    } catch (Exception $e) {
+                        // No bloqueamos el guardado si falla el push.
+                        error_log('FCM roles_updated failed: ' . $e->getMessage());
+                    }
+                }
             }
 
             // Obtener los datos actualizados para devolverlos

@@ -14,6 +14,25 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
+  const data = payload?.data || {};
+
+  // Triggers silenciosos: no mostramos notificación.
+  // Si hay pestañas abiertas, les avisamos para que refresquen roles/equipos.
+  if (data?.type === 'roles_updated') {
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientsArr) => {
+        for (const client of clientsArr) {
+          try {
+            client.postMessage({ type: 'roles_updated', id_equipo: data.id_equipo, ts: data.ts });
+          } catch {
+            // ignore
+          }
+        }
+      });
+    return;
+  }
+
   // Si el mensaje incluye `notification`, FCM/WebPush suele mostrar la notificación automáticamente.
   // En ese caso, si además hacemos `showNotification` aquí, aparecen duplicadas.
   const hasNotificationPayload = !!(payload?.notification && Object.keys(payload.notification).length);
@@ -21,7 +40,6 @@ messaging.onBackgroundMessage((payload) => {
     return;
   }
 
-  const data = payload?.data || {};
   const notif = payload?.notification || {};
   const fcmLink = payload?.fcmOptions?.link;
 

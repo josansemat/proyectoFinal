@@ -42,6 +42,68 @@ class FirebaseNotifier
         return $results;
     }
 
+    // Envío SILENCIOSO (solo data) para usar como “trigger” en el frontend.
+    // No incluye payload `notification` para evitar popups en navegador.
+    public static function sendMulticastDataOnly(array $tokens, array $data = []): array
+    {
+        $tokens = array_values(array_unique(array_filter($tokens)));
+        if (empty($tokens)) {
+            return ['success' => 0, 'failure' => 0, 'responses' => []];
+        }
+
+        $projectId = self::getProjectId();
+        $normalizedData = self::normalizeDataPayload($data);
+
+        $results = ['success' => 0, 'failure' => 0, 'responses' => []];
+        foreach ($tokens as $token) {
+            $response = self::sendDataMessageToToken($projectId, $token, $normalizedData);
+            $results['responses'][] = $response;
+            if (!empty($response['success'])) {
+                $results['success']++;
+            } else {
+                $results['failure']++;
+                if (!empty($response['deactivated'])) {
+                    FcmToken::deactivateByToken($token);
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    private static function sendDataMessageToToken(string $projectId, string $token, array $data): array
+    {
+        $message = self::buildDataOnlyMessagePayload($token, $data);
+        $url = sprintf('https://fcm.googleapis.com/v1/projects/%s/messages:send', $projectId);
+
+        try {
+            $response = self::authorizedJsonPost($url, ['message' => $message]);
+            return ['token' => $token, 'success' => true, 'response' => $response];
+        } catch (FirebaseNotifierException $e) {
+            $shouldDeactivate = self::shouldDeactivateToken($e->getStatus(), $e->getMessage());
+            return [
+                'token' => $token,
+                'success' => false,
+                'status' => $e->getStatus(),
+                'error' => $e->getMessage(),
+                'response' => $e->getResponseBody(),
+                'deactivated' => $shouldDeactivate,
+            ];
+        }
+    }
+
+    private static function buildDataOnlyMessagePayload(string $token, array $data): array
+    {
+        // Importante: NO incluir `notification` para que el SW no muestre nada.
+        return [
+            'token' => $token,
+            'data' => $data,
+            'webpush' => [
+                'headers' => ['Urgency' => 'high'],
+            ],
+        ];
+    }
+
     private static function sendMessageToToken(string $projectId, string $token, array $notification, array $data): array
     {
         $message = self::buildMessagePayload($token, $notification, $data);

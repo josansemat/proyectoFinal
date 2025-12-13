@@ -34,6 +34,12 @@ function Ranking({ user, currentTeam }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!error) return;
+    const timeout = setTimeout(() => setError(""), 4500);
+    return () => clearTimeout(timeout);
+  }, [error]);
+
   const rolGlobal = user?.rol_global || user?.rol || "usuario";
 
   const fetchRanking = useCallback(async () => {

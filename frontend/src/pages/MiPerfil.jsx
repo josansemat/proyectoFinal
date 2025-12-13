@@ -47,6 +47,30 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
   }, [user]);
 
   useEffect(() => {
+    if (!saveMsg?.text) return;
+    const timeout = setTimeout(() => setSaveMsg({ type: null, text: "" }), 4000);
+    return () => clearTimeout(timeout);
+  }, [saveMsg]);
+
+  useEffect(() => {
+    if (!pwdMsg?.text) return;
+    const timeout = setTimeout(() => setPwdMsg({ type: null, text: "" }), 4500);
+    return () => clearTimeout(timeout);
+  }, [pwdMsg]);
+
+  useEffect(() => {
+    if (!abandonMsg?.text) return;
+    const timeout = setTimeout(() => setAbandonMsg({ type: null, text: "" }), 4500);
+    return () => clearTimeout(timeout);
+  }, [abandonMsg]);
+
+  useEffect(() => {
+    if (!notifStatus?.text) return;
+    const timeout = setTimeout(() => setNotifStatus({ type: null, text: "" }), 4500);
+    return () => clearTimeout(timeout);
+  }, [notifStatus]);
+
+  useEffect(() => {
     if (typeof window === "undefined" || !user?.id) return;
     const token = localStorage.getItem("furbo_fcm_token");
     const owner = localStorage.getItem("furbo_fcm_token_owner");
