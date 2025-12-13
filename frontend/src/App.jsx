@@ -173,7 +173,7 @@ function App() {
       if (storedUserStr) {
         const userData = JSON.parse(storedUserStr);
         setUser(userData);
-        try { await fetchUserTeams(userData.id); } catch (e) { console.error(e); }
+        try { await fetchUserTeams(userData.id, userData); } catch (e) { console.error(e); }
         if (storedTeamStr) {
           const storedTeam = JSON.parse(storedTeamStr);
           try {
@@ -197,17 +197,27 @@ function App() {
     loadSession();
   }, []);
 
-  const fetchUserTeams = async (userId) => {
+  const fetchUserTeams = async (userId, userContext = null) => {
     try {
-      const response = await fetch(`/api/index.php?action=mis_equipos&id_jugador=${userId}`, { cache: "no-store" });
+      const role = userContext?.rol_global ?? userContext?.rol ?? user?.rol_global ?? user?.rol ?? "usuario";
+      const isAdmin = role === "admin";
+      const response = await fetch(
+        isAdmin
+          ? `/api/index.php?action=listar_equipos_todos&rol_global=admin`
+          : `/api/index.php?action=mis_equipos&id_jugador=${userId}`,
+        { cache: "no-store" }
+      );
       const data = await response.json();
-      if (data.success && data.equipos.length > 0) {
-        setUserTeams(data.equipos);
+      const equipos = Array.isArray(data.equipos) ? data.equipos : [];
+      if (data.success && equipos.length > 0) {
+        // Para admin: el selector muestra todos los equipos activos.
+        // Para usuarios: el selector muestra sus equipos.
+        setUserTeams(equipos);
         const storedTeamStr = localStorage.getItem("equipo_actual_furbo");
-        let teamToSelect = data.equipos[0];
+        let teamToSelect = equipos[0];
         if (storedTeamStr) {
           const storedTeam = JSON.parse(storedTeamStr);
-          const found = data.equipos.find(t => t.id === storedTeam.id);
+          const found = equipos.find(t => t.id === storedTeam.id);
           if (found) teamToSelect = { ...found, mi_rol: storedTeam.mi_rol ?? found.mi_rol ?? null };
         }
         if (!currentTeam || currentTeam.id !== teamToSelect.id) {
@@ -226,7 +236,7 @@ function App() {
   const handleLoginSuccess = async (userData) => {
     setUser(userData);
     localStorage.setItem("usuario_furbo", JSON.stringify(userData));
-    await fetchUserTeams(userData.id);
+    await fetchUserTeams(userData.id, userData);
     setCurrentView("inicio");
   };
 

@@ -13,6 +13,8 @@ const INITIAL_FORM = {
 
 export default function CreateJugador() {
     const [form, setForm] = useState({ ...INITIAL_FORM });
+    const [feedback, setFeedback] = useState({ type: "", text: "" });
+    const [submitting, setSubmitting] = useState(false);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -26,18 +28,30 @@ export default function CreateJugador() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        setFeedback({ type: "", text: "" });
+        setSubmitting(true);
 
-        const response = await fetch("/api/index.php?action=crear", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(form),
-        });
+        try {
+            const response = await fetch("/api/index.php?action=crear", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
 
-        const data = await response.json();
-        console.log("Respuesta:", data);
-        alert(data.message || data.error);
+            const data = await response.json();
+            if (data.success) {
+                setFeedback({ type: "success", text: data.message || "Jugador creado correctamente." });
+                setForm({ ...INITIAL_FORM });
+            } else {
+                setFeedback({ type: "error", text: data.error || "No se pudo crear el jugador." });
+            }
+        } catch (e) {
+            setFeedback({ type: "error", text: "Error de conexión con el servidor." });
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -51,6 +65,14 @@ export default function CreateJugador() {
                         </div>
 
                         <div className="card-body">
+                            {feedback.text && (
+                                <div
+                                    className={`alert ${feedback.type === "success" ? "alert-success" : "alert-danger"}`}
+                                    role="status"
+                                >
+                                    {feedback.text}
+                                </div>
+                            )}
                             <form className="create-jugador-form" onSubmit={handleSubmit}>
                                 <div>
                                     <label htmlFor="nombre">Nombre completo</label>
@@ -156,8 +178,8 @@ export default function CreateJugador() {
                                     <button type="button" className="btn btn-outline-secondary" onClick={handleReset}>
                                         Limpiar
                                     </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        Crear jugador
+                                    <button type="submit" className="btn btn-primary" disabled={submitting}>
+                                        {submitting ? "Creando..." : "Crear jugador"}
                                     </button>
                                 </div>
                             </form>

@@ -1,6 +1,7 @@
 <?php
 require_once 'cors.php';
 require_once '../models/Jugador.php';
+require_once '../models/Equipo.php';
 
 class JugadoresController {
 
@@ -157,13 +158,32 @@ class JugadoresController {
         $id_jugador = $data['id_jugador'] ?? null;
         $id_equipo = $data['id_equipo'] ?? null;
 
+        // Compatibilidad: si no vienen, asumimos que la acción la realiza el propio jugador.
+        $id_usuario = $data['id_usuario'] ?? $id_jugador;
+        $rol_global = $data['rol_global'] ?? 'usuario';
+
         if (!$id_jugador || !$id_equipo) {
             echo json_encode(["success" => false, "error" => "Faltan parámetros: id_jugador o id_equipo"]);
             return;
         }
 
         try {
-            $ok = Jugador::salirDeEquipo((int)$id_jugador, (int)$id_equipo);
+            $idJugadorNum = (int)$id_jugador;
+            $idEquipoNum = (int)$id_equipo;
+            $idUsuarioNum = (int)$id_usuario;
+
+            // Autorización:
+            // - Un jugador puede salir de su propio equipo.
+            // - Para sacar a otro jugador: debe ser admin global o manager del equipo.
+            $esMismoJugador = $idUsuarioNum === $idJugadorNum;
+            $esAdmin = ($rol_global === 'admin');
+            $esManager = Equipo::esManager($idUsuarioNum, $idEquipoNum);
+            if (!$esMismoJugador && !$esAdmin && !$esManager) {
+                echo json_encode(["success" => false, "error" => "No tienes permisos para sacar a este jugador del equipo"]);
+                return;
+            }
+
+            $ok = Jugador::salirDeEquipo($idJugadorNum, $idEquipoNum);
             if ($ok) {
                 echo json_encode(["success" => true, "message" => "Has salido del equipo correctamente"]);
             } else {

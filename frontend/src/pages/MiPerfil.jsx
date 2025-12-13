@@ -132,10 +132,11 @@ export default function MiPerfil({ user, currentTeam, onTeamChange, onUserUpdate
     setAbandonMsg({ type: null, text: "" });
     setAbandonLoading(true);
     try {
+      const rolGlobal = user?.rol_global || user?.rol || 'usuario';
       const resp = await fetch('/api/index.php?action=salir_equipo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_jugador: user.id, id_equipo: equipoId })
+        body: JSON.stringify({ id_jugador: user.id, id_equipo: equipoId, id_usuario: user.id, rol_global: rolGlobal })
       });
       const data = await resp.json();
       if (data.success) {

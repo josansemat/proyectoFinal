@@ -69,7 +69,8 @@ switch ($action) {
         break;
 
     case "listar_equipos_todos":
-        $equipos = Equipo::getAllEquipos();
+        $rolGlobal = $_GET['rol_global'] ?? 'usuario';
+        $equipos = Equipo::getAllEquipos($rolGlobal === 'admin');
         echo json_encode(["success" => true, "equipos" => $equipos]);
         break;
 

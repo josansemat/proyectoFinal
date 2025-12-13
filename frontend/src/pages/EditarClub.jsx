@@ -19,6 +19,13 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
   const [managers, setManagers] = useState({}); 
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [kickLoadingIds, setKickLoadingIds] = useState(() => new Set());
+  const [kickDialog, setKickDialog] = useState(null); // { id, nombre }
+
+  const rolGlobal = user?.rol_global ?? user?.rol ?? 'usuario';
+  const isAdmin = rolGlobal === 'admin';
+  const isManager = currentTeam?.mi_rol === 'manager';
+  const canManage = isAdmin || isManager;
 
   useEffect(() => {
     if (currentTeam?.id) {
@@ -138,12 +145,98 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
         setMessage({ text: 'Error de conexión al servidor', type: 'error' });
     }
   };
+
+  const handleKickPlayer = async (idJugador) => {
+    if (!currentTeam?.id || !idJugador) return;
+    if (!canManage) {
+      setMessage({ text: 'No tienes permisos para sacar jugadores del equipo.', type: 'error' });
+      return;
+    }
+    if (Number(idJugador) === Number(user?.id)) {
+      setMessage({ text: 'No puedes sacarte a ti mismo desde aquí. Usa “Mi perfil → Equipos” para abandonar el equipo.', type: 'error' });
+      return;
+    }
+    setKickDialog(null);
+
+    setKickLoadingIds((prev) => {
+      const next = new Set(prev);
+      next.add(Number(idJugador));
+      return next;
+    });
+    setMessage({ text: 'Procesando...', type: 'info' });
+    try {
+      const resp = await fetch('/api/index.php?action=salir_equipo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_jugador: Number(idJugador),
+          id_equipo: Number(currentTeam.id),
+          id_usuario: Number(user?.id),
+          rol_global: rolGlobal,
+        }),
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setMessage({ text: 'Jugador sacado del equipo.', type: 'success' });
+        await cargarJugadoresEquipo();
+      } else {
+        setMessage({ text: data.error || 'No se pudo sacar al jugador.', type: 'error' });
+      }
+    } catch (e) {
+      setMessage({ text: 'Error de conexión al servidor', type: 'error' });
+    } finally {
+      setKickLoadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(Number(idJugador));
+        return next;
+      });
+    }
+  };
   
   if (!currentTeam) return <div className="editar-club-page"><div className="edt-alert info">Selecciona un equipo primero.</div></div>;
+  if (!canManage) return <div className="editar-club-page"><div className="edt-alert error">No tienes permisos para editar este club.</div></div>;
   if (loading) return <div className="editar-club-page"><div className="edt-alert info">Cargando datos...</div></div>;
 
   return (
     <div className="editar-club-page">
+      {kickDialog && (
+        <div
+          className="edt-modal-overlay"
+          onClick={() => setKickDialog(null)}
+        >
+          <div
+            className="edt-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edt-kick-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="edt-modal-title" id="edt-kick-title">Confirmar acción</h3>
+            <p className="edt-modal-text">
+              ¿Seguro que quieres sacar a <strong>{kickDialog.nombre || 'este jugador'}</strong> del club?
+            </p>
+            <div className="edt-modal-actions">
+              <button
+                type="button"
+                className="edt-modal-btn edt-modal-btn--cancel"
+                onClick={() => setKickDialog(null)}
+                disabled={kickLoadingIds.has(Number(kickDialog.id))}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="edt-modal-btn edt-modal-btn--danger"
+                onClick={() => handleKickPlayer(kickDialog.id)}
+                disabled={kickLoadingIds.has(Number(kickDialog.id))}
+              >
+                {kickLoadingIds.has(Number(kickDialog.id)) ? 'Procesando...' : 'Aceptar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="edt-header">
         <h2>Personalizar {currentTeam.nombre}</h2>
       </header>
@@ -256,11 +349,12 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                     <p className="edt-preview-placeholder">No hay jugadores en el equipo.</p>
                   ) : (
                     <>
-                      <div className="edt-roster-header">
+                        <div className="edt-roster-header">
                           <div style={{flex: 1}}>Jugador</div>
                           <div style={{width: '80px', textAlign:'center'}}>Manager</div>
                           <div style={{width: '60px', textAlign:'center'}}>Dorsal</div>
-                      </div>
+                          <div style={{width: '90px', textAlign:'right'}}>Acciones</div>
+                        </div>
                       
                       <div className="edt-roster-list custom-scrollbar">
                         {jugadores.map(j => {
@@ -301,6 +395,18 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
                                     value={dorsalValue}
                                     onChange={(e) => handleDorsalChange(j.id, e.target.value)}
                                   />
+                                </div>
+
+                                <div className="edt-player-actions">
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-danger btn-sm"
+                                    onClick={() => setKickDialog({ id: j.id, nombre: j.nombre })}
+                                    disabled={kickLoadingIds.has(Number(j.id))}
+                                    title="Sacar jugador del club"
+                                  >
+                                    {kickLoadingIds.has(Number(j.id)) ? '...' : 'Sacar'}
+                                  </button>
                                 </div>
                               </div>
                             </div>

@@ -6,9 +6,11 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+  const [feedback, setFeedback] = useState({ type: "", text: "" });
 
   const isManager = currentTeam?.mi_rol === "manager";
-  const isAdminGlobal = user?.rol === "admin";
+  const roleGlobal = user?.rol_global ?? user?.rol;
+  const isAdminGlobal = roleGlobal === "admin";
 
   useEffect(() => {
     if (currentTeam?.id && (isManager || isAdminGlobal)) {
@@ -20,6 +22,7 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
 
   const fetchSolicitudes = async () => {
     setLoading(true);
+    setFeedback({ type: "", text: "" });
     try {
       const response = await fetch(
         `/api/index.php?action=ver_solicitudes_equipo&id_equipo=${currentTeam.id}`,
@@ -37,6 +40,7 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
 
   const handleResponse = async (idSolicitud, estado) => {
     setProcessingId(idSolicitud);
+    setFeedback({ type: "", text: "" });
 
     // Optimista: retirar la solicitud de la UI inmediatamente.
     const previous = solicitudes;
@@ -60,11 +64,12 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
         // Re-sincroniza por si el backend modifica más cosas.
         fetchSolicitudes();
       } else {
-        alert(data.error);
+        setFeedback({ type: "error", text: data.error || "No se pudo procesar la solicitud." });
         setSolicitudes(previous);
       }
     } catch (error) {
       console.error(error);
+      setFeedback({ type: "error", text: "Error de conexión con el servidor." });
       setSolicitudes(previous);
     } finally {
       setProcessingId(null);
@@ -93,6 +98,12 @@ const ManagerSolicitudes = ({ user, currentTeam }) => {
           <strong>{currentTeam.nombre}</strong>
         </p>
       </div>
+
+      {feedback.text && (
+        <div className={`alert ${feedback.type === "error" ? "alert-danger" : "alert-success"}`} role="status">
+          {feedback.text}
+        </div>
+      )}
 
       {solicitudes.length === 0 ? (
         <div className="alert text-center">

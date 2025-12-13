@@ -47,6 +47,72 @@
   padding-bottom: 3rem;
 }
 
+/* --- MODAL CONFIRMACIÓN (SACAR JUGADOR) --- */
+.edt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 9999;
+}
+
+.edt-modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--edt-surface);
+  border: 1px solid var(--edt-border);
+  border-radius: var(--edt-radius);
+  padding: 1rem;
+  box-shadow: var(--edt-shadow);
+  color: var(--edt-text);
+}
+
+.edt-modal-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.edt-modal-text {
+  margin: 0 0 1rem;
+  color: var(--edt-text);
+}
+
+.edt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.edt-modal-btn {
+  border: 1px solid transparent;
+  border-radius: var(--edt-radius-sm);
+  padding: 0.5rem 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edt-modal-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.edt-modal-btn--cancel {
+  background: var(--edt-input-bg);
+  border-color: var(--edt-border);
+  color: var(--edt-text);
+}
+
+.edt-modal-btn--danger {
+  background: var(--edt-danger);
+  border-color: var(--edt-danger);
+  color: #fff;
+}
+
 /* --- CABECERA --- */
 .edt-header {
   margin-bottom: 2rem;
@@ -250,6 +316,13 @@
   gap: 1rem;
 }
 
+.edt-player-actions {
+  width: 90px;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
 /* Checkbox Manager */
 .edt-manager-check {
   display: flex;
@@ -368,6 +441,12 @@
   .edt-player-controls {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .edt-player-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
   
   .edt-manager-check, .edt-dorsal-wrapper {

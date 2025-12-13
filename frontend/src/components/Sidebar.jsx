@@ -27,7 +27,7 @@ const Sidebar = ({
   const navigate = useNavigate();
   const location = useLocation(); // Hook para saber la ruta actual
 
-  const roleGlobal = user?.rol;
+  const roleGlobal = user?.rol_global ?? user?.rol;
   const isAdmin = roleGlobal === "admin";
   const isManagerCurrentTeam = currentTeam?.mi_rol === "manager";
   const canManageTeam = isAdmin || isManagerCurrentTeam;
@@ -196,7 +196,7 @@ const Sidebar = ({
           {isTeamDropdownOpen && hasMultipleTeams && (
             <div className="team-dropdown-menu shadow">
               <div className="small px-3 py-2 text-uppercase fw-bold text-sidebar-muted title-drop">
-                Mis Equipos
+                {isAdmin ? 'Todos los equipos' : 'Mis Equipos'}
               </div>
 
               <ul className="list-unstyled m-0 p-1">

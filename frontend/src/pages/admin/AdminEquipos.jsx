@@ -178,7 +178,7 @@ export default function AdminEquipos() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if(!form.nombre.trim()) { alert("El nombre es obligatorio"); return; }
+    if(!form.nombre.trim()) { setError("El nombre es obligatorio"); return; }
     setError("");
     
     try {
