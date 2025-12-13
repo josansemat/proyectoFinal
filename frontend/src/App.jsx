@@ -211,24 +211,11 @@ function App() {
       if (storedUserStr) {
         const userData = JSON.parse(storedUserStr);
         setUser(userData);
-        try { await fetchUserTeams(userData.id, userData); } catch (e) { console.error(e); }
+        // Optimista: mostramos el último equipo guardado, y luego lo refrescamos con fetchUserTeams/handleTeamChange.
         if (storedTeamStr) {
-          const storedTeam = JSON.parse(storedTeamStr);
-          try {
-            const resp = await fetch(`/api/index.php?action=get_equipo&id=${storedTeam.id}`, { cache: "no-store" });
-            const raw = await resp.json();
-            if (raw.success) {
-              const enriched = { ...raw.equipo, mi_rol: storedTeam.mi_rol ?? raw.equipo?.mi_rol ?? null };
-              setCurrentTeam(enriched);
-              localStorage.setItem("equipo_actual_furbo", JSON.stringify(enriched));
-            } else {
-              setCurrentTeam(storedTeam);
-            }
-          } catch (err) {
-            console.error("Error refrescando equipo:", err);
-            setCurrentTeam(storedTeam);
-          }
+          try { setCurrentTeam(JSON.parse(storedTeamStr)); } catch { /* ignore */ }
         }
+        try { await fetchUserTeams(userData.id, userData); } catch (e) { console.error(e); }
       }
       setLoadingInitial(false);
     };
@@ -246,7 +233,11 @@ function App() {
         { cache: "no-store" }
       );
       const data = await response.json();
-      const equipos = Array.isArray(data.equipos) ? data.equipos : [];
+      const equipos = (Array.isArray(data.equipos) ? data.equipos : []).map((t) => ({
+        ...t,
+        // Normalizamos para que el resto de la app siempre lea `mi_rol`
+        mi_rol: t.mi_rol ?? t.rol_en_equipo ?? t.rol ?? null,
+      }));
       if (data.success && equipos.length > 0) {
         // Para admin: el selector muestra todos los equipos activos.
         // Para usuarios: el selector muestra sus equipos.
@@ -256,7 +247,8 @@ function App() {
         if (storedTeamStr) {
           const storedTeam = JSON.parse(storedTeamStr);
           const found = equipos.find(t => t.id === storedTeam.id);
-          if (found) teamToSelect = { ...found, mi_rol: storedTeam.mi_rol ?? found.mi_rol ?? null };
+          // Importante: si el rol cambió en backend, NO debemos quedarnos con el rol viejo del localStorage.
+          if (found) teamToSelect = { ...found, mi_rol: found.mi_rol ?? storedTeam.mi_rol ?? null };
         }
         if (!currentTeam || currentTeam.id !== teamToSelect.id) {
           handleTeamChange(teamToSelect);

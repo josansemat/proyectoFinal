@@ -120,7 +120,7 @@ const EditarClub = ({ user, currentTeam, onTeamUpdate }) => {
         const payload = {
             id: currentTeam.id, 
             id_usuario: user.id,
-            rol_global: user.rol,
+          rol_global: rolGlobal,
             ...formData, 
             dorsales: dorsales, 
             roles: rolesToSend 
