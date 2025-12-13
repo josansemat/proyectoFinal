@@ -187,7 +187,7 @@ export default function Register({ switchToLogin }) {
                 />
               <label htmlFor="privacy" style={{ margin: 0, cursor: 'pointer' }}>
                 He leído y acepto la{" "}
-                <a href="#" onClick={(e) => e.preventDefault()} style={{textDecoration: 'underline'}}>
+                <a href="/politica-privacidad.pdf" target="_blank" rel="noopener noreferrer" style={{textDecoration: 'underline'}}>
                   política de privacidad
                 </a>
                 .
