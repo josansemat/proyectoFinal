@@ -34,6 +34,43 @@
   gap: 1.25rem;
 }
 
+.manual-pdf {
+  margin-top: 2rem;
+  padding: 1.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.08);
+}
+
+.manual-pdf h2 {
+  margin-bottom: 0.75rem;
+}
+
+.manual-pdf p {
+  margin-bottom: 1rem;
+  color: #334155;
+}
+
+.manual-pdf a {
+  color: #0ea5e9;
+  font-weight: 600;
+}
+
+.manual-pdf-frame {
+  width: 100%;
+  height: min(72vh, 860px);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+}
+
+.manual-pdf-object {
+  width: 100%;
+  height: 100%;
+}
+
 .manual-card {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
@@ -120,5 +157,13 @@
 
   .manual-help, .manual-glossary {
     padding: 1.2rem;
+  }
+
+  .manual-pdf {
+    padding: 1.2rem;
+  }
+
+  .manual-pdf-frame {
+    height: min(70vh, 640px);
   }
 }

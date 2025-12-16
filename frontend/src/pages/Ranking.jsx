@@ -228,7 +228,6 @@ function Ranking({ user, currentTeam }) {
         <div className="ranking-card__center">
             <div className="ranking-card__header">
                 <span className="ranking-name">{player.apodo || player.nombre}</span>
-                {player.rol === "manager" && <span className="badge-manager">M</span>}
             </div>
             
             <div className="ranking-bar-container">
@@ -246,7 +245,6 @@ function Ranking({ user, currentTeam }) {
 
         <div className="ranking-card__right">
              <div className="ranking-score-box">
-                <small>SCORE</small>
                 <strong>{formatDecimal(player.score, 0)}</strong>
              </div>
         </div>
@@ -266,15 +264,6 @@ function Ranking({ user, currentTeam }) {
             <span>Actualizado: {lastUpdatedLabel}</span>
           </div>
         </div>
-        <button
-          className="btn-icon-refresh"
-          onClick={fetchRanking}
-          disabled={loading}
-          title="Actualizar datos"
-          aria-label="Actualizar ranking"
-        >
-            {loading ? "..." : "⟳"}
-        </button>
       </header>
 
       {error && <div className="ranking-alert">{error}</div>}

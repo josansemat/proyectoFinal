@@ -266,17 +266,16 @@
 }
 
 .btn-logout-sidebar {
-  color: var(--danger-color);
+  color: white;
   width: 100%;
   text-align: left;
   background: none;
   transition: all 0.2s ease;
+  background: rgba(220, 53, 70, 0.671);
+
 }
 
-.btn-logout-sidebar:hover {
-  background: rgba(220, 53, 69, 0.15);
-  color: var(--danger-color);
-}
+
 
 .btn-logout-sidebar:hover .sidebar-nav-icon {
   transform: translateX(4px);

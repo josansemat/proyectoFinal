@@ -256,6 +256,7 @@
   color: black;
   border-left: 3px solid var(--rk-text-main);
   padding-left: 0.75rem;
+  background-color: white;
 }
 
 /* --- Grids --- */
