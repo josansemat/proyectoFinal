@@ -150,6 +150,19 @@
   }
 }
 
+/* Desktop medio: en fútbol 11 se veía demasiado grande y podía desbordar (≈992px–1241px) */
+@media (min-width: 992px) and (max-width: 1241px) {
+  .pitch.pitch-11 {
+    width: min(100%, 560px);
+    gap: 10px;
+  }
+  .pitch.pitch-11 .slot {
+    width: 104px;
+    max-width: 8vw;
+  }
+  
+}
+
 .btnpp {
     border-radius: 8px;
     padding: 0.6rem 1rem;

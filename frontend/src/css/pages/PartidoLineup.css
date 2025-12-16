@@ -171,13 +171,13 @@
   }
 }
 
-@media (min-width: 1200px) and (max-width: 1329px) {
+/* @media (min-width: 1200px) and (max-width: 1329px) {
   .lineup__layout {
     grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
     column-gap: clamp(1.25rem, 3vw, 2.5rem);
     align-items: start;
   }
-}
+} */
 
 @media (min-width: 1330px) {
   .lineup__layout {
